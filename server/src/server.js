@@ -1,6 +1,7 @@
 const app = require("./app");
+const config = require("./config/env");
 
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
 app.listen(PORT, () => {
   console.log(`Servidor disponible en http://localhost:${PORT}`);
