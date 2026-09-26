@@ -1,11 +1,14 @@
 const vehiculoModel = require("../models/vehiculo.model");
+const { validateId, validateData } = require("../utils/validators/vehiculo.validator");
 
 const getVehiculos = async () => {
     return await vehiculoModel.findAll();
 };
 
 const getVehiculoById = async (id) => {
-    const vehiculo = await vehiculoModel.findById(id);
+    const idNumerico = validateId(id);
+
+    const vehiculo = await vehiculoModel.findById(idNumerico);
 
     if (!vehiculo) {
         const error = new Error("Vehículo no encontrado");
@@ -17,11 +20,19 @@ const getVehiculoById = async (id) => {
 };
 
 const createVehiculo = async (data) => {
-    return await vehiculoModel.create(data);
+    const datosValidados = validateData(data);
+
+    return await vehiculoModel.create(datosValidados);
 };
 
 const updateVehiculo = async (id, data) => {
-    const vehiculo = await vehiculoModel.update(id, data);
+    const idNumerico = validateId(id);
+    const datosValidados = validateData(data);
+
+    const vehiculo = await vehiculoModel.update(
+        idNumerico,
+        datosValidados
+    );
 
     if (!vehiculo) {
         const error = new Error("Vehículo no encontrado");
@@ -33,7 +44,9 @@ const updateVehiculo = async (id, data) => {
 };
 
 const deleteVehiculo = async (id) => {
-    const vehiculo = await vehiculoModel.remove(id);
+    const idNumerico = validateId(id);
+
+    const vehiculo = await vehiculoModel.remove(idNumerico);
 
     if (!vehiculo) {
         const error = new Error("Vehículo no encontrado");
@@ -43,6 +56,7 @@ const deleteVehiculo = async (id) => {
 
     return vehiculo;
 };
+
 
 module.exports = {
     getVehiculos,
