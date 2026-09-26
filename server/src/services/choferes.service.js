@@ -1,5 +1,6 @@
 const choferModel = require("../models/chofer.model");
-const { validateId, validateData } = require("../utils/validators/vehiculo.validator");
+const { validateId } = require("../utils/validators/common.validators");
+const { validateData } = require("../utils/validators/vehiculo.validators");
 
 const getChoferes = async () => {
     return await choferModel.findAll();

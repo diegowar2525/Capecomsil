@@ -1,16 +1,3 @@
-const validateId = (id) => {
-    const idNumerico = Number(id);
-
-    if (!Number.isInteger(idNumerico) || idNumerico <= 0) {
-        const error = new Error("El ID del vehículo no es válido");
-        error.status = 400;
-        throw error;
-    }
-
-    return idNumerico;
-};
-
-
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         const error = new Error("Los datos del vehículo son obligatorios");
@@ -80,7 +67,4 @@ const validateData = (data) => {
     };
 };
 
-module.exports = {
-    validateId,
-    validateData
-}
+module.exports = { validateData };

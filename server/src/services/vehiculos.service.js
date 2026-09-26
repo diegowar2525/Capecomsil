@@ -1,5 +1,6 @@
 const vehiculoModel = require("../models/vehiculo.model");
-const { validateId, validateData } = require("../utils/validators/vehiculo.validator");
+const { validateId } = require("../utils/validators/common.validators");
+const { validateData } = require("../utils/validators/vehiculo.validators");
 
 const getVehiculos = async () => {
     return await vehiculoModel.findAll();
