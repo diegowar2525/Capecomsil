@@ -2,6 +2,7 @@
 -- CAPECOMSIL
 -- Esquema inicial de la base de datos
 -- PostgreSQL
+-- Después de crear este esquema, ejecutar migrations/001_tarifa_reglas.sql.
 -- =====================================================
 
 
