@@ -2,6 +2,22 @@ const categoriaProductoModel = require("../models/categoria_producto.model");
 const { validateId } = require("../utils/validators/common.validators");
 const { validateData } = require("../utils/validators/categoria_producto.validators");
 
+const validateCategoria = async (id) => {
+    const categoria = await categoriaProductoModel.findById(id);
+
+    if (!categoria) {
+        const error = new Error("La categoría indicada no existe");
+        error.status = 400;
+        throw error;
+    }
+
+    if (categoria.estado !== "ACTIVO") {
+        const error = new Error("La categoría seleccionada debe estar activa");
+        error.status = 409;
+        throw error;
+    }
+};
+
 const getCategoriasProducto = async () => {
     return await categoriaProductoModel.findAll();
 };
@@ -60,5 +76,6 @@ module.exports = {
     getCategoriaProductoById,
     createCategoriaProducto,
     updateCategoriaProducto,
-    deleteCategoriaProducto
+    deleteCategoriaProducto,
+    validateCategoria
 };
