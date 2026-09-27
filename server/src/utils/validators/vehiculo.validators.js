@@ -30,7 +30,7 @@ const validateData = (data) => {
     const capacidadNumerica = Number(capacidad_galones);
 
     if (
-        anio === undefined ||
+        !["number", "string"].includes(typeof anio) ||
         !Number.isInteger(anioNumerico) ||
         anioNumerico <= 0
     ) {
@@ -40,7 +40,7 @@ const validateData = (data) => {
     }
 
     if (
-        capacidad_galones === undefined ||
+        !["number", "string"].includes(typeof capacidad_galones) ||
         !Number.isFinite(capacidadNumerica) ||
         capacidadNumerica <= 0
     ) {
@@ -63,7 +63,7 @@ const validateData = (data) => {
         modelo: modelo.trim(),
         anio: anioNumerico,
         capacidad_galones: capacidadNumerica,
-        estado: estado ?? true
+        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
     };
 };
 

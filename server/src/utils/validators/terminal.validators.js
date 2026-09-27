@@ -29,7 +29,7 @@ const validateData = (data) => {
     return {
         nombre: nombre.trim(),
         ubicacion: ubicacion.trim(),
-        estado: estado ?? true
+        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
     };
 };
 

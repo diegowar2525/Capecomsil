@@ -1,4 +1,10 @@
 const validateData = (data) => {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        const error = new Error("Los datos del chofer son obligatorios");
+        error.status = 400;
+        throw error;
+    }
+
     const {
         nombre,
         cedula,
@@ -43,7 +49,7 @@ const validateData = (data) => {
         cedula: cedula.trim(),
         telefono: telefono?.trim() || null,
         tipo_remuneracion: tipo_remuneracion.trim(),
-        estado: estado ?? true,
+        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO",
     };
 };
 

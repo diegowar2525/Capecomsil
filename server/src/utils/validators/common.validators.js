@@ -1,8 +1,14 @@
 const validateId = (id) => {
     const idNumerico = Number(id);
 
-    if (!Number.isInteger(idNumerico) || idNumerico <= 0) {
-        const error = new Error("El ID del chofer no es válido.");
+    if (
+        !["string", "number"].includes(typeof id) ||
+        !/^\d+$/.test(String(id)) ||
+        !Number.isSafeInteger(idNumerico) ||
+        idNumerico <= 0 ||
+        idNumerico > 2147483647
+    ) {
+        const error = new Error("El ID debe ser un entero positivo válido");
         error.status = 400;
         throw error;
     }
@@ -10,4 +16,6 @@ const validateId = (id) => {
     return idNumerico;
 };
 
-module.exports = { validateId };
+module.exports = {
+    validateId
+};

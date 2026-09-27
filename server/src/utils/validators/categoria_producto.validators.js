@@ -1,4 +1,10 @@
 const validateData = (data) => {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+        const error = new Error("Los datos deben ser un objeto válido");
+        error.status = 400;
+        throw error;
+    }
+
     const {
         nombre,
         estado
@@ -25,6 +31,22 @@ const validateData = (data) => {
         error.status = 400;
         throw error;
     }
+
+    if (
+        data.descripcion !== undefined &&
+        data.descripcion !== null &&
+        typeof data.descripcion !== "string"
+    ) {
+        const error = new Error("El campo descripcion debe ser texto");
+        error.status = 400;
+        throw error;
+    }
+
+    return {
+        nombre: data.nombre.trim(),
+        descripcion: data.descripcion?.trim() || null,
+        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+    };
 };
 
 module.exports = {
