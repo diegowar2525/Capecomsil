@@ -6,6 +6,7 @@ const terminalesRoutes = require("./terminales.routes");
 const gasolinerasRoutes = require("./gasolineras.routes");
 const proveedoresRoutes = require("./proveedores.routes");
 const tarifasRoutes = require("./tarifas.routes");
+const productosRoutes = require("./productos.routes");
 const categoriasProductoRoutes = require("./categorias_producto.routes");
 const productosTransportadosRoutes = require(
     "./productos_transportados.routes"
@@ -25,6 +26,7 @@ router.use("/terminales", terminalesRoutes);
 router.use("/gasolineras", gasolinerasRoutes);
 router.use("/proveedores", proveedoresRoutes);
 router.use("/tarifas", tarifasRoutes);
+router.use("/productos", productosRoutes);
 router.use("/categorias-producto", categoriasProductoRoutes);
 router.use(
     "/productos-transportados",
