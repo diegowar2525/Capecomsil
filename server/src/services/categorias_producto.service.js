@@ -7,9 +7,9 @@ const getCategoriasProducto = async () => {
 };
 
 const getCategoriaProductoById = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const categoria = await categoriaProductoModel.findById(id);
+    const categoria = await categoriaProductoModel.findById(idNumerico);
 
     if (!categoria) {
         const error = new Error("Categoría de producto no encontrada");
@@ -21,22 +21,16 @@ const getCategoriaProductoById = async (id) => {
 };
 
 const createCategoriaProducto = async (data) => {
-    validateData(data);
+    const datosValidados = validateData(data);
 
-    const categoriaData = {
-        nombre: data.nombre.trim(),
-        descripcion: data.descripcion ?? null,
-        estado: data.estado ?? true
-    };
-
-    return await categoriaProductoModel.create(categoriaData);
+    return await categoriaProductoModel.create(datosValidados);
 };
 
 const updateCategoriaProducto = async (id, data) => {
-    validateId(id);
-    validateData(data);
+    const idNumerico = validateId(id);
+    const datosValidados = validateData(data);
 
-    const existingCategoria = await categoriaProductoModel.findById(id);
+    const existingCategoria = await categoriaProductoModel.findById(idNumerico);
 
     if (!existingCategoria) {
         const error = new Error("Categoría de producto no encontrada");
@@ -44,19 +38,13 @@ const updateCategoriaProducto = async (id, data) => {
         throw error;
     }
 
-    const categoriaData = {
-        nombre: data.nombre.trim(),
-        descripcion: data.descripcion ?? null,
-        estado: data.estado ?? true
-    };
-
-    return await categoriaProductoModel.update(id, categoriaData);
+    return await categoriaProductoModel.update(idNumerico, datosValidados);
 };
 
 const deleteCategoriaProducto = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const categoria = await categoriaProductoModel.findById(id);
+    const categoria = await categoriaProductoModel.findById(idNumerico);
 
     if (!categoria) {
         const error = new Error("Categoría de producto no encontrada");
@@ -64,7 +52,7 @@ const deleteCategoriaProducto = async (id) => {
         throw error;
     }
 
-    return await categoriaProductoModel.remove(id);
+    return await categoriaProductoModel.remove(idNumerico);
 };
 
 module.exports = {

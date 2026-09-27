@@ -13,9 +13,9 @@ const getProductosTransportados = async () => {
 };
 
 const getProductoTransportadoById = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const producto = await productoTransportadoModel.findById(id);
+    const producto = await productoTransportadoModel.findById(idNumerico);
 
     if (!producto) {
         const error = new Error(
@@ -29,24 +29,17 @@ const getProductoTransportadoById = async (id) => {
 };
 
 const createProductoTransportado = async (data) => {
-    validateData(data);
+    const datosValidados = validateData(data);
 
-    const productoData = {
-        nombre: data.nombre.trim(),
-        descripcion: data.descripcion ?? null,
-        unidad_medida: data.unidad_medida.trim(),
-        estado: data.estado ?? true
-    };
-
-    return await productoTransportadoModel.create(productoData);
+    return await productoTransportadoModel.create(datosValidados);
 };
 
 const updateProductoTransportado = async (id, data) => {
-    validateId(id);
-    validateData(data);
+    const idNumerico = validateId(id);
+    const datosValidados = validateData(data);
 
     const existingProducto =
-        await productoTransportadoModel.findById(id);
+        await productoTransportadoModel.findById(idNumerico);
 
     if (!existingProducto) {
         const error = new Error(
@@ -56,23 +49,16 @@ const updateProductoTransportado = async (id, data) => {
         throw error;
     }
 
-    const productoData = {
-        nombre: data.nombre.trim(),
-        descripcion: data.descripcion ?? null,
-        unidad_medida: data.unidad_medida.trim(),
-        estado: data.estado ?? true
-    };
-
     return await productoTransportadoModel.update(
-        id,
-        productoData
+        idNumerico,
+        datosValidados
     );
 };
 
 const deleteProductoTransportado = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const producto = await productoTransportadoModel.findById(id);
+    const producto = await productoTransportadoModel.findById(idNumerico);
 
     if (!producto) {
         const error = new Error(
@@ -82,7 +68,7 @@ const deleteProductoTransportado = async (id) => {
         throw error;
     }
 
-    return await productoTransportadoModel.remove(id);
+    return await productoTransportadoModel.remove(idNumerico);
 };
 
 module.exports = {

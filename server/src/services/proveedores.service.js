@@ -7,9 +7,9 @@ const getProveedores = async () => {
 };
 
 const getProveedorById = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const proveedor = await proveedorModel.findById(id);
+    const proveedor = await proveedorModel.findById(idNumerico);
 
     if (!proveedor) {
         const error = new Error("Proveedor no encontrado");
@@ -21,25 +21,16 @@ const getProveedorById = async (id) => {
 };
 
 const createProveedor = async (data) => {
-    validateData(data);
+    const datosValidados = validateData(data);
 
-    const proveedorData = {
-        nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
-        direccion: data.direccion ?? null,
-        telefono: data.telefono ?? null,
-        correo: data.correo ?? null,
-        estado: data.estado ?? true
-    };
-
-    return await proveedorModel.create(proveedorData);
+    return await proveedorModel.create(datosValidados);
 };
 
 const updateProveedor = async (id, data) => {
-    validateId(id);
-    validateData(data);
+    const idNumerico = validateId(id);
+    const datosValidados = validateData(data);
 
-    const existingProveedor = await proveedorModel.findById(id);
+    const existingProveedor = await proveedorModel.findById(idNumerico);
 
     if (!existingProveedor) {
         const error = new Error("Proveedor no encontrado");
@@ -47,22 +38,13 @@ const updateProveedor = async (id, data) => {
         throw error;
     }
 
-    const proveedorData = {
-        nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
-        direccion: data.direccion ?? null,
-        telefono: data.telefono ?? null,
-        correo: data.correo ?? null,
-        estado: data.estado ?? true
-    };
-
-    return await proveedorModel.update(id, proveedorData);
+    return await proveedorModel.update(idNumerico, datosValidados);
 };
 
 const deleteProveedor = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const proveedor = await proveedorModel.findById(id);
+    const proveedor = await proveedorModel.findById(idNumerico);
 
     if (!proveedor) {
         const error = new Error("Proveedor no encontrado");
@@ -70,7 +52,7 @@ const deleteProveedor = async (id) => {
         throw error;
     }
 
-    return await proveedorModel.remove(id);
+    return await proveedorModel.remove(idNumerico);
 };
 
 module.exports = {

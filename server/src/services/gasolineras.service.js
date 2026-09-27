@@ -7,9 +7,9 @@ const getGasolineras = async () => {
 };
 
 const getGasolineraById = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const gasolinera = await gasolineraModel.findById(id);
+    const gasolinera = await gasolineraModel.findById(idNumerico);
 
     if (!gasolinera) {
         const error = new Error("Gasolinera no encontrada");
@@ -21,27 +21,16 @@ const getGasolineraById = async (id) => {
 };
 
 const createGasolinera = async (data) => {
-    validateData(data);
+    const datosValidados = validateData(data);
 
-    const gasolineraData = {
-        nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
-        direccion: data.direccion ?? null,
-        telefono: data.telefono ?? null,
-        correo: data.correo ?? null,
-        representante_legal: data.representante_legal ?? null,
-        agente_retencion: data.agente_retencion ?? false,
-        estado: data.estado ?? true
-    };
-
-    return await gasolineraModel.create(gasolineraData);
+    return await gasolineraModel.create(datosValidados);
 };
 
 const updateGasolinera = async (id, data) => {
-    validateId(id);
-    validateData(data);
+    const idNumerico = validateId(id);
+    const datosValidados = validateData(data);
 
-    const existingGasolinera = await gasolineraModel.findById(id);
+    const existingGasolinera = await gasolineraModel.findById(idNumerico);
 
     if (!existingGasolinera) {
         const error = new Error("Gasolinera no encontrada");
@@ -49,24 +38,13 @@ const updateGasolinera = async (id, data) => {
         throw error;
     }
 
-    const gasolineraData = {
-        nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
-        direccion: data.direccion ?? null,
-        telefono: data.telefono ?? null,
-        correo: data.correo ?? null,
-        representante_legal: data.representante_legal ?? null,
-        agente_retencion: data.agente_retencion ?? false,
-        estado: data.estado ?? true
-    };
-
-    return await gasolineraModel.update(id, gasolineraData);
+    return await gasolineraModel.update(idNumerico, datosValidados);
 };
 
 const deleteGasolinera = async (id) => {
-    validateId(id);
+    const idNumerico = validateId(id);
 
-    const gasolinera = await gasolineraModel.findById(id);
+    const gasolinera = await gasolineraModel.findById(idNumerico);
 
     if (!gasolinera) {
         const error = new Error("Gasolinera no encontrada");
@@ -74,7 +52,7 @@ const deleteGasolinera = async (id) => {
         throw error;
     }
 
-    return await gasolineraModel.remove(id);
+    return await gasolineraModel.remove(idNumerico);
 };
 
 module.exports = {
