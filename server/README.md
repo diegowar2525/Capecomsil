@@ -1,5 +1,51 @@
 # API de CAPECOMSIL
 
+## Productos
+
+Ejecutar una sola vez `database/migrations/002_producto_reglas.sql` en la base existente.
+Para una base nueva, ejecutar `database/schema.sql` y las migraciones en orden numérico.
+
+Rutas: `GET /api/productos`, `GET /api/productos/:id`, `POST /api/productos`,
+`PUT /api/productos/:id` y `DELETE /api/productos/:id`.
+Los GET incluyen `nombre_categoria` además de `id_categoria`.
+
+Cuerpo de ejemplo para crear o reemplazar un producto:
+
+```json
+{
+  "id_categoria": 1,
+  "nombre": "Filtro de aceite",
+  "medida": null,
+  "modelo": null,
+  "marca": null,
+  "descripcion": null,
+  "unidad_medida": "unidad",
+  "stock_minimo": 2,
+  "estado": true
+}
+```
+
+Nombre, categoría y unidad son obligatorios. Los textos se recortan; los opcionales
+vacíos se almacenan como null. La unidad se normaliza a minúsculas y sigue siendo
+texto libre hasta definir un catálogo (no se unifican sinónimos). El stock mínimo
+admite hasta dos decimales, no es negativo y se omite para usar cero. Como otros
+NUMERIC de PostgreSQL, se devuelve en texto. El estado se recibe como booleano,
+usa true por defecto y se almacena como ACTIVO o INACTIVO.
+
+La categoría debe existir y estar activa al crear o cambiar de categoría. Es posible
+editar o inactivar un producto que conserva una categoría posteriormente inactivada.
+Se permiten nombres repetidos. PUT reemplaza los campos editables; omitir los
+opcionales aplica sus valores predeterminados.
+
+Compras, movimientos o mantenimientos asociados impiden eliminar el producto o
+cambiar su unidad. Se permite inactivarlo y modificar el resto de sus datos.
+Estas reglas se comprueban en servicios y se respaldan con triggers y claves
+foráneas en PostgreSQL. El CRUD no modifica existencias ni crea movimientos.
+`fecha_creacion` la genera PostgreSQL y no se modifica mediante la API.
+
+Las pruebas de productos ejecutan solicitudes HTTP contra un esquema temporal
+de PostgreSQL y revierten sus datos al terminar.
+
 Configurar `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` en `.env`.
 Ejecutar `npm install` y `npm run dev` desde `server`.
 
