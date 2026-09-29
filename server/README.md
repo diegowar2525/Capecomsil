@@ -1,5 +1,63 @@
 # API de CAPECOMSIL
 
+## Facturas de proveedor: productos, servicios e impuestos
+
+Rutas disponibles: `POST /api/facturas-proveedor`, `GET /api/facturas-proveedor`
+y `GET /api/facturas-proveedor/:id`. No hay edición ni eliminación de facturas en
+este módulo inicial. La API calcula los importes; ignora totales enviados por el cliente.
+
+Para una base nueva, usar solamente `database/schema.sql`. Para actualizar la versión
+anterior, ejecutar una sola vez `database/migrations/004_factura_proveedor_conceptos.sql`.
+Esta migración cambia `monto_total` a `total` y aborta si hay facturas existentes:
+no deduce impuestos históricos de importes que no los desglosan.
+
+```json
+{
+  "id_proveedor": 1,
+  "numero_factura": "001-001-000000001",
+  "fecha_emision": "2026-09-28",
+  "fecha_vencimiento": "2026-10-28",
+  "detalles": [
+    {
+      "tipo_concepto": "PRODUCTO",
+      "id_producto": 1,
+      "descripcion": "Llantas",
+      "cantidad": "10.00",
+      "precio_unitario": "20.00",
+      "descuento": "10.00",
+      "porcentaje_impuesto": "12.0000"
+    },
+    {
+      "tipo_concepto": "SERVICIO",
+      "descripcion": "Reparación",
+      "cantidad": "1.00",
+      "precio_unitario": "30.00",
+      "porcentaje_impuesto": "0"
+    }
+  ],
+  "recepcion_inicial": {
+    "fecha_recepcion": "2026-09-28",
+    "detalles": [{ "numero_detalle": 1, "cantidad_recibida": "4.00" }]
+  }
+}
+```
+
+Las tasas del ejemplo son ilustrativas, no valores predeterminados. Cada línea debe
+enviar su porcentaje (0 a 100, máximo cuatro decimales); el descuento omitido es cero
+y representa un importe por línea, no un porcentaje. Cantidad y precio admiten dos
+decimales. Los valores calculados se almacenan y se devuelven como texto decimal.
+PostgreSQL NUMERIC redondea el bruto por línea a dos decimales, resta el descuento
+y redondea su impuesto a dos decimales (mitades hacia arriba para importes positivos).
+La cabecera suma esos valores almacenados; no vuelve a descontar `descuento_total`.
+El ejemplo produce subtotal 220.00, descuento_total 10.00, impuestos 22.80 y total 242.80.
+
+`recepcion_inicial` es opcional. `numero_detalle` identifica la posición de la línea
+en la petición, empezando en 1. Solo admite productos y cantidades positivas que no
+superen lo facturado. La factura del ejemplo registra 10 llantas pero solo entran 4.
+Sin recepción inicial no se crean movimientos. Factura, detalles, recepción y entradas
+se guardan usando una única conexión y transacción; cualquier fallo revierte todo.
+Las recepciones posteriores, pagos y anulaciones tendrán sus propios servicios.
+
 ## Inicialización de PostgreSQL
 
 Ejecutar únicamente `database/schema.sql` en una base vacía. Incluye las 22 tablas,

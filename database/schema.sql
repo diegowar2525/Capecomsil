@@ -349,7 +349,10 @@ CREATE TABLE factura_proveedor (
     numero_factura VARCHAR(50) NOT NULL,
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE,
-    monto_total NUMERIC(14, 2) NOT NULL,
+    subtotal NUMERIC(14, 2) NOT NULL,
+    descuento_total NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    impuestos NUMERIC(14, 2) NOT NULL DEFAULT 0,
+    total NUMERIC(14, 2) NOT NULL,
     estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
     detalle TEXT,
 
@@ -358,7 +361,7 @@ CREATE TABLE factura_proveedor (
         REFERENCES proveedor(id_proveedor),
 
     CONSTRAINT chk_factura_proveedor_monto
-        CHECK (monto_total >= 0),
+        CHECK (subtotal >= 0 AND descuento_total >= 0 AND impuestos >= 0 AND total = subtotal + impuestos),
 
     CONSTRAINT uq_factura_proveedor_numero
         UNIQUE (id_proveedor, numero_factura)
@@ -368,11 +371,22 @@ CREATE TABLE factura_proveedor (
 CREATE TABLE detalle_factura_proveedor (
     id_detalle_factura_proveedor INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_factura_proveedor INTEGER NOT NULL,
-    id_producto INTEGER NOT NULL,
+    id_producto INTEGER,
+    tipo_concepto VARCHAR(20) NOT NULL,
+    descripcion TEXT NOT NULL,
 
     cantidad NUMERIC(12, 2) NOT NULL,
     precio_unitario NUMERIC(12, 2) NOT NULL,
+    descuento NUMERIC(14, 2) NOT NULL DEFAULT 0,
     subtotal NUMERIC(14, 2) NOT NULL,
+    porcentaje_impuesto NUMERIC(7, 4) NOT NULL,
+    impuesto NUMERIC(14, 2) NOT NULL,
+    total_linea NUMERIC(14, 2) NOT NULL,
+
+    CONSTRAINT chk_detalle_factura_concepto
+        CHECK ((tipo_concepto = 'PRODUCTO' AND id_producto IS NOT NULL)
+            OR (tipo_concepto = 'SERVICIO' AND id_producto IS NULL)),
+    CONSTRAINT chk_detalle_factura_descripcion CHECK (btrim(descripcion) <> ''),
 
     CONSTRAINT fk_detalle_factura_proveedor_factura
         FOREIGN KEY (id_factura_proveedor)
@@ -386,7 +400,12 @@ CREATE TABLE detalle_factura_proveedor (
         CHECK (
             cantidad > 0
             AND precio_unitario >= 0
-            AND subtotal >= 0
+            AND descuento >= 0
+            AND descuento <= round(cantidad * precio_unitario, 2)
+            AND subtotal = round(cantidad * precio_unitario, 2) - descuento
+            AND porcentaje_impuesto BETWEEN 0 AND 100
+            AND impuesto = round(subtotal * porcentaje_impuesto / 100, 2)
+            AND total_linea = subtotal + impuesto
         )
 );
 
@@ -580,3 +599,74 @@ CREATE TRIGGER movimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_produc
     FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
 CREATE TRIGGER mantenimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_producto ON detalle_mantenimiento
     FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
+-- =====================================================
+-- 10. RECEPCIONES DE COMPRAS Y TRAZABILIDAD
+-- =====================================================
+
+CREATE TABLE recepcion_compra (
+    id_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_factura_proveedor INTEGER NOT NULL,
+    fecha_recepcion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    numero_comprobante VARCHAR(100),
+    observacion TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADA',
+
+    CONSTRAINT fk_recepcion_factura_proveedor
+        FOREIGN KEY (id_factura_proveedor)
+        REFERENCES factura_proveedor(id_factura_proveedor),
+    CONSTRAINT chk_recepcion_estado
+        CHECK (estado IN ('REGISTRADA', 'ANULADA'))
+);
+
+CREATE TABLE detalle_recepcion_compra (
+    id_detalle_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_recepcion_compra INTEGER NOT NULL,
+    id_detalle_factura_proveedor INTEGER NOT NULL,
+    cantidad_recibida NUMERIC(12, 2) NOT NULL,
+    observacion TEXT,
+
+    CONSTRAINT fk_detalle_recepcion_cabecera
+        FOREIGN KEY (id_recepcion_compra)
+        REFERENCES recepcion_compra(id_recepcion_compra),
+    CONSTRAINT fk_detalle_recepcion_factura
+        FOREIGN KEY (id_detalle_factura_proveedor)
+        REFERENCES detalle_factura_proveedor(id_detalle_factura_proveedor),
+    CONSTRAINT uq_recepcion_detalle_factura
+        UNIQUE (id_recepcion_compra, id_detalle_factura_proveedor),
+    CONSTRAINT chk_detalle_recepcion_cantidad
+        CHECK (cantidad_recibida > 0)
+);
+
+ALTER TABLE movimiento_inventario
+    ADD COLUMN id_detalle_recepcion_compra INTEGER,
+    ADD COLUMN id_detalle_mantenimiento INTEGER,
+    ADD COLUMN id_movimiento_revertido INTEGER,
+    ADD CONSTRAINT fk_movimiento_recepcion
+        FOREIGN KEY (id_detalle_recepcion_compra)
+        REFERENCES detalle_recepcion_compra(id_detalle_recepcion_compra),
+    ADD CONSTRAINT fk_movimiento_mantenimiento
+        FOREIGN KEY (id_detalle_mantenimiento)
+        REFERENCES detalle_mantenimiento(id_detalle_mantenimiento),
+    ADD CONSTRAINT fk_movimiento_revertido
+        FOREIGN KEY (id_movimiento_revertido)
+        REFERENCES movimiento_inventario(id_movimiento),
+    ADD CONSTRAINT uq_movimiento_recepcion UNIQUE (id_detalle_recepcion_compra),
+    ADD CONSTRAINT uq_movimiento_mantenimiento UNIQUE (id_detalle_mantenimiento),
+    ADD CONSTRAINT uq_movimiento_revertido UNIQUE (id_movimiento_revertido),
+    ADD CONSTRAINT chk_movimiento_un_origen
+        CHECK (num_nonnulls(id_detalle_recepcion_compra, id_detalle_mantenimiento, id_movimiento_revertido) <= 1),
+    ADD CONSTRAINT chk_movimiento_origen_tipo
+        CHECK (
+            (id_detalle_recepcion_compra IS NULL OR tipo_movimiento = 'ENTRADA')
+            AND (id_detalle_mantenimiento IS NULL OR tipo_movimiento = 'SALIDA')
+        ),
+    ADD CONSTRAINT chk_movimiento_no_autorreversion
+        CHECK (id_movimiento_revertido IS NULL OR id_movimiento_revertido <> id_movimiento);
+
+CREATE INDEX idx_recepcion_factura ON recepcion_compra(id_factura_proveedor);
+CREATE INDEX idx_detalle_recepcion_factura ON detalle_recepcion_compra(id_detalle_factura_proveedor);
+
+-- Los servicios transaccionales de recepción e inventario deberán garantizar:
+-- misma factura en cabecera y detalles; cantidades acumuladas dentro de lo
+-- facturado; correspondencia de producto y cantidad con cada movimiento;
+-- creación obligatoria del movimiento; reversión inversa y stock no negativo.
