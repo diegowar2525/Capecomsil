@@ -34,7 +34,7 @@ for (const [entity, serviceName, suffix, data] of cases) {
                 return value;
             };
 
-            for (const [input, expected] of [[undefined, "ACTIVO"], [true, "ACTIVO"], [false, "INACTIVO"]]) {
+            for (const [input, expected] of [[undefined, true], [true, true], [false, false]]) {
                 const payload = { ...data, estado: input };
                 const created = await service[`create${suffix}`](payload);
                 const updated = await service[`update${suffix}`]("1", payload);

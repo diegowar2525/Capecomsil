@@ -13,8 +13,8 @@ test("PRODUCTO: datos normalizados y límites", () => {
     assert.equal(result.unidad_medida, "unidad");
     assert.equal(result.stock_minimo, "0");
     assert.equal(result.marca, null);
-    assert.equal(result.estado, "ACTIVO");
-    assert.equal(validateData({ ...data, estado: false }).estado, "INACTIVO");
+    assert.equal(result.estado, true);
+    assert.equal(validateData({ ...data, estado: false }).estado, false);
     for (const patch of [
         { id_categoria: true }, { nombre: " " }, { unidad_medida: " " },
         { nombre: "a".repeat(151) }, { medida: 12 }, { marca: [] },
@@ -38,9 +38,7 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
         await client.query("CREATE SCHEMA producto_test_" + process.pid);
         await client.query("SET LOCAL search_path TO producto_test_" + process.pid + ", public");
         await client.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
-        const migration = fs.readFileSync(path.join(__dirname, "../../database/migrations/002_producto_reglas.sql"), "utf8");
-        await client.query(migration.replace(/^BEGIN;|^COMMIT;/gm, ""));
-        await client.query("INSERT INTO categoria_producto(nombre,estado) VALUES ('Repuestos','ACTIVO'), ('Inactiva','INACTIVO')");
+        await client.query("INSERT INTO categoria_producto(nombre,estado) VALUES ('Repuestos',true), ('Inactiva',false)");
         pool.query = client.query.bind(client);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
@@ -64,9 +62,9 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
         assert.equal((await request("POST", "", { ...data, id_categoria: 2 })).status, 409);
         assert.equal((await request("PUT", `/${id}`, { ...data, id_categoria: 2 })).status, 409);
         assert.equal((await request("PUT", `/${id}`, { ...data, unidad_medida: "pieza" })).status, 200);
-        await client.query("UPDATE categoria_producto SET estado='INACTIVO' WHERE id_categoria=1");
+        await client.query("UPDATE categoria_producto SET estado=false WHERE id_categoria=1");
         assert.equal((await request("PUT", `/${id}`, { ...data, unidad_medida: "pieza", estado: false })).status, 200);
-        await client.query("UPDATE categoria_producto SET estado='ACTIVO' WHERE id_categoria=1");
+        await client.query("UPDATE categoria_producto SET estado=true WHERE id_categoria=1");
         const duplicate = await request("POST");
         assert.equal(duplicate.status, 201);
         assert.equal((await request("DELETE", `/${duplicate.body.id_producto}`)).status, 200);

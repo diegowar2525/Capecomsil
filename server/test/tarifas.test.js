@@ -13,9 +13,9 @@ test('validación de fechas reales, precisión monetaria y tipos', () => {
         { valor_por_galon: null }, { id_terminal: true },
         { estado: 'ACTIVO' }, { estado: 'false' }, { estado: null }, { estado: 0 }
     ]) assert.throws(() => validateData({ ...data, ...patch }), { status: 400 });
-    assert.equal(validateData(data).estado, 'ACTIVO');
-    assert.equal(validateData({ ...data, estado: true }).estado, 'ACTIVO');
-    assert.equal(validateData({ ...data, fecha_inicio: '2024-02-29', estado: false }).estado, 'INACTIVO');
+    assert.equal(validateData(data).estado, true);
+    assert.equal(validateData({ ...data, estado: true }).estado, true);
+    assert.equal(validateData({ ...data, fecha_inicio: '2024-02-29', estado: false }).estado, false);
 });
 
 test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () => {
@@ -26,8 +26,6 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
         await client.query('CREATE SCHEMA tarifa_test_' + process.pid);
         await client.query('SET LOCAL search_path TO tarifa_test_' + process.pid + ', public');
         await client.query(fs.readFileSync(path.join(__dirname, '../../database/schema.sql'), 'utf8'));
-        const sql = fs.readFileSync(path.join(__dirname, '../../database/migrations/001_tarifa_reglas.sql'), 'utf8');
-        await client.query(sql.replace(/^BEGIN;|^COMMIT;/gm, ''));
         const rejected = async (sql, code) => {
             await client.query('SAVEPOINT invalid_case');
             await assert.rejects(client.query(sql), { code });
@@ -35,7 +33,7 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
         };
         await client.query("INSERT INTO gasolinera(nombre) VALUES ('Prueba'), ('Otra'); INSERT INTO terminal(nombre) VALUES ('Prueba')");
         await client.query(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio,fecha_fin,estado)
-            VALUES (1,1,0.035,'2026-01-01','2026-08-31','INACTIVO')`);
+            VALUES (1,1,0.035,'2026-01-01','2026-08-31',false)`);
         await rejected(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio)
             VALUES (1,1,0.04,'2026-08-31')`, '23P01');
         await client.query(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio)
@@ -48,7 +46,7 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
         }
         await rejected('DELETE FROM tarifa WHERE id_tarifa=1', '23503');
         await rejected("INSERT INTO viaje(id_tarifa,id_vehiculo,id_chofer,fecha) VALUES (1,1,1,'2026-09-01')", '23514');
-        await client.query("UPDATE tarifa SET fecha_fin='2026-05-15', estado='ACTIVO' WHERE id_tarifa=1");
+        await client.query("UPDATE tarifa SET fecha_fin='2026-05-15', estado=true WHERE id_tarifa=1");
         await client.query('DELETE FROM tarifa WHERE id_gasolinera=2');
         await rejected(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio)
             VALUES (999,1,0.04,'2027-01-01')`, '23503');
@@ -59,10 +57,10 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
             const created = await model.create(validateData({ ...data, id_gasolinera: 2 }));
             assert.equal(created.fecha_inicio, '2026-01-01');
             assert.equal(created.valor_por_galon, '0.0350');
-            assert.equal((await model.findById(created.id_tarifa)).estado, 'ACTIVO');
+            assert.equal((await model.findById(created.id_tarifa)).estado, true);
             assert.ok((await model.findAll()).length >= 2);
             const updated = await model.update(created.id_tarifa, validateData({ ...data, id_gasolinera: 2, estado: false }));
-            assert.equal(updated.estado, 'INACTIVO');
+            assert.equal(updated.estado, false);
             assert.equal((await model.remove(created.id_tarifa)).id_tarifa, created.id_tarifa);
         } finally {
             pool.query = originalQuery;
