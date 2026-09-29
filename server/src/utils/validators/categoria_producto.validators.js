@@ -45,7 +45,7 @@ const validateData = (data) => {
     return {
         nombre: data.nombre.trim(),
         descripcion: data.descripcion?.trim() || null,
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

@@ -103,8 +103,8 @@ const validateData = (data) => {
         telefono: data.telefono?.trim() || null,
         correo: data.correo?.trim() || null,
         representante_legal: data.representante_legal?.trim() || null,
-        agente_retencion: (agente_retencion ?? false) ? "SI" : "NO",
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        agente_retencion: agente_retencion ?? false,
+        estado: estado ?? true
     };
 };
 

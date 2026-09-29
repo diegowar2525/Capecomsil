@@ -80,7 +80,7 @@ const validateData = (data) => {
         direccion: data.direccion?.trim() || null,
         telefono: data.telefono?.trim() || null,
         correo: data.correo?.trim() || null,
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

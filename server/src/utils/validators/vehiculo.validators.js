@@ -63,7 +63,7 @@ const validateData = (data) => {
         modelo: modelo.trim(),
         anio: anioNumerico,
         capacidad_galones: capacidadNumerica,
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

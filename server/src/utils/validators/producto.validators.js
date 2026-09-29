@@ -73,7 +73,7 @@ const validateData = (data) => {
         descripcion: descripcion?.trim() || null,
         unidad_medida: unidad_medida.trim().toLowerCase(),
         stock_minimo: String(stock_minimo),
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

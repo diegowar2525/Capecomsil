@@ -80,7 +80,7 @@ const validateData = (data) => {
         valor_por_galon: String(valor_por_galon),
         fecha_inicio: fechaInicioValidada,
         fecha_fin: fechaFinValidada,
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

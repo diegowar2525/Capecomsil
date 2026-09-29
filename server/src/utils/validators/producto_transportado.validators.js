@@ -58,7 +58,7 @@ const validateData = (data) => {
         nombre: data.nombre.trim(),
         unidad_medida: data.unidad_medida.trim(),
         descripcion: data.descripcion?.trim() || null,
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO"
+        estado: estado ?? true
     };
 };
 

@@ -49,7 +49,7 @@ const validateData = (data) => {
         cedula: cedula.trim(),
         telefono: telefono?.trim() || null,
         tipo_remuneracion: tipo_remuneracion.trim(),
-        estado: (estado ?? true) ? "ACTIVO" : "INACTIVO",
+        estado: estado ?? true,
     };
 };
 
