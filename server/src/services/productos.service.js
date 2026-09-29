@@ -2,7 +2,7 @@ const productoModel = require("../models/producto.model");
 
 const { validateId } = require("../utils/validators/common.validators");
 const { validateData } = require("../utils/validators/producto.validators");
-const { validateCategoria } = require("../services/categorias_producto.service");
+const { validateCategoriaActiva } = require("../services/categorias_producto.service");
 
 const getProductos = async () => {
     return await productoModel.findAll();
@@ -23,7 +23,7 @@ const getProductoById = async (id) => {
 
 const createProducto = async (data) => {
     const datosValidados = validateData(data);
-    await validateCategoria(datosValidados.id_categoria);
+    await validateCategoriaActiva(datosValidados.id_categoria);
     return await productoModel.create(datosValidados);
 };
 
@@ -34,7 +34,7 @@ const updateProducto = async (id, data) => {
     const productoExistente = await getProductoById(idNumerico);
 
     if (productoExistente.id_categoria !== datosValidados.id_categoria) {
-        await validateCategoria(datosValidados.id_categoria);
+        await validateCategoriaActiva(datosValidados.id_categoria);
     }
 
     if (
