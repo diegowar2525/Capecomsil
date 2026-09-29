@@ -39,8 +39,11 @@ CREATE TABLE chofer (
     nombre VARCHAR(150) NOT NULL,
     cedula VARCHAR(20) NOT NULL UNIQUE,
     telefono VARCHAR(20),
-    tipo_remuneracion VARCHAR(50),
-    estado BOOLEAN NOT NULL DEFAULT TRUE
+    tipo_remuneracion VARCHAR(50) NOT NULL,
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT chk_chofer_tipo_remuneracion
+        CHECK (tipo_remuneracion IN ('SUELDO', 'POR_VIAJE'))
 );
 
 

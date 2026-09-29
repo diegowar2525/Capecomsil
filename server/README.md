@@ -25,6 +25,13 @@ La restricción del esquema valida el signo, no el saldo acumulado.
 `gasolinera.agente_retencion` se recibe y almacena como booleano; la interfaz
 podrá mostrar Sí o No. Su valor predeterminado es false.
 
+## Choferes
+
+`tipo_remuneracion` es obligatorio y admite únicamente SUELDO o POR_VIAJE.
+La API recorta espacios y convierte el texto a mayúsculas. PostgreSQL refuerza
+la regla con NOT NULL y `chk_chofer_tipo_remuneracion`. No existe un valor
+predeterminado: se debe seleccionar explícitamente el tipo de remuneración.
+
 ## Productos
 
 Las reglas de productos están incluidas en `database/schema.sql`.

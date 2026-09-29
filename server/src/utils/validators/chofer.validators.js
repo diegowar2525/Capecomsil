@@ -28,6 +28,14 @@ const validateData = (data) => {
         throw error;
     }
 
+    const tipoRemuneracionValidado = tipo_remuneracion.trim().toUpperCase();
+
+    if (!["SUELDO", "POR_VIAJE"].includes(tipoRemuneracionValidado)) {
+        const error = new Error("El tipo de remuneración debe ser SUELDO o POR_VIAJE.");
+        error.status = 400;
+        throw error;
+    }
+
     if (
         telefono !== undefined &&
         telefono !== null &&
@@ -48,7 +56,7 @@ const validateData = (data) => {
         nombre: nombre.trim(),
         cedula: cedula.trim(),
         telefono: telefono?.trim() || null,
-        tipo_remuneracion: tipo_remuneracion.trim(),
+        tipo_remuneracion: tipoRemuneracionValidado,
         estado: estado ?? true,
     };
 };
