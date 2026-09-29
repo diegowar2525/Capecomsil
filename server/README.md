@@ -1,9 +1,33 @@
 # API de CAPECOMSIL
 
+## Inicialización de PostgreSQL
+
+Ejecutar únicamente `database/schema.sql` en una base vacía. Incluye las 22 tablas,
+restricciones, funciones, triggers y la extensión `btree_gist`; no requiere migraciones
+adicionales. Se necesitan permisos para crear esos objetos. El archivo no borra datos
+ni está diseñado para ejecutarse repetidamente sobre tablas existentes.
+En psql puede ejecutarse de forma atómica con `psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql`.
+
+Los estados administrativos de los nueve catálogos se reciben, almacenan y devuelven
+como booleanos, con true por defecto. La interfaz puede mostrarlos como Activo/Inactivo.
+Los estados de procesos (viajes, liquidaciones y facturas) conservan sus valores de texto.
+
+## Gastos y ajustes de inventario
+
+El esquema permite gastos sin vehículo y ajustes
+de inventario con signo. ENTRADA y SALIDA reciben cantidades positivas;
+AJUSTE recibe la diferencia positiva o negativa, nunca cero, no el saldo final.
+El saldo se calcula sumando ENTRADA y AJUSTE y restando SALIDA.
+El futuro servicio de inventario deberá bloquear el producto y comprobar el
+saldo dentro de la misma transacción para impedir existencias negativas.
+La restricción del esquema valida el signo, no el saldo acumulado.
+
+`gasolinera.agente_retencion` se recibe y almacena como booleano; la interfaz
+podrá mostrar Sí o No. Su valor predeterminado es false.
+
 ## Productos
 
-Ejecutar una sola vez `database/migrations/002_producto_reglas.sql` en la base existente.
-Para una base nueva, ejecutar `database/schema.sql` y las migraciones en orden numérico.
+Las reglas de productos están incluidas en `database/schema.sql`.
 
 Rutas: `GET /api/productos`, `GET /api/productos/:id`, `POST /api/productos`,
 `PUT /api/productos/:id` y `DELETE /api/productos/:id`.
@@ -30,7 +54,7 @@ vacíos se almacenan como null. La unidad se normaliza a minúsculas y sigue sie
 texto libre hasta definir un catálogo (no se unifican sinónimos). El stock mínimo
 admite hasta dos decimales, no es negativo y se omite para usar cero. Como otros
 NUMERIC de PostgreSQL, se devuelve en texto. El estado se recibe como booleano,
-usa true por defecto y se almacena como ACTIVO o INACTIVO.
+usa true por defecto y se almacena y devuelve como true o false.
 
 La categoría debe existir y estar activa al crear o cambiar de categoría. Es posible
 editar o inactivar un producto que conserva una categoría posteriormente inactivada.
@@ -51,10 +75,7 @@ Ejecutar `npm install` y `npm run dev` desde `server`.
 
 ## Tarifas
 
-Antes de usar las rutas, ejecutar una sola vez `database/migrations/001_tarifa_reglas.sql`
-sobre la base configurada. Para una base nueva, crear primero `database/schema.sql`.
-La migración requiere permiso para instalar `btree_gist` y crear restricciones y triggers.
-Si hay períodos superpuestos, falla y revierte todos sus cambios; los datos deben revisarse.
+Las reglas de tarifas y la extensión `btree_gist` están incluidas en `database/schema.sql`.
 
 | Método | Ruta | Operación |
 | --- | --- | --- |
@@ -80,8 +101,8 @@ Ejemplo de cuerpo para POST y PUT:
 Las fechas son inclusivas y usan `YYYY-MM-DD`. `fecha_fin: null` significa sin límite.
 En PUT se envían todos los campos; omitir fecha_fin la deja sin límite y omitir estado
 lo establece en true. En las solicitudes, estado acepta únicamente true o false (sin comillas),
-igual que los otros CRUD. El validador los convierte a ACTIVO e INACTIVO para la columna de texto
-de PostgreSQL; las respuestas conservan esos valores de texto. El estado es únicamente administrativo.
+igual que los otros CRUD. PostgreSQL y las respuestas conservan esos booleanos.
+El estado es únicamente administrativo.
 Ningún estado permite solapamientos para la misma gasolinera y terminal.
 El precio admite cero y hasta cuatro decimales; se devuelve como texto para conservar precisión.
 

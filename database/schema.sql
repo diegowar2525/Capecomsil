@@ -2,8 +2,6 @@
 -- CAPECOMSIL
 -- Esquema inicial de la base de datos
 -- PostgreSQL
--- Después de crear este esquema, ejecutar migrations/001_tarifa_reglas.sql.
--- Luego ejecutar migrations/002_producto_reglas.sql.
 -- =====================================================
 
 
@@ -15,7 +13,7 @@ CREATE TABLE terminal (
     id_terminal INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     ubicacion VARCHAR(255),
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 
@@ -26,7 +24,7 @@ CREATE TABLE vehiculo (
     modelo VARCHAR(100),
     anio INTEGER,
     capacidad_galones NUMERIC(12, 2) NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT chk_vehiculo_capacidad
         CHECK (capacidad_galones > 0),
@@ -42,7 +40,7 @@ CREATE TABLE chofer (
     cedula VARCHAR(20) NOT NULL UNIQUE,
     telefono VARCHAR(20),
     tipo_remuneracion VARCHAR(50),
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 
@@ -55,7 +53,7 @@ CREATE TABLE gasolinera (
     correo VARCHAR(150),
     representante_legal VARCHAR(150),
     agente_retencion BOOLEAN NOT NULL DEFAULT FALSE,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 
@@ -66,7 +64,7 @@ CREATE TABLE proveedor (
     direccion VARCHAR(255),
     telefono VARCHAR(20),
     correo VARCHAR(150),
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 
@@ -74,7 +72,7 @@ CREATE TABLE categoria_producto (
     id_categoria INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     descripcion TEXT,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 
@@ -83,7 +81,7 @@ CREATE TABLE producto_transportado (
     nombre VARCHAR(100) NOT NULL UNIQUE,
     descripcion TEXT,
     unidad_medida VARCHAR(30) NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO'
+    estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE producto (
@@ -97,7 +95,7 @@ CREATE TABLE producto (
     descripcion TEXT,
     unidad_medida VARCHAR(30) NOT NULL,
     stock_minimo NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_producto_categoria
@@ -121,7 +119,7 @@ CREATE TABLE tarifa (
     valor_por_galon NUMERIC(12, 4) NOT NULL,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE,
-    estado VARCHAR(20) NOT NULL DEFAULT 'ACTIVO',
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT fk_tarifa_gasolinera
         FOREIGN KEY (id_gasolinera)
@@ -310,7 +308,7 @@ CREATE TABLE pago (
 CREATE TABLE gasto (
     id_gasto INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_viaje INTEGER,
-    id_vehiculo INTEGER NOT NULL,
+    id_vehiculo INTEGER,
     id_proveedor INTEGER,
 
     fecha DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -432,7 +430,10 @@ CREATE TABLE movimiento_inventario (
         CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'AJUSTE')),
 
     CONSTRAINT chk_movimiento_cantidad
-        CHECK (cantidad > 0)
+        CHECK (
+            (tipo_movimiento IN ('ENTRADA', 'SALIDA') AND cantidad > 0)
+            OR (tipo_movimiento = 'AJUSTE' AND cantidad <> 0)
+        )
 );
 
 
@@ -483,3 +484,96 @@ CREATE TABLE detalle_mantenimiento (
     CONSTRAINT chk_detalle_mantenimiento_cantidad
         CHECK (cantidad > 0)
 );
+
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE tarifa ADD CONSTRAINT tarifa_sin_solapamientos
+    EXCLUDE USING gist (
+        id_gasolinera WITH =,
+        id_terminal WITH =,
+        daterange(fecha_inicio, fecha_fin, '[]') WITH &&
+    );
+
+CREATE FUNCTION proteger_historial_tarifa() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM viaje WHERE id_tarifa = OLD.id_tarifa) THEN
+        IF NEW.id_gasolinera IS DISTINCT FROM OLD.id_gasolinera
+            OR NEW.id_terminal IS DISTINCT FROM OLD.id_terminal
+            OR NEW.valor_por_galon IS DISTINCT FROM OLD.valor_por_galon
+            OR EXISTS (
+                SELECT 1 FROM viaje WHERE id_tarifa = OLD.id_tarifa
+                AND (fecha::date < NEW.fecha_inicio OR fecha::date > NEW.fecha_fin)
+            ) THEN
+            RAISE EXCEPTION 'La modificación altera el historial de viajes'
+                USING ERRCODE = '23514', CONSTRAINT = 'tarifa_historial';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tarifa_proteger_historial BEFORE UPDATE ON tarifa
+    FOR EACH ROW EXECUTE FUNCTION proteger_historial_tarifa();
+
+-- Serializa la asignación de viajes con cambios de tarifas.
+-- La FK existente impide eliminar tarifas con viajes asociados.
+CREATE FUNCTION validar_vigencia_tarifa_viaje() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE vigente tarifa%ROWTYPE;
+BEGIN
+    SELECT * INTO vigente FROM tarifa WHERE id_tarifa = NEW.id_tarifa FOR UPDATE;
+    IF FOUND AND (NEW.fecha::date < vigente.fecha_inicio OR NEW.fecha::date > vigente.fecha_fin) THEN
+        RAISE EXCEPTION 'La tarifa no cubre la fecha del viaje'
+            USING ERRCODE = '23514', CONSTRAINT = 'viaje_tarifa_vigente';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER viaje_validar_tarifa BEFORE INSERT OR UPDATE OF id_tarifa, fecha ON viaje
+    FOR EACH ROW EXECUTE FUNCTION validar_vigencia_tarifa_viaje();
+
+
+
+CREATE FUNCTION validar_reglas_producto() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE categoria_estado BOOLEAN;
+BEGIN
+    IF TG_OP = 'INSERT' OR NEW.id_categoria IS DISTINCT FROM OLD.id_categoria THEN
+        SELECT estado INTO categoria_estado FROM categoria_producto
+            WHERE id_categoria = NEW.id_categoria FOR SHARE;
+        IF FOUND AND categoria_estado IS NOT TRUE THEN
+            RAISE EXCEPTION 'La categoría seleccionada debe estar activa'
+                USING ERRCODE = '23514', CONSTRAINT = 'producto_categoria_activa';
+        END IF;
+    END IF;
+
+    IF TG_OP = 'UPDATE' AND NEW.unidad_medida IS DISTINCT FROM OLD.unidad_medida THEN
+        IF EXISTS (SELECT 1 FROM detalle_factura_proveedor WHERE id_producto = OLD.id_producto)
+            OR EXISTS (SELECT 1 FROM movimiento_inventario WHERE id_producto = OLD.id_producto)
+            OR EXISTS (SELECT 1 FROM detalle_mantenimiento WHERE id_producto = OLD.id_producto) THEN
+            RAISE EXCEPTION 'No se puede cambiar la unidad de un producto con historial'
+                USING ERRCODE = '23514', CONSTRAINT = 'producto_unidad_historial';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER producto_validar_reglas BEFORE INSERT OR UPDATE ON producto
+    FOR EACH ROW EXECUTE FUNCTION validar_reglas_producto();
+
+-- Serializa la primera operación histórica con cambios de unidad del producto.
+-- Las FK existentes bloquean su eliminación si hay historial.
+CREATE FUNCTION bloquear_producto_historial() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM 1 FROM producto WHERE id_producto = NEW.id_producto FOR UPDATE;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER compra_bloquear_producto BEFORE INSERT OR UPDATE OF id_producto ON detalle_factura_proveedor
+    FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
+CREATE TRIGGER movimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_producto ON movimiento_inventario
+    FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
+CREATE TRIGGER mantenimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_producto ON detalle_mantenimiento
+    FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
