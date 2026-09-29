@@ -1,29 +1,4 @@
-const { validateId } = require("./common.validators");
-
-const validateDate = (value) => {
-    if (
-        typeof value !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-        value.startsWith("0000")
-    ) {
-        const error = new Error("Las fechas deben tener formato YYYY-MM-DD");
-        error.status = 400;
-        throw error;
-    }
-
-    const fecha = new Date(`${value}T00:00:00Z`);
-
-    if (
-        !Number.isFinite(fecha.getTime()) ||
-        fecha.toISOString().slice(0, 10) !== value
-    ) {
-        const error = new Error("La fecha no existe en el calendario");
-        error.status = 400;
-        throw error;
-    }
-
-    return value;
-};
+const { validateId, validateDate } = require("./common.validators");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
