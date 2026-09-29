@@ -77,11 +77,11 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
             await client.query("ROLLBACK TO SAVEPOINT invalid_case");
         };
         await rejected("INSERT INTO producto(id_categoria,nombre,unidad_medida) VALUES (2,'No','unidad')", "23514", "producto_categoria_activa");
-        await client.query("INSERT INTO proveedor(nombre) VALUES ('Prueba'); INSERT INTO factura_proveedor(id_proveedor,numero_factura,fecha_emision,monto_total) VALUES (1,'TEST',CURRENT_DATE,1)");
+        await client.query("INSERT INTO proveedor(nombre) VALUES ('Prueba'); INSERT INTO factura_proveedor(id_proveedor,numero_factura,fecha_emision,subtotal,total) VALUES (1,'TEST',CURRENT_DATE,1,1)");
         await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO mantenimiento(id_vehiculo,tipo,monto) VALUES (1,'Prueba',1)");
         const histories = [
             ["movimiento_inventario", "INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo) VALUES ($1,'ENTRADA',1,'Prueba')", "fk_movimiento_producto"],
-            ["detalle_factura_proveedor", "INSERT INTO detalle_factura_proveedor(id_producto,id_factura_proveedor,cantidad,precio_unitario,subtotal) VALUES ($1,1,1,1,1)", "fk_detalle_factura_proveedor_producto"],
+            ["detalle_factura_proveedor", "INSERT INTO detalle_factura_proveedor(id_producto,id_factura_proveedor,tipo_concepto,descripcion,cantidad,precio_unitario,subtotal,porcentaje_impuesto,impuesto,total_linea) VALUES ($1,1,'PRODUCTO','Prueba',1,1,1,0,0,1)", "fk_detalle_factura_proveedor_producto"],
             ["detalle_mantenimiento", "INSERT INTO detalle_mantenimiento(id_producto,id_mantenimiento,cantidad) VALUES ($1,1,1)", "fk_detalle_mantenimiento_producto"]
         ];
         for (const [table, insert, constraint] of histories) {
