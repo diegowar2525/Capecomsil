@@ -1,9 +1,11 @@
 const { translateTarifaError } = require("./tarifa.errors");
 const { translateProductoError } = require("./producto.errors");
+const { translateFacturaProveedorError } = require("./factura_proveedor.errors");
 
 const translators = [
     translateTarifaError,
-    translateProductoError
+    translateProductoError,
+    translateFacturaProveedorError
 ];
 
 const translateDatabaseError = (error) => {
