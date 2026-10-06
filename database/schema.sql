@@ -1,12 +1,11 @@
--- =====================================================
--- CAPECOMSIL
--- Esquema inicial de la base de datos
--- PostgreSQL
--- =====================================================
+-- CAPECOMSIL: esquema completo para una base vacía.
+-- Todas las columnas y restricciones se definen en su CREATE TABLE.
+-- El orden respeta las dependencias de las claves foráneas.
 
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- =====================================================
--- 1. TABLAS INDEPENDIENTES
+-- TERMINAL
 -- =====================================================
 
 CREATE TABLE terminal (
@@ -16,6 +15,9 @@ CREATE TABLE terminal (
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- =====================================================
+-- VEHICULO
+-- =====================================================
 
 CREATE TABLE vehiculo (
     id_vehiculo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -33,6 +35,9 @@ CREATE TABLE vehiculo (
         CHECK (anio IS NULL OR anio > 0)
 );
 
+-- =====================================================
+-- CHOFER
+-- =====================================================
 
 CREATE TABLE chofer (
     id_chofer INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -46,6 +51,9 @@ CREATE TABLE chofer (
         CHECK (tipo_remuneracion IN ('SUELDO', 'POR_VIAJE'))
 );
 
+-- =====================================================
+-- GASOLINERA
+-- =====================================================
 
 CREATE TABLE gasolinera (
     id_gasolinera INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -59,6 +67,9 @@ CREATE TABLE gasolinera (
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- =====================================================
+-- PROVEEDOR
+-- =====================================================
 
 CREATE TABLE proveedor (
     id_proveedor INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -70,6 +81,9 @@ CREATE TABLE proveedor (
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- =====================================================
+-- CATEGORIA_PRODUCTO
+-- =====================================================
 
 CREATE TABLE categoria_producto (
     id_categoria INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -78,6 +92,9 @@ CREATE TABLE categoria_producto (
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- =====================================================
+-- PRODUCTO_TRANSPORTADO
+-- =====================================================
 
 CREATE TABLE producto_transportado (
     id_producto_transportado INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -86,6 +103,10 @@ CREATE TABLE producto_transportado (
     unidad_medida VARCHAR(30) NOT NULL,
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+-- =====================================================
+-- PRODUCTO
+-- =====================================================
 
 CREATE TABLE producto (
     id_producto INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -109,10 +130,8 @@ CREATE TABLE producto (
         CHECK (stock_minimo >= 0)
 );
 
-
-
 -- =====================================================
--- 2. TARIFAS
+-- TARIFA
 -- =====================================================
 
 CREATE TABLE tarifa (
@@ -136,12 +155,18 @@ CREATE TABLE tarifa (
         CHECK (valor_por_galon >= 0),
 
     CONSTRAINT chk_tarifa_fechas
-        CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio)
+        CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
+
+    CONSTRAINT tarifa_sin_solapamientos
+    EXCLUDE USING gist (
+        id_gasolinera WITH =,
+        id_terminal WITH =,
+        daterange(fecha_inicio, fecha_fin, '[]') WITH &&
+    )
 );
 
-
 -- =====================================================
--- 3. LIQUIDACIONES
+-- LIQUIDACION
 -- =====================================================
 
 CREATE TABLE liquidacion (
@@ -181,9 +206,8 @@ CREATE TABLE liquidacion (
         )
 );
 
-
 -- =====================================================
--- 4. VIAJES
+-- VIAJE
 -- =====================================================
 
 CREATE TABLE viaje (
@@ -213,6 +237,9 @@ CREATE TABLE viaje (
         REFERENCES liquidacion(id_liquidacion)
 );
 
+-- =====================================================
+-- DETALLE_VIAJE
+-- =====================================================
 
 CREATE TABLE detalle_viaje (
     id_detalle_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -239,6 +266,9 @@ CREATE TABLE detalle_viaje (
         )
 );
 
+-- =====================================================
+-- COSTO_VIAJE
+-- =====================================================
 
 CREATE TABLE costo_viaje (
     id_costo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -255,9 +285,8 @@ CREATE TABLE costo_viaje (
         CHECK (valor >= 0)
 );
 
-
 -- =====================================================
--- 5. FACTURACIÓN A GASOLINERAS Y PAGOS
+-- FACTURA
 -- =====================================================
 
 CREATE TABLE factura (
@@ -283,6 +312,9 @@ CREATE TABLE factura (
         CHECK (subtotal >= 0 AND retencion >= 0 AND valor_neto >= 0)
 );
 
+-- =====================================================
+-- PAGO
+-- =====================================================
 
 CREATE TABLE pago (
     id_pago INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -303,9 +335,8 @@ CREATE TABLE pago (
         CHECK (monto > 0)
 );
 
-
 -- =====================================================
--- 6. GASTOS
+-- GASTO
 -- =====================================================
 
 CREATE TABLE gasto (
@@ -337,9 +368,8 @@ CREATE TABLE gasto (
         CHECK (monto >= 0)
 );
 
-
 -- =====================================================
--- 7. FACTURAS DE PROVEEDORES
+-- FACTURA_PROVEEDOR
 -- =====================================================
 
 CREATE TABLE factura_proveedor (
@@ -354,7 +384,6 @@ CREATE TABLE factura_proveedor (
     impuestos NUMERIC(14, 2) NOT NULL DEFAULT 0,
     total NUMERIC(14, 2) NOT NULL,
     estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
-    detalle TEXT,
 
     CONSTRAINT fk_factura_proveedor_proveedor
         FOREIGN KEY (id_proveedor)
@@ -367,6 +396,9 @@ CREATE TABLE factura_proveedor (
         UNIQUE (id_proveedor, numero_factura)
 );
 
+-- =====================================================
+-- DETALLE_FACTURA_PROVEEDOR
+-- =====================================================
 
 CREATE TABLE detalle_factura_proveedor (
     id_detalle_factura_proveedor INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -409,6 +441,9 @@ CREATE TABLE detalle_factura_proveedor (
         )
 );
 
+-- =====================================================
+-- PAGO_PROVEEDOR
+-- =====================================================
 
 CREATE TABLE pago_proveedor (
     id_pago_proveedor INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -429,38 +464,8 @@ CREATE TABLE pago_proveedor (
         CHECK (monto > 0)
 );
 
-
 -- =====================================================
--- 8. INVENTARIO
--- =====================================================
-
-CREATE TABLE movimiento_inventario (
-    id_movimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_producto INTEGER NOT NULL,
-
-    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tipo_movimiento VARCHAR(20) NOT NULL,
-    cantidad NUMERIC(12, 2) NOT NULL,
-    motivo VARCHAR(150) NOT NULL,
-    observacion TEXT,
-
-    CONSTRAINT fk_movimiento_producto
-        FOREIGN KEY (id_producto)
-        REFERENCES producto(id_producto),
-
-    CONSTRAINT chk_movimiento_tipo
-        CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'AJUSTE')),
-
-    CONSTRAINT chk_movimiento_cantidad
-        CHECK (
-            (tipo_movimiento IN ('ENTRADA', 'SALIDA') AND cantidad > 0)
-            OR (tipo_movimiento = 'AJUSTE' AND cantidad <> 0)
-        )
-);
-
-
--- =====================================================
--- 9. MANTENIMIENTOS
+-- MANTENIMIENTO
 -- =====================================================
 
 CREATE TABLE mantenimiento (
@@ -486,6 +491,9 @@ CREATE TABLE mantenimiento (
         CHECK (monto >= 0)
 );
 
+-- =====================================================
+-- DETALLE_MANTENIMIENTO
+-- =====================================================
 
 CREATE TABLE detalle_mantenimiento (
     id_detalle_mantenimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -507,15 +515,105 @@ CREATE TABLE detalle_mantenimiento (
         CHECK (cantidad > 0)
 );
 
+-- =====================================================
+-- RECEPCION_COMPRA
+-- =====================================================
 
-CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE TABLE recepcion_compra (
+    id_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_factura_proveedor INTEGER NOT NULL,
+    fecha_recepcion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    numero_comprobante VARCHAR(100),
+    observacion TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADA',
 
-ALTER TABLE tarifa ADD CONSTRAINT tarifa_sin_solapamientos
-    EXCLUDE USING gist (
-        id_gasolinera WITH =,
-        id_terminal WITH =,
-        daterange(fecha_inicio, fecha_fin, '[]') WITH &&
-    );
+    CONSTRAINT fk_recepcion_factura_proveedor
+        FOREIGN KEY (id_factura_proveedor)
+        REFERENCES factura_proveedor(id_factura_proveedor),
+    CONSTRAINT chk_recepcion_estado
+        CHECK (estado IN ('REGISTRADA', 'ANULADA'))
+);
+
+-- =====================================================
+-- DETALLE_RECEPCION_COMPRA
+-- =====================================================
+
+CREATE TABLE detalle_recepcion_compra (
+    id_detalle_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_recepcion_compra INTEGER NOT NULL,
+    id_detalle_factura_proveedor INTEGER NOT NULL,
+    cantidad_recibida NUMERIC(12, 2) NOT NULL,
+    observacion TEXT,
+
+    CONSTRAINT fk_detalle_recepcion_cabecera
+        FOREIGN KEY (id_recepcion_compra)
+        REFERENCES recepcion_compra(id_recepcion_compra),
+    CONSTRAINT fk_detalle_recepcion_factura
+        FOREIGN KEY (id_detalle_factura_proveedor)
+        REFERENCES detalle_factura_proveedor(id_detalle_factura_proveedor),
+    CONSTRAINT uq_recepcion_detalle_factura
+        UNIQUE (id_recepcion_compra, id_detalle_factura_proveedor),
+    CONSTRAINT chk_detalle_recepcion_cantidad
+        CHECK (cantidad_recibida > 0)
+);
+
+-- =====================================================
+-- MOVIMIENTO_INVENTARIO
+-- =====================================================
+
+CREATE TABLE movimiento_inventario (
+    id_movimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_producto INTEGER NOT NULL,
+
+    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tipo_movimiento VARCHAR(20) NOT NULL,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    motivo VARCHAR(150) NOT NULL,
+    observacion TEXT,
+
+    CONSTRAINT fk_movimiento_producto
+        FOREIGN KEY (id_producto)
+        REFERENCES producto(id_producto),
+
+    CONSTRAINT chk_movimiento_tipo
+        CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'AJUSTE')),
+
+    CONSTRAINT chk_movimiento_cantidad
+        CHECK (
+            (tipo_movimiento IN ('ENTRADA', 'SALIDA') AND cantidad > 0)
+            OR (tipo_movimiento = 'AJUSTE' AND cantidad <> 0)
+        ),
+
+    id_detalle_recepcion_compra INTEGER,
+    id_detalle_mantenimiento INTEGER,
+    id_movimiento_revertido INTEGER,
+    CONSTRAINT fk_movimiento_recepcion
+        FOREIGN KEY (id_detalle_recepcion_compra)
+        REFERENCES detalle_recepcion_compra(id_detalle_recepcion_compra),
+    CONSTRAINT fk_movimiento_mantenimiento
+        FOREIGN KEY (id_detalle_mantenimiento)
+        REFERENCES detalle_mantenimiento(id_detalle_mantenimiento),
+    CONSTRAINT fk_movimiento_revertido
+        FOREIGN KEY (id_movimiento_revertido)
+        REFERENCES movimiento_inventario(id_movimiento),
+    CONSTRAINT uq_movimiento_recepcion UNIQUE (id_detalle_recepcion_compra),
+    CONSTRAINT uq_movimiento_mantenimiento UNIQUE (id_detalle_mantenimiento),
+    CONSTRAINT uq_movimiento_revertido UNIQUE (id_movimiento_revertido),
+    CONSTRAINT chk_movimiento_un_origen
+        CHECK (num_nonnulls(id_detalle_recepcion_compra, id_detalle_mantenimiento, id_movimiento_revertido) <= 1),
+    CONSTRAINT chk_movimiento_origen_tipo
+        CHECK (
+            (id_detalle_recepcion_compra IS NULL OR tipo_movimiento = 'ENTRADA')
+            AND (id_detalle_mantenimiento IS NULL OR tipo_movimiento = 'SALIDA')
+        ),
+    CONSTRAINT chk_movimiento_no_autorreversion
+        CHECK (id_movimiento_revertido IS NULL OR id_movimiento_revertido <> id_movimiento)
+);
+
+CREATE INDEX idx_recepcion_factura ON recepcion_compra(id_factura_proveedor);
+CREATE INDEX idx_detalle_recepcion_factura ON detalle_recepcion_compra(id_detalle_factura_proveedor);
+
+-- FUNCIONES Y TRIGGERS DE PROTECCIÓN DEL HISTORIAL
 
 CREATE FUNCTION proteger_historial_tarifa() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -599,74 +697,3 @@ CREATE TRIGGER movimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_produc
     FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
 CREATE TRIGGER mantenimiento_bloquear_producto BEFORE INSERT OR UPDATE OF id_producto ON detalle_mantenimiento
     FOR EACH ROW EXECUTE FUNCTION bloquear_producto_historial();
--- =====================================================
--- 10. RECEPCIONES DE COMPRAS Y TRAZABILIDAD
--- =====================================================
-
-CREATE TABLE recepcion_compra (
-    id_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_factura_proveedor INTEGER NOT NULL,
-    fecha_recepcion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    numero_comprobante VARCHAR(100),
-    observacion TEXT,
-    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADA',
-
-    CONSTRAINT fk_recepcion_factura_proveedor
-        FOREIGN KEY (id_factura_proveedor)
-        REFERENCES factura_proveedor(id_factura_proveedor),
-    CONSTRAINT chk_recepcion_estado
-        CHECK (estado IN ('REGISTRADA', 'ANULADA'))
-);
-
-CREATE TABLE detalle_recepcion_compra (
-    id_detalle_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_recepcion_compra INTEGER NOT NULL,
-    id_detalle_factura_proveedor INTEGER NOT NULL,
-    cantidad_recibida NUMERIC(12, 2) NOT NULL,
-    observacion TEXT,
-
-    CONSTRAINT fk_detalle_recepcion_cabecera
-        FOREIGN KEY (id_recepcion_compra)
-        REFERENCES recepcion_compra(id_recepcion_compra),
-    CONSTRAINT fk_detalle_recepcion_factura
-        FOREIGN KEY (id_detalle_factura_proveedor)
-        REFERENCES detalle_factura_proveedor(id_detalle_factura_proveedor),
-    CONSTRAINT uq_recepcion_detalle_factura
-        UNIQUE (id_recepcion_compra, id_detalle_factura_proveedor),
-    CONSTRAINT chk_detalle_recepcion_cantidad
-        CHECK (cantidad_recibida > 0)
-);
-
-ALTER TABLE movimiento_inventario
-    ADD COLUMN id_detalle_recepcion_compra INTEGER,
-    ADD COLUMN id_detalle_mantenimiento INTEGER,
-    ADD COLUMN id_movimiento_revertido INTEGER,
-    ADD CONSTRAINT fk_movimiento_recepcion
-        FOREIGN KEY (id_detalle_recepcion_compra)
-        REFERENCES detalle_recepcion_compra(id_detalle_recepcion_compra),
-    ADD CONSTRAINT fk_movimiento_mantenimiento
-        FOREIGN KEY (id_detalle_mantenimiento)
-        REFERENCES detalle_mantenimiento(id_detalle_mantenimiento),
-    ADD CONSTRAINT fk_movimiento_revertido
-        FOREIGN KEY (id_movimiento_revertido)
-        REFERENCES movimiento_inventario(id_movimiento),
-    ADD CONSTRAINT uq_movimiento_recepcion UNIQUE (id_detalle_recepcion_compra),
-    ADD CONSTRAINT uq_movimiento_mantenimiento UNIQUE (id_detalle_mantenimiento),
-    ADD CONSTRAINT uq_movimiento_revertido UNIQUE (id_movimiento_revertido),
-    ADD CONSTRAINT chk_movimiento_un_origen
-        CHECK (num_nonnulls(id_detalle_recepcion_compra, id_detalle_mantenimiento, id_movimiento_revertido) <= 1),
-    ADD CONSTRAINT chk_movimiento_origen_tipo
-        CHECK (
-            (id_detalle_recepcion_compra IS NULL OR tipo_movimiento = 'ENTRADA')
-            AND (id_detalle_mantenimiento IS NULL OR tipo_movimiento = 'SALIDA')
-        ),
-    ADD CONSTRAINT chk_movimiento_no_autorreversion
-        CHECK (id_movimiento_revertido IS NULL OR id_movimiento_revertido <> id_movimiento);
-
-CREATE INDEX idx_recepcion_factura ON recepcion_compra(id_factura_proveedor);
-CREATE INDEX idx_detalle_recepcion_factura ON detalle_recepcion_compra(id_detalle_factura_proveedor);
-
--- Los servicios transaccionales de recepción e inventario deberán garantizar:
--- misma factura en cabecera y detalles; cantidades acumuladas dentro de lo
--- facturado; correspondencia de producto y cantidad con cada movimiento;
--- creación obligatoria del movimiento; reversión inversa y stock no negativo.
