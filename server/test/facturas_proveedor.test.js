@@ -27,7 +27,7 @@ test("Factura: HTTP, importes exactos, recepción parcial y rollback integral", 
     const client = await pool.connect();
     const originalConnect = pool.connect;
     const originalQuery = pool.query;
-    const model = require("../src/models/factura_proveedor.model");
+    const model = require("../src/models/movimiento_inventario.model");
     const originalEntrada = model.createEntrada;
     let server;
     try {
