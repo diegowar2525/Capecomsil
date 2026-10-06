@@ -1,6 +1,50 @@
 # API de CAPECOMSIL
 
+## Mantenimientos
+
+Disponible: `POST /api/mantenimientos`, `GET /api/mantenimientos` y
+`GET /api/mantenimientos/:id`. Cada entidad tiene su propio modelo; el servicio
+coordina cabecera, detalles y salidas en una sola transacción. No se incluyen
+edición, eliminación ni anulación de mantenimientos en esta primera versión.
+
+```json
+{
+  "id_vehiculo": 1,
+  "id_proveedor": null,
+  "fecha": "2026-10-05",
+  "tipo": "Cambio de filtros",
+  "monto": "25.00",
+  "descripcion": "Mantenimiento del motor",
+  "observacion": null,
+  "detalles": [
+    { "id_producto": 1, "cantidad": "2.00", "observacion": null }
+  ]
+}
+```
+
+Vehículo, fecha, tipo y monto son obligatorios. El proveedor es opcional.
+El monto es el importe registrado para el trabajo, no se calcula a partir de
+productos ni genera automáticamente gastos, facturas o pagos. Se admite cero.
+Se pueden omitir los detalles o enviar una lista vacía si no se consume inventario.
+Cada producto aparece una vez; las cantidades son positivas y admiten dos decimales.
+Se comprueban referencias y stock actual, incluyendo ajustes con signo.
+El stock se compara en PostgreSQL usando NUMERIC. Se bloquean los productos
+en orden por ID hasta terminar la transacción para impedir consumos simultáneos
+por encima de las existencias. Un fallo revierte toda la operación.
+
+Para probar consumos después de limpiar la base: cargar catálogos con `seed.sql`
+y registrar una compra con recepción inicial para disponer de stock. El seed no
+carga existencias. El rechazo por stock insuficiente devuelve HTTP 409.
+
+`factura_proveedor.detalle` (texto de cabecera) se eliminó del esquema.
+Las líneas de `detalle_factura_proveedor` permanecen.
+
 ## Facturas de proveedor: productos, servicios e impuestos
+
+Las escrituras están separadas por entidad en los modelos de factura, detalle de
+factura, recepción, detalle de recepción y movimiento de inventario. El servicio
+de facturas coordina esos modelos con el mismo `client` dentro de una transacción.
+Los detalles no tienen un CRUD independiente: se registran como parte de la compra.
 
 Rutas disponibles: `POST /api/facturas-proveedor`, `GET /api/facturas-proveedor`
 y `GET /api/facturas-proveedor/:id`. No hay edición ni eliminación de facturas en
