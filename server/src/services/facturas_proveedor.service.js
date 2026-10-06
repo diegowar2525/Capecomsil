@@ -1,7 +1,5 @@
+const { createRecepcionEnTransaccion } = require("./recepciones_compra.service");
 const detalleFacturaProveedorModel = require("../models/detalle_factura_proveedor.model");
-const recepcionCompraModel = require("../models/recepcion_compra.model");
-const detalleRecepcionCompraModel = require("../models/detalle_recepcion_compra.model");
-const movimientoInventarioModel = require("../models/movimiento_inventario.model");
 const proveedorModel = require("../models/proveedor.model");
 const productoModel = require("../models/producto.model");
 const pool = require("../config/database");
@@ -51,22 +49,14 @@ const createFacturaProveedor = async (data) => {
         const resultado = await facturaProveedorModel.updateTotales(client, factura.id_factura_proveedor);
         let recepcion = null;
         if (datosValidados.recepcion_inicial) {
-            recepcion = await recepcionCompraModel.create(client, factura.id_factura_proveedor, datosValidados.recepcion_inicial.fecha_recepcion);
-            for (const recibido of datosValidados.recepcion_inicial.detalles) {
-                const detalle = detalles[recibido.numero_detalle - 1];
-                const entrada = await detalleRecepcionCompraModel.create(client, recepcion.id_recepcion_compra, detalle, recibido.cantidad_recibida);
-                if (!entrada) {
-                    const error = new Error("La cantidad recibida supera la cantidad facturada");
-                    error.status = 400;
-                    throw error;
-                }
-                await movimientoInventarioModel.createEntrada(client, {
-                    id_producto: detalle.id_producto,
-                    fecha: recepcion.fecha_recepcion,
-                    cantidad: recibido.cantidad_recibida,
-                    id_detalle_recepcion_compra: entrada.id_detalle_recepcion_compra
-                });
-            }
+            recepcion = await createRecepcionEnTransaccion(client, {
+                id_factura_proveedor: factura.id_factura_proveedor,
+                fecha_recepcion: datosValidados.recepcion_inicial.fecha_recepcion,
+                detalles: datosValidados.recepcion_inicial.detalles.map((recibido) => ({
+                    id_detalle_factura_proveedor: detalles[recibido.numero_detalle - 1].id_detalle_factura_proveedor,
+                    cantidad_recibida: recibido.cantidad_recibida
+                }))
+            });
         }
         await client.query("COMMIT");
         return { ...resultado, detalles, recepcion_inicial: recepcion };

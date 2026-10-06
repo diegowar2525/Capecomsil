@@ -59,7 +59,17 @@ const updateTotales = async (client, id) => {
     return result.rows[0];
 };
 
+const findByIdForUpdate = async (client, id) => {
+    const result = await client.query(
+        "SELECT * FROM factura_proveedor WHERE id_factura_proveedor = $1 FOR UPDATE",
+        [id]
+    );
+
+    return result.rows[0];
+};
+
 module.exports = {
+    findByIdForUpdate,
     findAll,
     findById,
     create,

@@ -35,6 +35,16 @@ const create = async (client, id, data) => {
     return result.rows[0];
 };
 
+const findByIdForShare = async (client, id) => {
+    const result = await client.query(
+        "SELECT * FROM detalle_factura_proveedor WHERE id_detalle_factura_proveedor = $1 FOR SHARE",
+        [id]
+    );
+
+    return result.rows[0];
+};
+
 module.exports = {
+    findByIdForShare,
     create
 };
