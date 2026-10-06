@@ -1,13 +1,4 @@
-const { validateId, validateDate, validateDecimal } = require("./common.validators");
-
-const validateOptionalText = (value, campo) => {
-    if (value != null && typeof value !== "string") {
-        const error = new Error(`El campo ${campo} debe ser texto`);
-        error.status = 400;
-        throw error;
-    }
-    return value?.trim() || null;
-};
+const { validateId, validateDate, validateDecimal, validateOptionalText } = require("./common.validators");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {

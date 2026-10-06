@@ -51,10 +51,21 @@ const validateDecimal = (value, campo, enteros, decimales) => {
     return String(value);
 };
 
+const validateOptionalText = (value, campo, maximo) => {
+    if (value == null) return null;
+    if (typeof value !== "string" || (maximo && value.trim().length > maximo)) {
+        const error = new Error(`El campo ${campo} debe ser texto${maximo ? ` de máximo ${maximo} caracteres` : ""}`);
+        error.status = 400;
+        throw error;
+    }
+    return value.trim() || null;
+};
+
 module.exports = {
     validateId,
     validateDate,
-    validateDecimal
+    validateDecimal,
+    validateOptionalText
 };
 
 
