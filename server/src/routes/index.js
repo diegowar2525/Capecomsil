@@ -1,5 +1,6 @@
 const express = require("express");
 const facturasProveedorRoutes = require("./facturas_proveedor.routes");
+const mantenimientosRoutes = require("./mantenimientos.routes");
 
 const vehiculosRoutes = require("./vehiculos.routes");
 const choferesRoutes = require("./choferes.routes");
@@ -30,6 +31,7 @@ router.use("/tarifas", tarifasRoutes);
 router.use("/productos", productosRoutes);
 router.use("/categorias-producto", categoriasProductoRoutes);
 router.use("/facturas-proveedor", facturasProveedorRoutes);
+router.use("/mantenimientos", mantenimientosRoutes);
 router.use(
     "/productos-transportados",
     productosTransportadosRoutes
