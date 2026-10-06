@@ -1,5 +1,42 @@
 # API de CAPECOMSIL
 
+## Recepciones posteriores de compras
+
+`POST /api/recepciones-compra` registra una entrega de una factura existente:
+
+```json
+{
+  "id_factura_proveedor": 1,
+  "fecha_recepcion": "2026-10-05",
+  "numero_comprobante": "ENTREGA-002",
+  "observacion": "Entrega parcial",
+  "detalles": [
+    {
+      "id_detalle_factura_proveedor": 1,
+      "cantidad_recibida": "3.00",
+      "observacion": null
+    }
+  ]
+}
+```
+
+Se utilizan los IDs reales de los detalles obtenidos al consultar la factura,
+no posiciones ni IDs de producto. Comprobante y observaciones son opcionales.
+La respuesta 201 incluye la recepción y sus detalles; las entradas se generan
+automáticamente, una por detalle, en la misma transacción.
+
+La factura debe existir y no estar ANULADA. PAGADA no impide recibir productos.
+Se rechazan servicios, detalles ajenos o repetidos, cantidades no positivas y
+cantidades superiores a lo pendiente. Lo pendiente resta únicamente recepciones
+REGISTRADAS. La comprobación usa NUMERIC y bloquea la factura y los productos
+durante la transacción para evitar excesos en entregas simultáneas.
+
+La recepción inicial comparte el mismo servicio transaccional y conserva el
+formato `numero_detalle` de la petición de factura. Este módulo no incluye
+anulaciones: cambiar un estado directamente en SQL no revierte inventario.
+No requiere cambios de esquema ni borrar datos. Las consultas de stock,
+ajustes y anulaciones se implementarán por separado.
+
 ## Mantenimientos
 
 Disponible: `POST /api/mantenimientos`, `GET /api/mantenimientos` y
@@ -100,7 +137,8 @@ en la petición, empezando en 1. Solo admite productos y cantidades positivas qu
 superen lo facturado. La factura del ejemplo registra 10 llantas pero solo entran 4.
 Sin recepción inicial no se crean movimientos. Factura, detalles, recepción y entradas
 se guardan usando una única conexión y transacción; cualquier fallo revierte todo.
-Las recepciones posteriores, pagos y anulaciones tendrán sus propios servicios.
+Las recepciones posteriores usan el servicio descrito arriba. Pagos y anulaciones
+siguen pendientes.
 
 ## Inicialización de PostgreSQL
 
