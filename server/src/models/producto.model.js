@@ -146,7 +146,13 @@ const hasHistory = async (id) => {
     return result.rows[0].tiene_historial;
 };
 
+const findByIdForUpdate = async (client, id) => {
+    const result = await client.query("SELECT id_producto FROM producto WHERE id_producto=$1 FOR UPDATE", [id]);
+    return result.rows[0];
+};
+
 module.exports = {
+    findByIdForUpdate,
     findAll,
     findById,
     create,

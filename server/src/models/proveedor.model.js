@@ -97,7 +97,13 @@ const remove = async (id) => {
     return result.rows[0];
 };
 
+const findByIdForShare = async (client, id) => {
+    const result = await client.query("SELECT id_proveedor FROM proveedor WHERE id_proveedor=$1 FOR SHARE", [id]);
+    return result.rows[0];
+};
+
 module.exports = {
+    findByIdForShare,
     findAll,
     findById,
     create,
