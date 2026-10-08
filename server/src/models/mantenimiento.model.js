@@ -43,7 +43,22 @@ const create = async (client, data) => {
     return result.rows[0];
 };
 
+const findForUpdate = async (client, id) => {
+    const result = await client.query("SELECT * FROM mantenimiento WHERE id_mantenimiento=$1 FOR UPDATE", [id]);
+    return result.rows[0];
+};
+
+const anular = async (client, id, motivo) => {
+    const result = await client.query(
+        "UPDATE mantenimiento SET estado='ANULADO', fecha_anulacion=CURRENT_TIMESTAMP, motivo_anulacion=$2 WHERE id_mantenimiento=$1 RETURNING *",
+        [id, motivo]
+    );
+    return result.rows[0];
+};
+
 module.exports = {
+    findForUpdate,
+    anular,
     findAll,
     findById,
     create

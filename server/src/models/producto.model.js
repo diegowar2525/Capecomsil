@@ -151,7 +151,32 @@ const findByIdForUpdate = async (client, id) => {
     return result.rows[0];
 };
 
+const findStock = async (id = null, soloBajoStock = false) => {
+    const result = await pool.query(
+        `
+        SELECT p.id_producto, p.nombre, p.unidad_medida, p.estado,
+            p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
+            COALESCE(s.stock, 0) < p.stock_minimo AS bajo_stock
+        FROM producto p
+        LEFT JOIN (
+            SELECT id_producto, SUM(
+                CASE WHEN tipo_movimiento = 'SALIDA' THEN -cantidad ELSE cantidad END
+            ) AS stock
+            FROM movimiento_inventario
+            GROUP BY id_producto
+        ) s USING (id_producto)
+        WHERE ($1::integer IS NULL OR p.id_producto = $1)
+            AND (NOT $2::boolean OR COALESCE(s.stock, 0) < p.stock_minimo)
+        ORDER BY p.id_producto
+        `,
+        [id, soloBajoStock]
+    );
+
+    return result.rows;
+};
+
 module.exports = {
+    findStock,
     findByIdForUpdate,
     findAll,
     findById,
