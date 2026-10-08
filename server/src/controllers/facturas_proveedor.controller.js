@@ -27,7 +27,25 @@ const createFacturaProveedor = async (req, res, next) => {
     }
 };
 
+const getRecepciones = async (req, res, next) => {
+    try {
+        res.json(await facturasProveedorService.getRecepciones(req.params.id));
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getPendientesRecepcion = async (req, res, next) => {
+    try {
+        res.json(await facturasProveedorService.getPendientesRecepcion(req.params.id));
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = { 
+    getRecepciones,
+    getPendientesRecepcion,
     getFacturasProveedor, 
     getFacturaProveedorById, 
     createFacturaProveedor 
