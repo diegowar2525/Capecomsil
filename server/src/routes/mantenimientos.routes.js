@@ -1,4 +1,5 @@
 const express = require("express");
+const { anularMantenimiento } = require("../controllers/anulaciones.controller");
 const {
     getMantenimientos,
     getMantenimientoById,
@@ -6,6 +7,7 @@ const {
 } = require("../controllers/mantenimientos.controller");
 
 const router = express.Router();
+router.post("/:id/anular", anularMantenimiento);
 
 router.get("/", getMantenimientos);
 router.get("/:id", getMantenimientoById);
