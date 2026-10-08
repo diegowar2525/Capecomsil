@@ -1,6 +1,7 @@
 const { createRecepcionEnTransaccion } = require("./recepciones_compra.service");
 const detalleFacturaProveedorModel = require("../models/detalle_factura_proveedor.model");
 const proveedorModel = require("../models/proveedor.model");
+const recepcionCompraModel = require("../models/recepcion_compra.model");
 const productoModel = require("../models/producto.model");
 const pool = require("../config/database");
 const facturaProveedorModel = require("../models/factura_proveedor.model");
@@ -73,7 +74,19 @@ const createFacturaProveedor = async (data) => {
     }
 };
 
+const getRecepciones = async (id) => {
+    const factura = await getFacturaProveedorById(id);
+    return await recepcionCompraModel.findByFactura(factura.id_factura_proveedor);
+};
+
+const getPendientesRecepcion = async (id) => {
+    const factura = await getFacturaProveedorById(id);
+    return await detalleFacturaProveedorModel.findPendientesByFactura(factura.id_factura_proveedor);
+};
+
 module.exports = {
+    getRecepciones,
+    getPendientesRecepcion,
     getFacturasProveedor,
     getFacturaProveedorById,
     createFacturaProveedor
