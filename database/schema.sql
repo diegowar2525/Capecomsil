@@ -470,6 +470,9 @@ CREATE TABLE pago_proveedor (
 
 CREATE TABLE mantenimiento (
     id_mantenimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADO' CHECK (estado IN ('REGISTRADO', 'ANULADO')),
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
     id_vehiculo INTEGER NOT NULL,
     id_proveedor INTEGER,
 
@@ -521,6 +524,8 @@ CREATE TABLE detalle_mantenimiento (
 
 CREATE TABLE recepcion_compra (
     id_recepcion_compra INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
     id_factura_proveedor INTEGER NOT NULL,
     fecha_recepcion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     numero_comprobante VARCHAR(100),
