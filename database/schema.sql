@@ -384,6 +384,8 @@ CREATE TABLE factura_proveedor (
     impuestos NUMERIC(14, 2) NOT NULL DEFAULT 0,
     total NUMERIC(14, 2) NOT NULL,
     estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADA',
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
     CONSTRAINT chk_factura_proveedor_estado CHECK (estado IN ('REGISTRADA','ANULADA')),
 
     CONSTRAINT fk_factura_proveedor_proveedor
