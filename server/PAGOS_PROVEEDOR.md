@@ -44,7 +44,25 @@ GET /api/pagos-proveedor?id_proveedor=1&estado=REGISTRADO&fecha_desde=2026-10-01
 - `estado_pago`: PAGADA si el saldo es cero, PARCIAL si hay abonos y saldo, PENDIENTE si no hay abonos. Una factura de total cero se considera PAGADA sin admitir pagos.
 - `vencida`: factura no anulada con saldo positivo y vencimiento anterior al día actual en America/Guayaquil. Sin fecha de vencimiento devuelve false; el propio día de vencimiento todavía no está vencida.
 
-Los importes y `estado_pago` de una factura anulada se muestran como historial; dicha factura no aparece en cuentas por pagar ni admite nuevos pagos. La anulación de facturas es un flujo pendiente, separado de la anulación de pagos.
+Los importes y `estado_pago` de una factura anulada se muestran como historial; dicha factura no aparece en cuentas por pagar ni admite nuevos pagos.
+
+## Anular una factura de compra
+
+`POST /api/facturas-proveedor/:id/anular`
+
+```json
+{
+  "motivo": "Factura registrada por error"
+}
+```
+
+Exige motivo (hasta 150 caracteres) y devuelve 200 con la factura y sus detalles. Registra `estado=ANULADA`, `fecha_anulacion` automática y `motivo_anulacion`. Conserva importes, número de factura, detalles y todas las operaciones históricas. El número de factura continúa reservado para ese proveedor.
+
+Si hay pagos REGISTRADO o recepciones REGISTRADA, devuelve 409 e indica qué registros deben anularse primero mediante sus endpoints existentes. No anula dependencias automáticamente. Si los productos recibidos ya fueron consumidos y no existe stock suficiente, la anulación de la recepción se rechazará; esa situación debe resolverse antes de anular la factura. No se debe generar un ajuste ficticio para eludir ese control.
+
+La operación bloquea la factura en una transacción, igual que las altas de pagos y recepciones. Una segunda anulación devuelve 409; un ID inexistente, 404; motivo o ID inválido, 400. Una factura anulada no admite pagos ni recepciones y queda fuera de cuentas por pagar. Sus saldos calculados y cantidades pendientes en las consultas históricas no constituyen una deuda o entrega exigible: debe considerarse su estado ANULADA.
+
+La anulación no crea movimientos adicionales de inventario: las reversiones ya se realizaron al anular las recepciones. Para bases anteriores, `database/migrations/007_anulacion_factura_proveedor.sql` incorpora las dos columnas de auditoría sin borrar datos; el esquema final también las incluye. Las facturas anuladas previamente por SQL pueden conservar ambos campos nulos, ya que no se inventa su fecha ni motivo histórico.
 
 ## Anular un pago
 
