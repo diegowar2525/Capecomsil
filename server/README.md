@@ -141,7 +141,9 @@ superen lo facturado. La factura del ejemplo registra 10 llantas pero solo entra
 Sin recepción inicial no se crean movimientos. Factura, detalles, recepción y entradas
 se guardan usando una única conexión y transacción; cualquier fallo revierte todo.
 Las recepciones posteriores usan el servicio descrito arriba. Los pagos y sus
-anulaciones están disponibles; la anulación de facturas de compra sigue pendiente.
+anulaciones están disponibles. `POST /api/facturas-proveedor/:id/anular` permite
+anular una factura sin pagos ni recepciones vigentes, conservando su historial.
+Consultar [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md) para requisitos y ejemplos.
 
 ## Inicialización de PostgreSQL
 
