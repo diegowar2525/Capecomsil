@@ -7,6 +7,8 @@ const pool = require("../config/database");
 const facturaProveedorModel = require("../models/factura_proveedor.model");
 const { validateData } = require("../utils/validators/factura_proveedor.validators");
 const { validateId } = require("../utils/validators/common.validators");
+const { validateMotivo } = require("../utils/validators/anulacion.validators");
+const { createHttpError } = require("../utils/errors/http.error");
 
 const getFacturasProveedor = async () => {
     return await facturaProveedorModel.findAll();
@@ -59,8 +61,10 @@ const createFacturaProveedor = async (data) => {
                 }))
             });
         }
+        const resumen = await facturaProveedorModel.findById(factura.id_factura_proveedor, client);
         await client.query("COMMIT");
-        return { ...resultado, detalles, recepcion_inicial: recepcion };
+        return { ...resultado, total_pagado: resumen.total_pagado, saldo_pendiente: resumen.saldo_pendiente,
+            estado_pago: resumen.estado_pago, vencida: resumen.vencida, detalles, recepcion_inicial: recepcion };
     } catch (error) {
         await client.query("ROLLBACK");
         if (error.code === "22003") {
@@ -84,7 +88,37 @@ const getPendientesRecepcion = async (id) => {
     return await detalleFacturaProveedorModel.findPendientesByFactura(factura.id_factura_proveedor);
 };
 
+const anularFacturaProveedor = async (id, data) => {
+    id = validateId(id);
+    const motivo = validateMotivo(data);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        // Pagos y recepciones también bloquean esta fila antes de registrarse.
+        const factura = await facturaProveedorModel.findByIdForUpdate(client, id);
+        if (!factura) throw createHttpError("Factura de proveedor no encontrada", 404);
+        if (factura.estado === "ANULADA") throw createHttpError("La factura ya está anulada");
+        const dependencias = await facturaProveedorModel.getDependenciasVigentes(client, id);
+        if (dependencias.tiene_pagos || dependencias.tiene_recepciones) {
+            const pendientes = [];
+            if (dependencias.tiene_pagos) pendientes.push("pagos");
+            if (dependencias.tiene_recepciones) pendientes.push("recepciones");
+            throw createHttpError(`Debes anular primero los siguientes registros vigentes de la factura: ${pendientes.join(" y ")}`);
+        }
+        await facturaProveedorModel.anular(client, id, motivo);
+        const resultado = await facturaProveedorModel.findById(id, client);
+        await client.query("COMMIT");
+        return resultado;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
+    anularFacturaProveedor,
     getRecepciones,
     getPendientesRecepcion,
     getFacturasProveedor,
