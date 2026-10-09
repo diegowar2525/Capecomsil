@@ -63,7 +63,9 @@ test("Recepciones: parciales, integridad, rollback y concurrencia", async () => 
         assert.equal((await receive({ ...receipt("1"), id_factura_proveedor: other.body.id_factura_proveedor })).status, 400);
         await isolated.query("UPDATE factura_proveedor SET estado='ANULADA' WHERE id_factura_proveedor=$1", [invoice]);
         assert.equal((await receive(receipt("1"))).status, 409);
-        await isolated.query("UPDATE factura_proveedor SET estado='PAGADA' WHERE id_factura_proveedor=$1", [invoice]);
+        await isolated.query("UPDATE factura_proveedor SET estado='REGISTRADA' WHERE id_factura_proveedor=$1", [invoice]);
+        assert.equal((await post("/pagos-proveedor", { id_factura_proveedor: invoice,
+            fecha_pago: "2026-10-05", monto: first.body.total, forma_pago: "EFECTIVO" })).status, 201);
         // El pago no impide recibir lo comprado.
         const second = await receive(receipt("3"));
         assert.equal(second.status, 201);
