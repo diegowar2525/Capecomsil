@@ -383,7 +383,8 @@ CREATE TABLE factura_proveedor (
     descuento_total NUMERIC(14, 2) NOT NULL DEFAULT 0,
     impuestos NUMERIC(14, 2) NOT NULL DEFAULT 0,
     total NUMERIC(14, 2) NOT NULL,
-    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
+    estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADA',
+    CONSTRAINT chk_factura_proveedor_estado CHECK (estado IN ('REGISTRADA','ANULADA')),
 
     CONSTRAINT fk_factura_proveedor_proveedor
         FOREIGN KEY (id_proveedor)
@@ -448,6 +449,14 @@ CREATE TABLE detalle_factura_proveedor (
 CREATE TABLE pago_proveedor (
     id_pago_proveedor INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_factura_proveedor INTEGER NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADO',
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
+    CONSTRAINT chk_pago_proveedor_estado CHECK (estado IN ('REGISTRADO','ANULADO')),
+    CONSTRAINT chk_pago_proveedor_anulacion CHECK (
+        (estado='REGISTRADO' AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
+        OR (estado='ANULADO' AND fecha_anulacion IS NOT NULL AND motivo_anulacion IS NOT NULL AND btrim(motivo_anulacion) <> '')
+    ),
 
     fecha_pago DATE NOT NULL DEFAULT CURRENT_DATE,
     monto NUMERIC(14, 2) NOT NULL,
@@ -467,6 +476,8 @@ CREATE TABLE pago_proveedor (
 -- =====================================================
 -- MANTENIMIENTO
 -- =====================================================
+
+CREATE INDEX idx_pago_proveedor_factura ON pago_proveedor(id_factura_proveedor);
 
 CREATE TABLE mantenimiento (
     id_mantenimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
