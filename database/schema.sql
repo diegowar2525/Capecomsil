@@ -212,17 +212,14 @@ CREATE TABLE liquidacion (
 
 CREATE TABLE viaje (
     id_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_tarifa INTEGER NOT NULL,
     id_vehiculo INTEGER NOT NULL,
     id_chofer INTEGER NOT NULL,
-    id_liquidacion INTEGER,
 
     fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(30) NOT NULL DEFAULT 'PENDIENTE',
-
-    CONSTRAINT fk_viaje_tarifa
-        FOREIGN KEY (id_tarifa)
-        REFERENCES tarifa(id_tarifa),
+    estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADO',
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
+    CONSTRAINT chk_viaje_estado CHECK (estado IN ('REGISTRADO', 'ANULADO')),
 
     CONSTRAINT fk_viaje_vehiculo
         FOREIGN KEY (id_vehiculo)
@@ -230,11 +227,7 @@ CREATE TABLE viaje (
 
     CONSTRAINT fk_viaje_chofer
         FOREIGN KEY (id_chofer)
-        REFERENCES chofer(id_chofer),
-
-    CONSTRAINT fk_viaje_liquidacion
-        FOREIGN KEY (id_liquidacion)
-        REFERENCES liquidacion(id_liquidacion)
+        REFERENCES chofer(id_chofer)
 );
 
 -- =====================================================
@@ -244,7 +237,11 @@ CREATE TABLE viaje (
 CREATE TABLE detalle_viaje (
     id_detalle_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_viaje INTEGER NOT NULL,
+    id_tarifa INTEGER NOT NULL,
+    id_liquidacion INTEGER,
     id_producto_transportado INTEGER NOT NULL,
+    CONSTRAINT fk_detalle_viaje_tarifa FOREIGN KEY (id_tarifa) REFERENCES tarifa(id_tarifa),
+    CONSTRAINT fk_detalle_viaje_liquidacion FOREIGN KEY (id_liquidacion) REFERENCES liquidacion(id_liquidacion),
 
     galones NUMERIC(14, 2) NOT NULL,
     tarifa_aplicada NUMERIC(12, 4) NOT NULL,
@@ -635,13 +632,14 @@ CREATE INDEX idx_detalle_recepcion_factura ON detalle_recepcion_compra(id_detall
 
 CREATE FUNCTION proteger_historial_tarifa() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM viaje WHERE id_tarifa = OLD.id_tarifa) THEN
+    IF EXISTS (SELECT 1 FROM detalle_viaje WHERE id_tarifa = OLD.id_tarifa) THEN
         IF NEW.id_gasolinera IS DISTINCT FROM OLD.id_gasolinera
             OR NEW.id_terminal IS DISTINCT FROM OLD.id_terminal
             OR NEW.valor_por_galon IS DISTINCT FROM OLD.valor_por_galon
             OR EXISTS (
-                SELECT 1 FROM viaje WHERE id_tarifa = OLD.id_tarifa
-                AND (fecha::date < NEW.fecha_inicio OR fecha::date > NEW.fecha_fin)
+                SELECT 1 FROM detalle_viaje d JOIN viaje v USING (id_viaje)
+                WHERE d.id_tarifa = OLD.id_tarifa
+                AND (v.fecha::date < NEW.fecha_inicio OR v.fecha::date > NEW.fecha_fin)
             ) THEN
             RAISE EXCEPTION 'La modificación altera el historial de viajes'
                 USING ERRCODE = '23514', CONSTRAINT = 'tarifa_historial';
@@ -654,13 +652,14 @@ $$;
 CREATE TRIGGER tarifa_proteger_historial BEFORE UPDATE ON tarifa
     FOR EACH ROW EXECUTE FUNCTION proteger_historial_tarifa();
 
--- Serializa la asignación de viajes con cambios de tarifas.
--- La FK existente impide eliminar tarifas con viajes asociados.
+-- Serializa entregas con cambios de fecha del viaje y cambios de tarifas.
 CREATE FUNCTION validar_vigencia_tarifa_viaje() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE vigente tarifa%ROWTYPE;
+        fecha_viaje TIMESTAMP;
 BEGIN
+    SELECT fecha INTO fecha_viaje FROM viaje WHERE id_viaje=NEW.id_viaje FOR UPDATE;
     SELECT * INTO vigente FROM tarifa WHERE id_tarifa = NEW.id_tarifa FOR UPDATE;
-    IF FOUND AND (NEW.fecha::date < vigente.fecha_inicio OR NEW.fecha::date > vigente.fecha_fin) THEN
+    IF FOUND AND (fecha_viaje::date < vigente.fecha_inicio OR fecha_viaje::date > vigente.fecha_fin) THEN
         RAISE EXCEPTION 'La tarifa no cubre la fecha del viaje'
             USING ERRCODE = '23514', CONSTRAINT = 'viaje_tarifa_vigente';
     END IF;
@@ -668,8 +667,31 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER viaje_validar_tarifa BEFORE INSERT OR UPDATE OF id_tarifa, fecha ON viaje
+CREATE TRIGGER detalle_viaje_validar_tarifa BEFORE INSERT OR UPDATE OF id_tarifa, id_viaje ON detalle_viaje
     FOR EACH ROW EXECUTE FUNCTION validar_vigencia_tarifa_viaje();
+
+CREATE FUNCTION validar_fecha_viaje() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE vigente tarifa%ROWTYPE;
+BEGIN
+    FOR vigente IN SELECT t.* FROM tarifa t
+        WHERE t.id_tarifa IN (SELECT d.id_tarifa FROM detalle_viaje d WHERE d.id_viaje=NEW.id_viaje)
+        ORDER BY t.id_tarifa FOR UPDATE
+    LOOP
+        IF NEW.fecha::date < vigente.fecha_inicio OR NEW.fecha::date > vigente.fecha_fin THEN
+            RAISE EXCEPTION 'La tarifa no cubre la fecha del viaje'
+                USING ERRCODE = '23514', CONSTRAINT = 'viaje_tarifa_vigente';
+        END IF;
+    END LOOP;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER viaje_validar_fecha BEFORE UPDATE OF fecha ON viaje
+    FOR EACH ROW EXECUTE FUNCTION validar_fecha_viaje();
+
+CREATE INDEX idx_detalle_viaje_tarifa ON detalle_viaje(id_tarifa);
+CREATE INDEX idx_detalle_viaje_liquidacion ON detalle_viaje(id_liquidacion);
+CREATE INDEX idx_detalle_viaje_viaje ON detalle_viaje(id_viaje);
 
 
 
