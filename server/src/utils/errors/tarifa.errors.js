@@ -10,7 +10,7 @@ const translateTarifaError = (error) => {
     }
 
     if (error.code === "23503") {
-        if (error.constraint === "fk_viaje_tarifa") {
+        if (error.constraint === "fk_detalle_viaje_tarifa") {
             return {
                 status: 409,
                 message: "La operación viola la relación entre viajes y tarifas: la tarifa está utilizada o no existe"
