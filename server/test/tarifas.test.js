@@ -40,12 +40,22 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
             VALUES (1,1,0.04,'2026-09-01'), (2,1,0.05,'2026-01-01')`);
         await rejected("UPDATE tarifa SET fecha_fin='2026-09-01' WHERE id_tarifa=1", '23P01');
         await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','SUELDO')");
-        await client.query("INSERT INTO viaje(id_tarifa,id_vehiculo,id_chofer,fecha) VALUES (1,1,1,'2026-05-15 23:59:59')");
+        await client.query("INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones')");
+        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha) VALUES (1,1,'2026-05-15 23:59:59')");
+        await client.query("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) VALUES (1,1,1,100,0.035,3.50)");
         for (const change of ["valor_por_galon=0.04", 'id_gasolinera=2', "fecha_fin='2026-05-14'", "fecha_inicio='2026-05-16'"]) {
             await rejected('UPDATE tarifa SET ' + change + ' WHERE id_tarifa=1', '23514');
         }
         await rejected('DELETE FROM tarifa WHERE id_tarifa=1', '23503');
-        await rejected("INSERT INTO viaje(id_tarifa,id_vehiculo,id_chofer,fecha) VALUES (1,1,1,'2026-09-01')", '23514');
+        await rejected("UPDATE viaje SET fecha='2026-09-01' WHERE id_viaje=1", '23514');
+        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha) VALUES (1,1,'2026-09-01')");
+        await rejected("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) VALUES (2,1,1,100,0.035,3.50)", '23514');
+        await rejected("UPDATE detalle_viaje SET id_viaje=2 WHERE id_viaje=1", '23514');
+        // Un mismo viaje puede entregar a otra gasolinera y liquidarse por detalle.
+        await client.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (2,'2026-05-01','2026-05-31')");
+        await client.query("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_liquidacion,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) SELECT 1,id_tarifa,1,1,20,0.05,1 FROM tarifa WHERE id_gasolinera=2");
+        await rejected("UPDATE tarifa SET valor_por_galon=0.06 WHERE id_gasolinera=2", '23514');
+        await client.query("DELETE FROM detalle_viaje WHERE id_liquidacion=1");
         await client.query("UPDATE tarifa SET fecha_fin='2026-05-15', estado=true WHERE id_tarifa=1");
         await client.query('DELETE FROM tarifa WHERE id_gasolinera=2');
         await rejected(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio)

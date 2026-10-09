@@ -27,7 +27,7 @@ test('API: rutas, validación y traducción de errores', async () => {
         assert.equal((await request('PUT', '/1')).status, 409);
         model.create = async () => { throw { code: '23P01', constraint: 'tarifa_sin_solapamientos' }; };
         assert.equal((await request('POST')).status, 409);
-        model.remove = async () => { throw { code: '23503', constraint: 'fk_viaje_tarifa', table: 'viaje' }; };
+        model.remove = async () => { throw { code: '23503', constraint: 'fk_detalle_viaje_tarifa', table: 'viaje' }; };
         assert.equal((await request('DELETE', '/1')).status, 409);
         model.create = async () => { throw { code: '23503', constraint: 'fk_tarifa_terminal' }; };
         assert.equal((await request('POST')).status, 400);
