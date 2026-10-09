@@ -1,5 +1,7 @@
 const express = require("express");
+const { getCuentasPorPagar } = require("../controllers/pagos_proveedor.controller");
 const router = express.Router();
+router.get("/:id/cuentas-por-pagar", getCuentasPorPagar);
 
 const proveedoresController = require("../controllers/proveedores.controller");
 
