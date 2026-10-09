@@ -1,5 +1,8 @@
 # API de CAPECOMSIL
 
+Consultas de inventario, ajustes y anulaciones: [INVENTARIO.md](INVENTARIO.md).
+Pagos a proveedores, saldos y cuentas por pagar: [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md).
+
 ## Recepciones posteriores de compras
 
 `POST /api/recepciones-compra` registra una entrega de una factura existente:
@@ -25,7 +28,7 @@ no posiciones ni IDs de producto. Comprobante y observaciones son opcionales.
 La respuesta 201 incluye la recepción y sus detalles; las entradas se generan
 automáticamente, una por detalle, en la misma transacción.
 
-La factura debe existir y no estar ANULADA. PAGADA no impide recibir productos.
+La factura debe existir y no estar ANULADA. Su estado_pago PAGADA no impide recibir productos.
 Se rechazan servicios, detalles ajenos o repetidos, cantidades no positivas y
 cantidades superiores a lo pendiente. Lo pendiente resta únicamente recepciones
 REGISTRADAS. La comprobación usa NUMERIC y bloquea la factura y los productos
@@ -137,8 +140,8 @@ en la petición, empezando en 1. Solo admite productos y cantidades positivas qu
 superen lo facturado. La factura del ejemplo registra 10 llantas pero solo entran 4.
 Sin recepción inicial no se crean movimientos. Factura, detalles, recepción y entradas
 se guardan usando una única conexión y transacción; cualquier fallo revierte todo.
-Las recepciones posteriores usan el servicio descrito arriba. Pagos y anulaciones
-siguen pendientes.
+Las recepciones posteriores usan el servicio descrito arriba. Los pagos y sus
+anulaciones están disponibles; la anulación de facturas de compra sigue pendiente.
 
 ## Inicialización de PostgreSQL
 
