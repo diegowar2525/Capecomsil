@@ -43,7 +43,16 @@ const getPendientesRecepcion = async (req, res, next) => {
     }
 };
 
+const anularFacturaProveedor = async (req, res, next) => {
+    try {
+        res.json(await facturasProveedorService.anularFacturaProveedor(req.params.id, req.body));
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = { 
+    anularFacturaProveedor,
     getRecepciones,
     getPendientesRecepcion,
     getFacturasProveedor, 
