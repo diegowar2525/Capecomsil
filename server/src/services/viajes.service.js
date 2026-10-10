@@ -5,7 +5,9 @@ const vehiculoModel = require("../models/vehiculo.model");
 const choferModel = require("../models/chofer.model");
 const productoModel = require("../models/producto_transportado.model");
 const tarifaModel = require("../models/tarifa.model");
-const { validateData } = require("../utils/validators/viaje.validators");
+const { validateData, validateFiltros } = require("../utils/validators/viaje.validators");
+const { validateId } = require("../utils/validators/common.validators");
+const { validateMotivo } = require("../utils/validators/anulacion.validators");
 const { createHttpError } = require("../utils/errors/http.error");
 
 const createViaje = async (data) => {
@@ -50,4 +52,39 @@ const createViaje = async (data) => {
     }
 };
 
-module.exports = { createViaje };
+const getViajes = async (query) => {
+    return await viajeModel.findAll(validateFiltros(query));
+};
+
+const getViajeById = async (id) => {
+    id = validateId(id);
+    const viaje = await viajeModel.findById(id);
+    if (!viaje) throw createHttpError("Viaje no encontrado", 404);
+    return { ...viaje, detalles: await detalleModel.findByViaje(id) };
+};
+
+const anularViaje = async (id, data) => {
+    id = validateId(id);
+    const motivo = validateMotivo(data);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const viaje = await viajeModel.findByIdForUpdate(client, id);
+        if (!viaje) throw createHttpError("Viaje no encontrado", 404);
+        if (viaje.estado === "ANULADO") throw createHttpError("El viaje ya está anulado");
+        const detalles = await detalleModel.findByViajeForUpdate(client, id);
+        if (detalles.some(d => d.id_liquidacion !== null)) throw createHttpError("No se puede anular un viaje con entregas asociadas a una liquidación");
+        await viajeModel.anular(client, id, motivo);
+        const resultado = await viajeModel.findById(id, client);
+        const entregas = await detalleModel.findByViaje(id, client);
+        await client.query("COMMIT");
+        return { ...resultado, detalles: entregas };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+module.exports = { getViajes, getViajeById, anularViaje, createViaje };

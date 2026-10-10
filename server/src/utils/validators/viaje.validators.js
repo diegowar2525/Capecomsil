@@ -23,4 +23,23 @@ const validateData = (data) => {
     return { fecha, id_vehiculo, id_chofer, detalles };
 };
 
-module.exports = { validateData };
+const validateFiltros = (query) => {
+    const filtros = {};
+    for (const key of ["id_vehiculo", "id_chofer", "id_gasolinera", "id_terminal"]) {
+        filtros[key] = query[key] === undefined ? null : validateId(query[key]);
+    }
+    filtros.fecha_desde = query.fecha_desde === undefined ? null : validateDate(query.fecha_desde);
+    filtros.fecha_hasta = query.fecha_hasta === undefined ? null : validateDate(query.fecha_hasta);
+    filtros.estado = query.estado ?? null;
+    if (filtros.fecha_desde && filtros.fecha_hasta && filtros.fecha_desde > filtros.fecha_hasta) throw createHttpError("Rango de fechas inválido", 400);
+    if (filtros.estado !== null && !["REGISTRADO", "ANULADO"].includes(filtros.estado)) throw createHttpError("Estado de viaje inválido", 400);
+    filtros.limit = query.limit === undefined ? 50 : validateId(query.limit);
+    filtros.offset = query.offset === undefined ? 0 : Number(query.offset);
+    if (filtros.limit > 200 || (query.offset !== undefined && (typeof query.offset !== "string" || !/^\d+$/.test(query.offset)))
+        || !Number.isSafeInteger(filtros.offset) || filtros.offset < 0 || filtros.offset > 2147483647) {
+        throw createHttpError("limit debe estar entre 1 y 200 y offset debe ser un entero no negativo", 400);
+    }
+    return filtros;
+};
+
+module.exports = { validateData, validateFiltros };
