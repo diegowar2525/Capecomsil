@@ -1,6 +1,6 @@
 # Viajes: modelo de datos aprobado
 
-Están implementados el esquema y el registro transaccional mediante `POST /api/viajes`. Las consultas y la anulación por API quedan para las próximas etapas.
+Están implementados el esquema, el registro transaccional, las consultas y la anulación de viajes.
 
 ## VIAJE
 
@@ -38,7 +38,23 @@ La respuesta 201 incluye viaje, detalles, `total_galones` y `valor_transporte`. 
 
 Vehículo, chofer y combustibles deben existir; sus estados administrativos no impiden registrar operaciones históricas. Referencias inválidas, exceso de capacidad o datos inválidos devuelven 400; ausencia de tarifa aplicable devuelve 409. No hay cambios en el inventario interno. Toda la operación comparte una transacción y bloquea las referencias relevantes hasta terminar. No requiere nuevas migraciones después de la 008.
 
-## Migración
+## Consultas y anulación
+
+- `GET /api/viajes`: listado con placa, nombre del chofer y totales de todas las entregas del viaje.
+- `GET /api/viajes/:id`: cabecera, totales y detalles con nombres de gasolinera, terminal y combustible; incluye tarifa e importe históricos e id_liquidacion opcional.
+- `POST /api/viajes/:id/anular`: recibe `{"motivo":"Viaje registrado por error"}`.
+
+Filtros opcionales: `fecha_desde`, `fecha_hasta` (YYYY-MM-DD, días completos inclusivos), `id_vehiculo`, `id_chofer`, `id_gasolinera`, `id_terminal`, `estado` (REGISTRADO/ANULADO). `limit` predeterminado 50, máximo 200; `offset` predeterminado 0. Orden por fecha e ID descendentes. Sin coincidencias se devuelve `[]`; los filtros inválidos devuelven 400.
+
+Ejemplo: `GET /api/viajes?id_gasolinera=2&fecha_desde=2026-10-01&fecha_hasta=2026-10-31&limit=50&offset=0`.
+
+Los filtros por gasolinera y terminal seleccionan viajes que contienen una entrega coincidente con ambos. No recortan los totales del viaje; la consulta individual siempre devuelve todas sus entregas. Los nombres descriptivos son los actuales de los catálogos, mientras que tarifas e importes son los valores históricos guardados.
+
+La anulación exige motivo (máximo 150 caracteres), conserva entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación, incluso si esa liquidación tiene otro estado. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje se anula y registra uno nuevo.
+
+Se bloquean la cabecera y las entregas durante la transacción. El futuro módulo de liquidaciones deberá bloquear la cabecera y rechazar viajes anulados antes de asociar detalles. Estas operaciones no requieren nuevas columnas ni migraciones.
+
+## Migración del esquema
 
 El esquema consolidado es `database/schema.sql`. La migración `008_viajes_entregas.sql` copia la tarifa y liquidación de cada cabecera antigua a todos sus detalles antes de eliminar las columnas de VIAJE. Conserva galones, tarifas aplicadas e importes, y transforma PENDIENTE en REGISTRADO. Las fechas y motivos de anulaciones anteriores quedan nulos si no existían.
 
