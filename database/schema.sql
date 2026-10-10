@@ -20,6 +20,7 @@ CREATE TABLE terminal (
 -- =====================================================
 
 CREATE TABLE vehiculo (
+    imagen_url VARCHAR(2048),
     id_vehiculo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     placa VARCHAR(20) NOT NULL UNIQUE,
     marca VARCHAR(100),
@@ -40,6 +41,7 @@ CREATE TABLE vehiculo (
 -- =====================================================
 
 CREATE TABLE chofer (
+    imagen_url VARCHAR(2048),
     id_chofer INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
     cedula VARCHAR(20) NOT NULL UNIQUE,
@@ -109,6 +111,7 @@ CREATE TABLE producto_transportado (
 -- =====================================================
 
 CREATE TABLE producto (
+    imagen_url VARCHAR(2048),
     id_producto INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_categoria INTEGER NOT NULL,
 
