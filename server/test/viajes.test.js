@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { Pool } = require("pg");
-const { validateData } = require("../src/utils/validators/viaje.validators");
+const { validateData, validateFiltros } = require("../src/utils/validators/viaje.validators");
 const body = { fecha: "2026-10-08", id_vehiculo: 1, id_chofer: 1, detalles: [
     { id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "60.00" },
     { id_gasolinera: 2, id_terminal: 1, id_producto_transportado: 1, galones: "40.00" }
@@ -16,6 +16,10 @@ test("Viajes: validación de entregas", () => {
         assert.throws(() => validateData({ ...body, ...patch }), { status: 400 });
     }
     assert.equal(validateData(body).detalles.length, 2);
+    for (const q of [{ estado: "OTRO" }, { limit: "201" }, { offset: [] }, { id_vehiculo: true },
+        { fecha_desde: "2026-10-09", fecha_hasta: "2026-10-08" }]) {
+        assert.throws(() => validateFiltros(q), { status: 400 });
+    }
 });
 
 test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async () => {
@@ -74,6 +78,56 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal((await isolated.query("SELECT COUNT(*)::int n FROM detalle_viaje")).rows[0].n, 4);
         await assert.rejects(isolated.query("UPDATE tarifa SET valor_por_galon=1 WHERE id_tarifa=1"), { code: "23514" });
         assert.equal((await isolated.query("SELECT COUNT(*)::int n FROM movimiento_inventario")).rows[0].n, 0);
+        const request = async (route, payload) => {
+            const r = await fetch(`http://127.0.0.1:${server.address().port}/api/viajes${route}`, payload
+                ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) } : {});
+            return { status: r.status, body: await r.json() };
+        };
+        const id = first.body.id_viaje;
+        const fetched = await request("/" + id);
+        assert.equal(fetched.status, 200);
+        assert.equal(fetched.body.placa, "TEST");
+        assert.equal(fetched.body.detalles[1].nombre_gasolinera, "B");
+        assert.equal(fetched.body.detalles[0].nombre_producto_transportado, "Diesel");
+        assert.equal(fetched.body.valor_transporte, "3.70");
+        const filtered = await request("?id_gasolinera=2&id_terminal=1&id_vehiculo=1&id_chofer=1");
+        assert.equal(filtered.body.length, 1);
+        assert.equal(filtered.body[0].total_galones, "100.00");
+        assert.equal((await request("?id_terminal=999")).body.length, 0);
+        assert.equal((await request("?limit=1&offset=1")).body[0].id_viaje, id);
+        await isolated.query("UPDATE viaje SET fecha='2026-10-08 23:59:59' WHERE id_viaje=$1", [id]);
+        assert.equal((await request("?fecha_desde=2026-10-08&fecha_hasta=2026-10-08")).body.length, 2);
+        assert.equal((await request("?fecha_desde=2026-10-09")).body.length, 0);
+        assert.equal((await request("/99999")).status, 404);
+        assert.equal((await request("/abc")).status, 400);
+        assert.equal((await request("?estado=OTRO")).status, 400);
+        const motivo = { motivo: "Registro incorrecto" };
+        assert.equal((await request(`/${id}/anular`, { motivo: " " })).status, 400);
+        assert.equal((await request("/99999/anular", motivo)).status, 404);
+        await isolated.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (2,'2026-10-01','2026-10-31')");
+        await isolated.query("UPDATE detalle_viaje SET id_liquidacion=1 WHERE id_detalle_viaje=$1", [first.body.detalles[1].id_detalle_viaje]);
+        assert.equal((await request(`/${id}/anular`, motivo)).status, 409);
+        assert.equal((await request('/' + id)).body.estado, "REGISTRADO");
+        await isolated.query("UPDATE detalle_viaje SET id_liquidacion=NULL WHERE id_viaje=$1", [id]);
+        const viajeModel = require("../src/models/viaje.model");
+        const anularOriginal = viajeModel.anular;
+        try {
+            viajeModel.anular = async (...args) => { await anularOriginal(...args); throw new Error("Fallo de anulación simulado"); };
+            assert.equal((await request(`/${id}/anular`, motivo)).status, 500);
+        } finally {
+            viajeModel.anular = anularOriginal;
+        }
+        assert.equal((await request('/' + id)).body.fecha_anulacion, null);
+        const canceladas = await Promise.all([request(`/${id}/anular`, motivo), request(`/${id}/anular`, motivo)]);
+        assert.deepEqual(canceladas.map(r => r.status).sort(), [200,409]);
+        const cancelled = canceladas.find(r => r.status === 200).body;
+        assert.equal(cancelled.detalles.length, 2);
+        assert.equal(cancelled.valor_transporte, "3.70");
+        assert.equal(cancelled.motivo_anulacion, motivo.motivo);
+        assert.ok(cancelled.fecha_anulacion);
+        assert.equal((await request("?estado=ANULADO")).body.length, 1);
+        assert.equal((await request("?estado=REGISTRADO")).body.length, 1);
+        await assert.rejects(isolated.query("DELETE FROM tarifa WHERE id_tarifa=1"), { code: "23503" });
     } finally {
         model.create = original;
         if (server) await new Promise(resolve => server.close(resolve));
