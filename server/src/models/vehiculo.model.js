@@ -131,7 +131,15 @@ const findByIdForShare = async (client, id) => {
     return result.rows[0];
 };
 
+const getCapacidadViaje = async (client, id, cantidades) => {
+    // El vehículo debe permanecer bloqueado mientras se valida y registra el viaje.
+    return (await client.query(`SELECT capacidad_galones,
+        capacidad_galones >= (SELECT SUM(n) FROM unnest($2::numeric[]) AS n) AS suficiente
+        FROM vehiculo WHERE id_vehiculo=$1`, [id, cantidades])).rows[0];
+};
+
 module.exports = {
+    getCapacidadViaje,
     findByIdForShare,
     findAll,
     findById,

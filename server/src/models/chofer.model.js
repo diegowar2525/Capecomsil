@@ -112,7 +112,12 @@ const remove = async (id) => {
   return result.rows[0];
 };
 
+const findByIdForShare = async (client, id) => {
+  return (await client.query("SELECT id_chofer FROM chofer WHERE id_chofer=$1 FOR SHARE", [id])).rows[0];
+};
+
 module.exports = {
+  findByIdForShare,
   findAll,
   findById,
   create,

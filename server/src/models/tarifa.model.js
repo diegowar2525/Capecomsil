@@ -143,7 +143,17 @@ const remove = async (id) => {
     return result.rows[0];
 };
 
+const findVigenteForUpdate = async (client, gasolinera, terminal, fecha) => {
+    return (await client.query(`
+        SELECT * FROM tarifa
+        WHERE 
+        id_gasolinera=$1 AND id_terminal=$2 AND fecha_inicio <= $3::date
+        AND (fecha_fin IS NULL OR fecha_fin >= $3::date)
+        ORDER BY id_tarifa FOR UPDATE`, [gasolinera, terminal, fecha])).rows[0];
+};
+
 module.exports = {
+    findVigenteForUpdate,
     findAll,
     findById,
     create,
