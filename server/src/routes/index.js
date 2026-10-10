@@ -1,4 +1,5 @@
 const express = require("express");
+const viajesRoutes = require("./viajes.routes");
 const pagosProveedorRoutes = require("./pagos_proveedor.routes");
 const inventarioRoutes = require("./inventario.routes");
 const recepcionesCompraRoutes = require("./recepciones_compra.routes");
@@ -26,6 +27,7 @@ router.get("/health", (req, res) => {
 });
 
 router.use("/vehiculos", vehiculosRoutes);
+router.use("/viajes", viajesRoutes);
 router.use("/choferes", choferesRoutes);
 router.use("/terminales", terminalesRoutes);
 router.use("/gasolineras", gasolinerasRoutes);
