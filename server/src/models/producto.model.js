@@ -35,6 +35,7 @@ const create = async (data) => {
         descripcion,
         unidad_medida,
         stock_minimo,
+        imagen_url,
         estado
     } = data;
 
@@ -49,9 +50,10 @@ const create = async (data) => {
             descripcion,
             unidad_medida,
             stock_minimo,
+            imagen_url,
             estado
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
         `,
         [
@@ -63,6 +65,7 @@ const create = async (data) => {
             descripcion,
             unidad_medida,
             stock_minimo,
+            imagen_url,
             estado
         ]
     );
@@ -80,6 +83,7 @@ const update = async (id, data) => {
         descripcion,
         unidad_medida,
         stock_minimo,
+        imagen_url,
         estado
     } = data;
 
@@ -95,8 +99,9 @@ const update = async (id, data) => {
             descripcion = $6,
             unidad_medida = $7,
             stock_minimo = $8,
-            estado = $9
-        WHERE id_producto = $10
+            imagen_url = $9,
+            estado = $10
+        WHERE id_producto = $11
         RETURNING *
         `,
         [
@@ -108,6 +113,7 @@ const update = async (id, data) => {
             descripcion,
             unidad_medida,
             stock_minimo,
+            imagen_url,
             estado,
             id
         ]
@@ -155,7 +161,7 @@ const findStock = async (id = null, soloBajoStock = false) => {
     const result = await pool.query(
         `
         SELECT p.id_producto, p.nombre, p.unidad_medida, p.estado,
-            p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
+            p.imagen_url, p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
             COALESCE(s.stock, 0) < p.stock_minimo AS bajo_stock
         FROM producto p
         LEFT JOIN (

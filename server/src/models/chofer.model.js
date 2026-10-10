@@ -8,6 +8,7 @@ const findAll = async () => {
             cedula,
             telefono,
             tipo_remuneracion,
+            imagen_url,
             estado
         FROM chofer
         ORDER BY id_chofer DESC
@@ -24,6 +25,7 @@ const findById = async (id) => {
       cedula,
       telefono,
       tipo_remuneracion,
+      imagen_url,
       estado
     FROM chofer
     WHERE id_chofer = $1;
@@ -38,6 +40,7 @@ const create = async ({
   cedula,
   telefono,
   tipo_remuneracion,
+  imagen_url,
   estado,
 }) => {
   const result = await pool.query(
@@ -47,9 +50,10 @@ const create = async ({
       cedula,
       telefono,
       tipo_remuneracion,
+      imagen_url,
       estado
     )
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *;
   `,
     [
@@ -57,6 +61,7 @@ const create = async ({
       cedula,
       telefono,
       tipo_remuneracion,
+      imagen_url,
       estado,
     ]
   );
@@ -71,6 +76,7 @@ const update = async (
     cedula,
     telefono,
     tipo_remuneracion,
+    imagen_url,
     estado
   }
 ) => {
@@ -82,8 +88,10 @@ const update = async (
       cedula = $2,
       telefono = $3,
       tipo_remuneracion = $4,
-      estado = $5
-    WHERE id_chofer = $6
+      imagen_url = $5,
+
+      estado = $6
+    WHERE id_chofer = $7
     RETURNING *;
   `,
     [
@@ -91,6 +99,7 @@ const update = async (
       cedula,
       telefono,
       tipo_remuneracion,
+      imagen_url,
       estado,
       id,
     ]

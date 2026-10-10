@@ -9,6 +9,7 @@ const findAll = async () => {
       modelo,
       anio,
       capacidad_galones,
+      imagen_url,
       estado
     FROM vehiculo
     ORDER BY id_vehiculo DESC
@@ -27,6 +28,7 @@ const findById = async (id) => {
         modelo,
         anio,
         capacidad_galones,
+        imagen_url,
         estado
       FROM vehiculo
       WHERE id_vehiculo = $1
@@ -43,6 +45,7 @@ const create = async ({
     modelo,
     anio,
     capacidad_galones,
+    imagen_url,
     estado
 }) => {
     const result = await pool.query(
@@ -53,9 +56,10 @@ const create = async ({
         modelo,
         anio,
         capacidad_galones,
+        imagen_url,
         estado
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `,
         [
@@ -64,6 +68,7 @@ const create = async ({
             modelo,
             anio,
             capacidad_galones,
+            imagen_url,
             estado
         ]
     );
@@ -79,6 +84,7 @@ const update = async (
         modelo,
         anio,
         capacidad_galones,
+        imagen_url,
         estado
     }
 ) => {
@@ -91,8 +97,10 @@ const update = async (
         modelo = $3,
         anio = $4,
         capacidad_galones = $5,
-        estado = $6
-      WHERE id_vehiculo = $7
+        imagen_url = $6,
+
+        estado = $7
+      WHERE id_vehiculo = $8
       RETURNING *
     `,
         [
@@ -101,6 +109,7 @@ const update = async (
             modelo,
             anio,
             capacidad_galones,
+            imagen_url,
             estado,
             id
         ]
