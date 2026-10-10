@@ -1,3 +1,4 @@
+const { validateImagenUrl } = require("./common.validators");
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         const error = new Error("Los datos del chofer son obligatorios");
@@ -53,6 +54,7 @@ const validateData = (data) => {
     }
 
     return {
+        imagen_url: validateImagenUrl(data.imagen_url),
         nombre: nombre.trim(),
         cedula: cedula.trim(),
         telefono: telefono?.trim() || null,

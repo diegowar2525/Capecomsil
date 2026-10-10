@@ -1,3 +1,4 @@
+const { validateImagenUrl } = require("./common.validators");
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         const error = new Error("Los datos del vehículo son obligatorios");
@@ -58,6 +59,7 @@ const validateData = (data) => {
     }
 
     return {
+        imagen_url: validateImagenUrl(data.imagen_url),
         placa: placa.trim().toUpperCase(),
         marca: marca.trim(),
         modelo: modelo.trim(),

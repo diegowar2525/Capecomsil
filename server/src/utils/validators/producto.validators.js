@@ -1,3 +1,4 @@
+const { validateImagenUrl } = require("./common.validators");
 const { validateId } = require("./common.validators");
 
 const validateData = (data) => {
@@ -65,6 +66,7 @@ const validateData = (data) => {
     }
 
     return {
+        imagen_url: validateImagenUrl(data.imagen_url),
         id_categoria: idCategoriaNumerico,
         nombre: nombre.trim(),
         medida: medida?.trim() || null,

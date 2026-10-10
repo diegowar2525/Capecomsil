@@ -61,7 +61,22 @@ const validateOptionalText = (value, campo, maximo) => {
     return value.trim() || null;
 };
 
+const validateImagenUrl = (value) => {
+    const text = validateOptionalText(value, "imagen_url", 2048);
+    if (text === null) return null;
+    try {
+        const url = new URL(text);
+        if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) throw new Error();
+    } catch {
+        const error = new Error("imagen_url debe ser una URL HTTP o HTTPS válida");
+        error.status = 400;
+        throw error;
+    }
+    return text;
+};
+
 module.exports = {
+    validateImagenUrl,
     validateId,
     validateDate,
     validateDecimal,
