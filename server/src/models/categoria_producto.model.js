@@ -21,21 +21,24 @@ const create = async (data) => {
     const {
         nombre,
         descripcion,
-        estado
+        estado,
+        es_llanta
     } = data;
 
     const result = await pool.query(
         `INSERT INTO categoria_producto (
             nombre,
             descripcion,
-            estado
+            estado,
+            es_llanta
         )
-        VALUES ($1, $2, $3)
+        VALUES ($1, $2, $3, $4)
         RETURNING *`,
         [
             nombre,
             descripcion,
-            estado
+            estado,
+            es_llanta
         ]
     );
 
@@ -46,7 +49,8 @@ const update = async (id, data) => {
     const {
         nombre,
         descripcion,
-        estado
+        estado,
+        es_llanta
     } = data;
 
     const result = await pool.query(
@@ -54,13 +58,15 @@ const update = async (id, data) => {
         SET
             nombre = $1,
             descripcion = $2,
-            estado = $3
-        WHERE id_categoria = $4
+            estado = $3,
+            es_llanta = $4
+        WHERE id_categoria = $5
         RETURNING *`,
         [
             nombre,
             descripcion,
             estado,
+            es_llanta,
             id
         ]
     );

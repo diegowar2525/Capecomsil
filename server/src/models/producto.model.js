@@ -36,7 +36,8 @@ const create = async (data) => {
         unidad_medida,
         stock_minimo,
         imagen_url,
-        estado
+        estado,
+        condicion_llanta
     } = data;
 
     const result = await pool.query(
@@ -51,9 +52,10 @@ const create = async (data) => {
             unidad_medida,
             stock_minimo,
             imagen_url,
-            estado
+            estado,
+            condicion_llanta
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
         `,
         [
@@ -66,7 +68,8 @@ const create = async (data) => {
             unidad_medida,
             stock_minimo,
             imagen_url,
-            estado
+            estado,
+            condicion_llanta
         ]
     );
 
@@ -84,7 +87,8 @@ const update = async (id, data) => {
         unidad_medida,
         stock_minimo,
         imagen_url,
-        estado
+        estado,
+        condicion_llanta
     } = data;
 
     const result = await pool.query(
@@ -100,8 +104,9 @@ const update = async (id, data) => {
             unidad_medida = $7,
             stock_minimo = $8,
             imagen_url = $9,
-            estado = $10
-        WHERE id_producto = $11
+            estado = $10,
+            condicion_llanta = $11
+        WHERE id_producto = $12
         RETURNING *
         `,
         [
@@ -115,6 +120,7 @@ const update = async (id, data) => {
             stock_minimo,
             imagen_url,
             estado,
+            condicion_llanta,
             id
         ]
     );
@@ -161,7 +167,7 @@ const findStock = async (id = null, soloBajoStock = false) => {
     const result = await pool.query(
         `
         SELECT p.id_producto, p.nombre, p.unidad_medida, p.estado,
-            p.imagen_url, p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
+            p.imagen_url, p.medida, p.marca, p.modelo, p.condicion_llanta, p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
             COALESCE(s.stock, 0) < p.stock_minimo AS bajo_stock
         FROM producto p
         LEFT JOIN (

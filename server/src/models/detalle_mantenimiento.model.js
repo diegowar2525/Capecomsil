@@ -4,9 +4,9 @@ const findByMantenimiento = async (id, client = pool) => {
     const result = await client.query(
         `
         SELECT detalle_mantenimiento.*, producto.nombre AS nombre_producto,
-            producto.unidad_medida
+            producto.unidad_medida, producto.medida, producto.condicion_llanta
         FROM detalle_mantenimiento
-        JOIN producto USING (id_producto)
+        LEFT JOIN producto USING (id_producto)
         WHERE id_mantenimiento = $1
         ORDER BY id_detalle_mantenimiento
         `,
@@ -20,12 +20,12 @@ const create = async (client, id, data) => {
     const result = await client.query(
         `
         INSERT INTO detalle_mantenimiento (
-            id_mantenimiento, id_producto, cantidad, observacion
+            id_mantenimiento, id_producto, cantidad, observacion, origen_producto, descripcion_producto
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         `,
-        [id, data.id_producto, data.cantidad, data.observacion]
+        [id, data.id_producto, data.cantidad, data.observacion, data.origen_producto, data.descripcion_producto]
     );
 
     return result.rows[0];
