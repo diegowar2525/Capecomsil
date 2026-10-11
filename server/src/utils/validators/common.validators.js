@@ -41,6 +41,24 @@ const validateDate = (value) => {
     return value;
 };
 
+// Hora local del negocio, sin conversión implícita por zona horaria.
+const validateDateTime = (value) => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/.test(value)) {
+        const error = new Error("La fecha debe tener formato YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss, sin zona horaria");
+        error.status = 400;
+        throw error;
+    }
+    const fecha = validateDate(value.slice(0, 10));
+    const hora = value.length === 10 ? "00:00:00" : value.slice(11, 16) + (value.length === 16 ? ":00" : value.slice(16));
+    const [h, m, s] = hora.split(":").map(Number);
+    if (h > 23 || m > 59 || s > 59) {
+        const error = new Error("La hora no es válida");
+        error.status = 400;
+        throw error;
+    }
+    return `${fecha}T${hora}`;
+};
+
 const validateDecimal = (value, campo, enteros, decimales) => {
     const formato = new RegExp(`^\\d{1,${enteros}}(\\.\\d{1,${decimales}})?$`);
     if (!["string", "number"].includes(typeof value) || !formato.test(String(value))) {
@@ -76,6 +94,7 @@ const validateImagenUrl = (value) => {
 };
 
 module.exports = {
+    validateDateTime,
     validateImagenUrl,
     validateId,
     validateDate,
