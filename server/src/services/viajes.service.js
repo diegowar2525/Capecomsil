@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const viajeModel = require("../models/viaje.model");
+const tramoModel = require("../models/tramo_viaje.model");
 const detalleModel = require("../models/detalle_viaje.model");
 const vehiculoModel = require("../models/vehiculo.model");
 const choferModel = require("../models/chofer.model");
@@ -29,12 +30,16 @@ const createViaje = async (data) => {
         for (const detalle of ordenados) {
             const clave = `${detalle.id_gasolinera}:${detalle.id_terminal}`;
             if (!tarifas.has(clave)) {
-                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha);
+                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha_inicio.slice(0, 10));
                 if (!tarifa) throw createHttpError(`No existe tarifa vigente para gasolinera ${detalle.id_gasolinera} y terminal ${detalle.id_terminal}`);
                 tarifas.set(clave, tarifa);
             }
         }
         const viaje = await viajeModel.create(client, validado);
+        const tramos = [];
+        for (const tramo of validado.tramos) {
+            tramos.push(await tramoModel.create(client, viaje.id_viaje, tramo));
+        }
         const detalles = [];
         for (const detalle of validado.detalles) {
             const tarifa = tarifas.get(`${detalle.id_gasolinera}:${detalle.id_terminal}`);
@@ -42,7 +47,7 @@ const createViaje = async (data) => {
         }
         const totales = await viajeModel.getTotales(client, viaje.id_viaje);
         await client.query("COMMIT");
-        return { ...viaje, ...totales, detalles };
+        return { ...viaje, ...totales, detalles, tramos };
     } catch (error) {
         await client.query("ROLLBACK");
         if (error.code === "22003") throw createHttpError("Los importes del viaje exceden el límite permitido", 400);
@@ -60,7 +65,7 @@ const getViajeById = async (id) => {
     id = validateId(id);
     const viaje = await viajeModel.findById(id);
     if (!viaje) throw createHttpError("Viaje no encontrado", 404);
-    return { ...viaje, detalles: await detalleModel.findByViaje(id) };
+    return { ...viaje, detalles: await detalleModel.findByViaje(id), tramos: await tramoModel.findByViaje(id) };
 };
 
 const anularViaje = async (id, data) => {
@@ -77,8 +82,9 @@ const anularViaje = async (id, data) => {
         await viajeModel.anular(client, id, motivo);
         const resultado = await viajeModel.findById(id, client);
         const entregas = await detalleModel.findByViaje(id, client);
+        const tramos = await tramoModel.findByViaje(id, client);
         await client.query("COMMIT");
-        return { ...resultado, detalles: entregas };
+        return { ...resultado, detalles: entregas, tramos };
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
