@@ -161,28 +161,33 @@ VALUES
 INSERT INTO categoria_producto (
     nombre,
     descripcion,
-    estado
+    estado,
+    es_llanta
 )
 VALUES
 (
     'Llantas',
     'Llantas y neumáticos para los vehículos de la empresa',
+    TRUE,
     TRUE
 ),
 (
     'Lubricantes',
     'Aceites, grasas y otros lubricantes utilizados en los vehículos',
-    TRUE
+    TRUE,
+    FALSE
 ),
 (
     'Filtros',
     'Filtros de aceite, combustible, aire y otros filtros para vehículos',
-    TRUE
+    TRUE,
+    FALSE
 ),
 (
     'Repuestos',
     'Repuestos y componentes utilizados para reparación y mantenimiento de vehículos',
-    TRUE
+    TRUE,
+    FALSE
 );
 
 
@@ -194,6 +199,7 @@ VALUES
 -- necesariamente tengan IDs 1, 2, 3 y 4.
 
 INSERT INTO producto (
+    condicion_llanta,
     id_categoria,
     nombre,
     medida,
@@ -205,6 +211,7 @@ INSERT INTO producto (
     estado
 )
 SELECT
+    'NUEVA',
     id_categoria,
     'Llanta para tanquero',
     '11R22.5',
