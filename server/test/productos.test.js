@@ -14,6 +14,10 @@ test("PRODUCTO: datos normalizados y límites", () => {
     assert.equal(result.stock_minimo, "0");
     assert.equal(result.marca, null);
     assert.equal(result.estado, true);
+    assert.equal(validateData({ ...data, condicion_llanta: " reencauchada " }).condicion_llanta, "REENCAUCHADA");
+    for (const condicion_llanta of [true, "USADA", ""]) {
+        assert.throws(() => validateData({ ...data, condicion_llanta }), { status: 400 });
+    }
     assert.equal(validateData({ ...data, estado: false }).estado, false);
     for (const patch of [
         { id_categoria: true }, { nombre: " " }, { unidad_medida: " " },
@@ -94,6 +98,39 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
             await client.query(`DELETE FROM ${table} WHERE id_producto=$1`, [id]);
         }
         assert.equal((await request("DELETE", `/${id}`)).status, 200);
+        const categoriaUrl = base.replace("/productos", "/categorias-producto");
+        const categoriaRequest = async (method, suffix, payload) => {
+            const response = await fetch(categoriaUrl + suffix, {
+                method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+            });
+            return { status: response.status, body: await response.json() };
+        };
+        const categoria = await categoriaRequest("POST", "", { nombre: "Neumáticos", es_llanta: true });
+        assert.equal(categoria.status, 201);
+        assert.equal(categoria.body.es_llanta, true);
+        const categoriaId = categoria.body.id_categoria;
+        const llanta = { ...data, id_categoria: categoriaId, medida: "11R22.5", condicion_llanta: "NUEVA" };
+        const creada = await request("POST", "", llanta);
+        assert.equal(creada.status, 201);
+        assert.equal(creada.body.condicion_llanta, "NUEVA");
+        const llantaId = creada.body.id_producto;
+        assert.equal((await request("PUT", `/${llantaId}`, { ...llanta, condicion_llanta: "REENCAUCHADA" })).body.condicion_llanta, "REENCAUCHADA");
+        assert.equal((await request("GET", `/${llantaId}`)).body.condicion_llanta, "REENCAUCHADA");
+        assert.equal((await categoriaRequest("PUT", `/${categoriaId}`, { nombre: "Llantas", es_llanta: true })).status, 200);
+        const rejectedRequest = async (fn) => {
+            await client.query("SAVEPOINT invalid_http");
+            const result = await fn();
+            await client.query("ROLLBACK TO SAVEPOINT invalid_http");
+            assert.equal(result.status, 409);
+            assert.notEqual(result.body.message, "Error interno del servidor");
+        };
+        await rejectedRequest(() => request("POST", "", { ...llanta, condicion_llanta: null }));
+        await rejectedRequest(() => request("POST", "", { ...llanta, id_categoria: 1 }));
+        await rejectedRequest(() => categoriaRequest("PUT", `/${categoriaId}`, { nombre: "Llantas", es_llanta: false }));
+        await client.query("INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo) VALUES ($1,'ENTRADA',1,'Prueba')", [llantaId]);
+        await rejectedRequest(() => request("PUT", `/${llantaId}`, llanta));
+        await rejectedRequest(() => request("PUT", `/${llantaId}`, { ...llanta, condicion_llanta: "REENCAUCHADA", medida: "315/80 R22.5" }));
+        assert.equal((await request("PUT", `/${llantaId}`, { ...llanta, condicion_llanta: "REENCAUCHADA", estado: false })).status, 200);
     } finally {
         if (server) await new Promise(resolve => server.close(resolve));
         pool.query = originalQuery;

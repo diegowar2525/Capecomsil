@@ -8,6 +8,11 @@ const { validateData } = require("../src/utils/validators/mantenimiento.validato
 const body = { id_vehiculo: 1, fecha: "2026-10-05", tipo: "Cambio de filtros", monto: "25.00", detalles: [{ id_producto: 1, cantidad: "2.00" }] };
 
 test("Mantenimiento: cantidades, referencias y datos obligatorios", () => {
+    for (const detalle of [
+        { origen_producto: "EXTERNO", cantidad: 1 },
+        { origen_producto: "EXTERNO", id_producto: 1, descripcion_producto: "Llanta", cantidad: 1 },
+        { origen_producto: "OTRO", id_producto: 1, cantidad: 1 }
+    ]) assert.throws(() => validateData({ ...body, detalles: [detalle] }), { status: 400 });
     assert.equal(validateData(body).id_proveedor, null);
     assert.deepEqual(validateData({ ...body, detalles: [] }).detalles, []);
     for (const change of [
@@ -80,6 +85,26 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         assert.equal((await post({ ...body, detalles: [] })).status, 201);
         const removed = await isolated.query("SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name='factura_proveedor' AND column_name='detalle'", [schema]);
         assert.equal(removed.rowCount, 0);
+        const externo = { origen_producto: "EXTERNO", descripcion_producto: "Llanta del taller 315/80 R22.5", cantidad: "1" };
+        const mixto = await post({ ...body, detalles: [{ id_producto: 1, cantidad: "1" }, externo, { ...externo, descripcion_producto: "Aceite externo" }] });
+        assert.equal(mixto.status, 201);
+        const mixtoId = mixto.body.id_mantenimiento;
+        const consulta = await (await fetch(url + "/" + mixtoId)).json();
+        assert.equal(consulta.detalles.length, 3);
+        assert.equal(consulta.detalles[1].descripcion_producto, externo.descripcion_producto);
+        assert.equal(consulta.detalles[1].id_producto, null);
+        const cancel = await fetch(url + "/" + mixtoId + "/anular", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba mixta" })
+        });
+        assert.equal(cancel.status, 200);
+        assert.equal((await cancel.json()).reversiones.length, 1);
+        const soloExterno = await post({ ...body, detalles: [externo] });
+        assert.equal(soloExterno.status, 201);
+        const cancelExterno = await fetch(url + "/" + soloExterno.body.id_mantenimiento + "/anular", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba externa" })
+        });
+        assert.equal(cancelExterno.status, 200);
+        assert.equal((await cancelExterno.json()).reversiones.length, 0);
     } finally {
         movimientoModel.createSalida = originalSalida;
         if (server) await new Promise(resolve => server.close(resolve));
