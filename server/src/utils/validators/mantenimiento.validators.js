@@ -1,3 +1,4 @@
+const { createHttpError } = require("../errors/http.error");
 const { validateId, validateDate, validateDecimal, validateOptionalText } = require("./common.validators");
 
 const validateData = (data) => {
@@ -30,16 +31,23 @@ const validateData = (data) => {
             error.status = 400;
             throw error;
         }
-        const id_producto = validateId(detalle.id_producto);
+        const origen_producto = detalle.origen_producto === undefined ? "INVENTARIO" : detalle.origen_producto;
+        if (!["INVENTARIO", "EXTERNO"].includes(origen_producto)) throw createHttpError("Origen de producto inválido", 400);
+        if (origen_producto === "EXTERNO" && detalle.id_producto != null) throw createHttpError("Un material externo no debe indicar id_producto", 400);
+        const id_producto = origen_producto === "INVENTARIO" ? validateId(detalle.id_producto) : null;
+        const descripcion_producto = validateOptionalText(detalle.descripcion_producto, "descripcion_producto", 200);
+        if (origen_producto === "EXTERNO" && !descripcion_producto) throw createHttpError("Describa el material externo", 400);
         const cantidad = validateDecimal(detalle.cantidad, "cantidad", 10, 2);
-        if (/^0+(\.0+)?$/.test(cantidad) || productos.has(id_producto)) {
+        if (/^0+(\.0+)?$/.test(cantidad) || (id_producto !== null && productos.has(id_producto))) {
             const error = new Error("Las cantidades deben ser positivas y los productos no pueden repetirse");
             error.status = 400;
             throw error;
         }
-        productos.add(id_producto);
+        if (id_producto !== null) productos.add(id_producto);
         return {
             id_producto,
+            origen_producto,
+            descripcion_producto,
             cantidad,
             observacion: validateOptionalText(detalle.observacion, "observacion del detalle")
         };

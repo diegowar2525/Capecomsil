@@ -42,7 +42,13 @@ const validateData = (data) => {
         throw error;
     }
 
+    if (data.es_llanta !== undefined && typeof data.es_llanta !== "boolean") {
+        const error = new Error("es_llanta debe ser true o false");
+        error.status = 400;
+        throw error;
+    }
     return {
+        es_llanta: data.es_llanta ?? false,
         nombre: data.nombre.trim(),
         descripcion: data.descripcion?.trim() || null,
         estado: estado ?? true

@@ -1,3 +1,4 @@
+const { createHttpError } = require("../errors/http.error");
 const { validateImagenUrl } = require("./common.validators");
 const { validateId } = require("./common.validators");
 
@@ -65,7 +66,15 @@ const validateData = (data) => {
         throw error;
     }
 
+    let condicion_llanta = data.condicion_llanta ?? null;
+    if (condicion_llanta !== null) {
+        if (typeof condicion_llanta !== "string" || !["NUEVA", "REENCAUCHADA"].includes(condicion_llanta.trim().toUpperCase())) {
+            throw createHttpError("La condición de llanta debe ser NUEVA o REENCAUCHADA", 400);
+        }
+        condicion_llanta = condicion_llanta.trim().toUpperCase();
+    }
     return {
+        condicion_llanta,
         imagen_url: validateImagenUrl(data.imagen_url),
         id_categoria: idCategoriaNumerico,
         nombre: nombre.trim(),
