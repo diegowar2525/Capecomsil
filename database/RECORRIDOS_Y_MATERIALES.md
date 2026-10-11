@@ -14,10 +14,10 @@ Para una base vacía ejecutar `schema.sql` y opcionalmente `seed.sql`. No ejecut
 Para el esquema anterior ejecutar una sola vez `migrations/010_recorridos_llantas_mantenimiento.sql`.
 La migración elimina viajes y entregas sin reconstruir distancias desconocidas. Se detiene si existen liquidaciones, costos o gastos asociados. Conserva las demás operaciones. La clasificación inicial de «Llanta para tanquero», 11R22.5, como NUEVA fue confirmada por el usuario.
 
-## Alcance pendiente en backend
+## Backend adaptado
 
-Este cambio es de esquema. Antes de volver a utilizar los endpoints de viajes hay que sustituir las referencias a `fecha` en modelos, servicios, validadores, documentación y pruebas e incorporar el modelo de tramos y su inserción transaccional. El contrato anterior de viajes ya no es compatible.
-También falta admitir `es_llanta` y `condicion_llanta` en los CRUD correspondientes, y permitir materiales externos en el flujo de mantenimiento y su anulación. La base los admite, pero los endpoints actuales aún no reciben estos campos.
+Los endpoints de viajes utilizan `fecha_inicio`, `fecha_fin` y `tramos`, con un modelo propio e inserción transaccional. El contrato anterior con `fecha` ya no es compatible. Consultas y anulaciones incluyen los tramos, y el total de kilómetros se calcula en PostgreSQL.
+Los CRUD de categorías y productos admiten `es_llanta` y `condicion_llanta`. Los mantenimientos admiten materiales externos y las anulaciones revierten únicamente los movimientos existentes. Ver ejemplos en `server/VIAJES.md` y `server/RECORRIDOS_Y_MATERIALES.md`.
 La configuración y el cálculo automático de costos no forman parte de esta migración.
 
 Validación específica: desde `server`, ejecutar `node --test test/esquema-recorridos.test.js`. Crea un esquema temporal y revierte todas las pruebas.
