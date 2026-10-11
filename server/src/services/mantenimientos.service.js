@@ -44,7 +44,7 @@ const createMantenimiento = async (data) => {
         }
 
         // El mismo orden de bloqueo que en compras evita interbloqueos.
-        const ordenados = [...datosValidados.detalles].sort((a, b) => a.id_producto - b.id_producto);
+        const ordenados = datosValidados.detalles.filter(d => d.origen_producto === "INVENTARIO").sort((a, b) => a.id_producto - b.id_producto);
         for (const detalle of ordenados) {
             if (!await productoModel.findByIdForUpdate(client, detalle.id_producto)) {
                 const error = new Error("El producto indicado no existe");
@@ -63,7 +63,7 @@ const createMantenimiento = async (data) => {
         const detalles = [];
         for (const detalle of datosValidados.detalles) {
             const creado = await detalleMantenimientoModel.create(client, mantenimiento.id_mantenimiento, detalle);
-            await movimientoInventarioModel.createSalida(client, {
+            if (detalle.origen_producto === "INVENTARIO") await movimientoInventarioModel.createSalida(client, {
                 id_producto: detalle.id_producto,
                 fecha: datosValidados.fecha,
                 cantidad: detalle.cantidad,
