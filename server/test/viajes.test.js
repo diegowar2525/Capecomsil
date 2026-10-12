@@ -5,9 +5,9 @@ const path = require("node:path");
 const { Pool } = require("pg");
 const { validateData, validateFiltros } = require("../src/utils/validators/viaje.validators");
 const body = { fecha_inicio: "2026-10-08", fecha_fin: "2026-10-09", id_vehiculo: 1, id_chofer: 1, tramos: [
-    { orden: 1, id_gasolinera_origen: 1, id_terminal_destino: 1, kilometros: "10.25" },
-    { orden: 2, id_terminal_origen: 1, id_gasolinera_destino: 1, kilometros: "10.25" },
-    { orden: 3, id_gasolinera_origen: 1, id_gasolinera_destino: 2, kilometros: "5.10" }
+    { orden: 1, id_trayecto: 1 },
+    { orden: 2, id_trayecto: 2 },
+    { orden: 3, id_trayecto: 3 }
 ], detalles: [
     { id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "60.00" },
     { id_gasolinera: 2, id_terminal: 1, id_producto_transportado: 1, galones: "40.00" }
@@ -18,9 +18,7 @@ test("Viajes: validación de entregas", () => {
         { fecha_fin: "2026-10-07" }, { fecha_inicio: "2026-10-08T24:00:00" },
         { tramos: [] }, { tramos: [null] },
         { tramos: body.tramos.map(t => ({ ...t, orden: 1 })) },
-        { tramos: body.tramos.map(t => ({ ...t, kilometros: "0" })) },
-        { tramos: body.tramos.slice(0, 2) },
-        { tramos: body.tramos.map(t => ({ ...t, id_terminal_origen: 1 })) }
+        { tramos: body.tramos.map(t => ({ ...t, id_trayecto: true })) }
     ]) assert.throws(() => validateData({ ...body, ...patch }), { status: 400 });
     assert.equal(validateData({ ...body, fecha_inicio: "2026-10-08T09:30" }).fecha_inicio, "2026-10-08T09:30:00");
     for (const patch of [{ detalles: [] }, { detalles: [null] }, { fecha_inicio: "2026-02-30" },
@@ -56,6 +54,9 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
             INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones'),('Extra','galones');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio,fecha_fin,estado)
             VALUES (1,1,0.035,'2026-01-01','2026-10-08',false),(2,1,0.04,'2026-01-01',NULL,true);`);
+        await admin.query(`INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,10.25);
+            INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Entrega A',1,1,10.25);
+            INSERT INTO trayecto(nombre,id_gasolinera_origen,id_gasolinera_destino,kilometros) VALUES ('Entrega B',1,2,5.10);`);
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
@@ -83,8 +84,13 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
             assert.equal((await post({ ...body, ...patch })).status, 400);
         }
         assert.equal((await post({ ...body, fecha_inicio: "2026-10-09" })).status, 409);
-        const missingPlace = body.tramos.map(t => t.orden === 1 ? { ...t, id_gasolinera_origen: 999 } : t);
+        const missingPlace = body.tramos.map(t => t.orden === 1 ? { ...t, id_trayecto: 999 } : t);
         assert.equal((await post({ ...body, tramos: missingPlace })).status, 400);
+        assert.equal((await post({ ...body, tramos: body.tramos.slice(0,2) })).status, 400);
+        assert.equal((await post({ ...body, tramos: [body.tramos[0], { orden: 2, id_trayecto: 3 }] })).status, 400);
+        await isolated.query("UPDATE trayecto SET estado=false WHERE id_trayecto=3");
+        assert.equal((await post(body)).status, 409);
+        await isolated.query("UPDATE trayecto SET estado=true WHERE id_trayecto=3");
         const count = async () => (await isolated.query("SELECT COUNT(*)::int n FROM viaje")).rows[0].n;
         const before = await count();
         let calls = 0;
@@ -143,11 +149,18 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         const cancelled = canceladas.find(r => r.status === 200).body;
         assert.equal(cancelled.detalles.length, 2);
         assert.equal(cancelled.tramos.length, 3);
+        await isolated.query("UPDATE trayecto SET kilometros=50 WHERE id_trayecto=3");
+        assert.equal((await request('/' + id)).body.kilometros_recorridos, "25.60");
+        const nuevo = await post({ ...body, tramos: body.tramos.map(t => ({ ...t, kilometros: "999", id_terminal_origen: 999 })) });
+        assert.equal(nuevo.status, 201);
+        assert.equal(nuevo.body.kilometros_recorridos, "70.50");
+        await assert.rejects(isolated.query("UPDATE trayecto SET id_gasolinera_destino=1 WHERE id_trayecto=3"), { code: "23514" });
+        await assert.rejects(isolated.query("DELETE FROM trayecto WHERE id_trayecto=3"), { code: "23503" });
         assert.equal(cancelled.valor_transporte, "3.70");
         assert.equal(cancelled.motivo_anulacion, motivo.motivo);
         assert.ok(cancelled.fecha_anulacion);
         assert.equal((await request("?estado=ANULADO")).body.length, 1);
-        assert.equal((await request("?estado=REGISTRADO")).body.length, 1);
+        assert.equal((await request("?estado=REGISTRADO")).body.length, 2);
         await assert.rejects(isolated.query("DELETE FROM tarifa WHERE id_tarifa=1"), { code: "23503" });
     } finally {
         model.create = original;
