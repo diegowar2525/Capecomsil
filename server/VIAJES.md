@@ -27,9 +27,9 @@ No se incorporan compartimientos ni planificación. Se rechaza la suma de galone
   "id_vehiculo": 1,
   "id_chofer": 1,
   "tramos": [
-    { "orden": 1, "id_gasolinera_origen": 1, "id_terminal_destino": 1, "kilometros": "20.00" },
-    { "orden": 2, "id_terminal_origen": 1, "id_gasolinera_destino": 1, "kilometros": "20.00" },
-    { "orden": 3, "id_gasolinera_origen": 1, "id_gasolinera_destino": 2, "kilometros": "30.00" }
+    { "orden": 1, "id_trayecto": 1 },
+    { "orden": 2, "id_trayecto": 2 },
+    { "orden": 3, "id_trayecto": 3 }
   ],
   "detalles": [
     { "id_gasolinera": 1, "id_terminal": 1, "id_producto_transportado": 1, "galones": "4000.00" },
@@ -42,7 +42,7 @@ Inicio y fin aceptan YYYY-MM-DD (medianoche) o YYYY-MM-DDTHH:mm:ss, con hora loc
 
 La respuesta 201 incluye viaje, detalles, tramos, `kilometros_recorridos`, `total_galones` y `valor_transporte`. Las cantidades e importes son cadenas decimales. El precio se copia de la tarifa y el importe se redondea a dos decimales por entrega en PostgreSQL NUMERIC. Los totales suman los detalles. `id_liquidacion` queda en null. Estado, tarifas e importes enviados por el cliente se ignoran.
 
-Vehículo, chofer y combustibles deben existir; sus estados administrativos no impiden registrar operaciones históricas. Referencias inválidas, exceso de capacidad o datos inválidos devuelven 400; ausencia de tarifa aplicable devuelve 409. No hay cambios en el inventario interno. Toda la operación comparte una transacción y bloquea las referencias relevantes hasta terminar. Requiere el esquema con la migración 010 ya aplicada. No volver a ejecutarla para actualizar el backend.
+Vehículo, chofer y combustibles deben existir; sus estados administrativos no impiden registrar operaciones históricas. Referencias inválidas, exceso de capacidad o datos inválidos devuelven 400; ausencia de tarifa aplicable devuelve 409. No hay cambios en el inventario interno. Toda la operación comparte una transacción y bloquea las referencias relevantes hasta terminar. Requiere el schema.sql actualizado con TRAYECTO. La migración histórica 010 por sí sola no incorpora este catálogo.
 
 ## Consultas y anulación
 
@@ -68,8 +68,10 @@ La migración es transaccional y se aplica una sola vez a la versión anterior. 
 
 ## Tramos
 
-El modelo tramo_viaje se utiliza dentro del servicio de viajes, sin CRUD independiente. Cada tramo recibe orden, exactamente un terminal o gasolinera como origen, exactamente uno como destino, kilómetros positivos con hasta dos decimales y observacion opcional. Se ordenan por orden y se exige secuencia desde 1 sin huecos ni duplicados.
+El modelo tramo_viaje se utiliza dentro del servicio de viajes, sin CRUD independiente. Cada tramo recibe orden, id_trayecto y observacion opcional. El trayecto debe existir y estar activo. El servidor resuelve las ubicaciones y copia sus kilómetros; ubicaciones o kilómetros adicionales enviados en el JSON se ignoran. Se ordenan por orden y se exige secuencia desde 1 sin huecos ni duplicados.
 
 El primer tramo sale de una gasolinera hacia un terminal. Cada origen siguiente coincide con el destino anterior. El recorrido debe pasar por el terminal de cada entrega antes de llegar a la gasolinera destinataria. No se exige regresar al origen. Las ubicaciones deben existir.
 
-Los kilómetros son distancias informadas, no calculadas mediante mapas; el backend suma los tramos con NUMERIC. POST, GET individual y anulación devuelven tramos; GET individual y anulación añaden nombres de origen/destino. El listado incluye kilometros_recorridos. Estos kilómetros todavía no generan COSTO_VIAJE automáticamente.
+Los kilómetros se configuran en TRAYECTO, no se calculan mediante mapas; el backend suma los tramos con NUMERIC. POST, GET individual y anulación devuelven tramos; GET individual y anulación añaden nombres de origen/destino. El listado incluye kilometros_recorridos. Estos kilómetros todavía no generan COSTO_VIAJE automáticamente.
+
+El catálogo todavía no tiene endpoints CRUD. Los IDs del ejemplo presuponen trayectos configurados: gasolinera 1 → terminal 1, terminal 1 → gasolinera 1 y gasolinera 1 → gasolinera 2. Cambiar los kilómetros del catálogo solo afecta a nuevos tramos. Sus ubicaciones no pueden cambiarse si tiene historial y las FK impiden eliminarlo. Inactivarlo no oculta ni invalida viajes anteriores.
