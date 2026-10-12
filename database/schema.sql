@@ -242,24 +242,34 @@ CREATE TABLE viaje (
 -- DETALLE_VIAJE
 -- =====================================================
 
-CREATE TABLE tramo_viaje (
-    id_tramo_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_viaje INTEGER NOT NULL REFERENCES viaje(id_viaje),
-    orden INTEGER NOT NULL CHECK (orden > 0),
+CREATE TABLE trayecto (
+    id_trayecto INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL CHECK (btrim(nombre) <> ''),
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
     id_terminal_origen INTEGER REFERENCES terminal(id_terminal),
     id_gasolinera_origen INTEGER REFERENCES gasolinera(id_gasolinera),
     id_terminal_destino INTEGER REFERENCES terminal(id_terminal),
     id_gasolinera_destino INTEGER REFERENCES gasolinera(id_gasolinera),
     kilometros NUMERIC(10,2) NOT NULL CHECK (kilometros > 0),
     observacion TEXT,
-    CONSTRAINT uq_tramo_viaje_orden UNIQUE (id_viaje, orden) DEFERRABLE INITIALLY DEFERRED,
-    CONSTRAINT chk_tramo_origen CHECK (num_nonnulls(id_terminal_origen, id_gasolinera_origen) = 1),
-    CONSTRAINT chk_tramo_destino CHECK (num_nonnulls(id_terminal_destino, id_gasolinera_destino) = 1),
-    CONSTRAINT chk_tramo_distinto CHECK (
+    CONSTRAINT chk_trayecto_origen CHECK (num_nonnulls(id_terminal_origen, id_gasolinera_origen) = 1),
+    CONSTRAINT chk_trayecto_destino CHECK (num_nonnulls(id_terminal_destino, id_gasolinera_destino) = 1),
+    CONSTRAINT chk_trayecto_distinto CHECK (
         id_terminal_origen IS DISTINCT FROM id_terminal_destino
         OR id_gasolinera_origen IS DISTINCT FROM id_gasolinera_destino
     )
 );
+
+CREATE TABLE tramo_viaje (
+    id_tramo_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_viaje INTEGER NOT NULL REFERENCES viaje(id_viaje),
+    id_trayecto INTEGER NOT NULL REFERENCES trayecto(id_trayecto),
+    orden INTEGER NOT NULL CHECK (orden > 0),
+    kilometros NUMERIC(10,2) NOT NULL CHECK (kilometros > 0),
+    observacion TEXT,
+    CONSTRAINT uq_tramo_viaje_orden UNIQUE (id_viaje, orden) DEFERRABLE INITIALLY DEFERRED
+);
+CREATE INDEX idx_tramo_trayecto ON tramo_viaje(id_trayecto);
 
 CREATE TABLE detalle_viaje (
     id_detalle_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -797,16 +807,16 @@ BEGIN
     ELSE ids := ARRAY[OLD.id_viaje, NEW.id_viaje]; END IF;
     FOREACH viaje_id IN ARRAY ids LOOP
         IF NOT EXISTS (SELECT 1 FROM viaje WHERE id_viaje = viaje_id) THEN CONTINUE; END IF;
-        SELECT count(*), max(orden) INTO total, ultimo FROM tramo_viaje WHERE id_viaje = viaje_id;
+        SELECT count(*), max(orden) INTO total, ultimo FROM (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) recorrido WHERE id_viaje = viaje_id;
         IF total = 0 OR total <> ultimo OR NOT EXISTS (
-            SELECT 1 FROM tramo_viaje WHERE id_viaje = viaje_id AND orden = 1
+            SELECT 1 FROM (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) recorrido WHERE id_viaje = viaje_id AND orden = 1
                 AND id_gasolinera_origen IS NOT NULL AND id_terminal_destino IS NOT NULL
         ) THEN
             RAISE EXCEPTION 'El recorrido debe comenzar en una gasolinera hacia un terminal y tener orden consecutivo'
                 USING ERRCODE = '23514', CONSTRAINT = 'viaje_recorrido';
         END IF;
         IF EXISTS (
-            SELECT 1 FROM tramo_viaje a JOIN tramo_viaje b
+            SELECT 1 FROM (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) a JOIN (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) b
                 ON b.id_viaje = a.id_viaje AND b.orden = a.orden + 1
             WHERE a.id_viaje = viaje_id AND (
                 a.id_terminal_destino IS DISTINCT FROM b.id_terminal_origen
@@ -818,7 +828,7 @@ BEGIN
         IF EXISTS (
             SELECT 1 FROM detalle_viaje d JOIN tarifa t USING(id_tarifa)
             WHERE d.id_viaje = viaje_id AND NOT EXISTS (
-                SELECT 1 FROM tramo_viaje carga JOIN tramo_viaje entrega
+                SELECT 1 FROM (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) carga JOIN (SELECT t.*, c.id_terminal_origen, c.id_gasolinera_origen, c.id_terminal_destino, c.id_gasolinera_destino FROM tramo_viaje t JOIN trayecto c USING (id_trayecto)) entrega
                     ON entrega.id_viaje = carga.id_viaje AND entrega.orden > carga.orden
                 WHERE carga.id_viaje = viaje_id AND carga.id_terminal_destino = t.id_terminal
                     AND entrega.id_gasolinera_destino = t.id_gasolinera
@@ -906,3 +916,42 @@ END;
 $$;
 CREATE TRIGGER mantenimiento_proteger_material BEFORE UPDATE ON detalle_mantenimiento
     FOR EACH ROW EXECUTE FUNCTION proteger_material_consumido();
+
+-- El catálogo puede cambiar sus kilómetros para nuevos viajes, nunca los extremos usados.
+CREATE FUNCTION proteger_historial_trayecto() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF (NEW.id_terminal_origen IS DISTINCT FROM OLD.id_terminal_origen
+        OR NEW.id_gasolinera_origen IS DISTINCT FROM OLD.id_gasolinera_origen
+        OR NEW.id_terminal_destino IS DISTINCT FROM OLD.id_terminal_destino
+        OR NEW.id_gasolinera_destino IS DISTINCT FROM OLD.id_gasolinera_destino)
+        AND EXISTS (SELECT 1 FROM tramo_viaje WHERE id_trayecto=OLD.id_trayecto) THEN
+        RAISE EXCEPTION 'No se pueden cambiar las ubicaciones de un trayecto utilizado'
+            USING ERRCODE='23514', CONSTRAINT='trayecto_historial';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER trayecto_proteger_historial BEFORE UPDATE ON trayecto
+    FOR EACH ROW EXECUTE FUNCTION proteger_historial_trayecto();
+
+CREATE FUNCTION copiar_trayecto_viaje() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE seleccionado trayecto%ROWTYPE;
+BEGIN
+    IF TG_OP = 'INSERT' OR NEW.id_trayecto IS DISTINCT FROM OLD.id_trayecto THEN
+        SELECT * INTO seleccionado FROM trayecto WHERE id_trayecto=NEW.id_trayecto FOR SHARE;
+        IF FOUND THEN
+            IF NOT seleccionado.estado THEN
+                RAISE EXCEPTION 'El trayecto está inactivo'
+                    USING ERRCODE='23514', CONSTRAINT='trayecto_activo';
+            END IF;
+            NEW.kilometros := seleccionado.kilometros;
+        END IF;
+    ELSIF NEW.kilometros IS DISTINCT FROM OLD.kilometros THEN
+        RAISE EXCEPTION 'Los kilómetros históricos no se modifican manualmente'
+            USING ERRCODE='23514', CONSTRAINT='tramo_kilometros_historial';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER tramo_copiar_trayecto BEFORE INSERT OR UPDATE ON tramo_viaje
+    FOR EACH ROW EXECUTE FUNCTION copiar_trayecto_viaje();
