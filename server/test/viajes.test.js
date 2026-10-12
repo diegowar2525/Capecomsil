@@ -162,6 +162,11 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal((await request("?estado=ANULADO")).body.length, 1);
         assert.equal((await request("?estado=REGISTRADO")).body.length, 2);
         await assert.rejects(isolated.query("DELETE FROM tarifa WHERE id_tarifa=1"), { code: "23503" });
+        const directo = await post({ ...body, tramos: [{ orden: 1, id_trayecto: 2 }], detalles: [body.detalles[0]] });
+        assert.equal(directo.status, 201);
+        assert.equal(directo.body.kilometros_recorridos, "10.25");
+        // Comenzar en una gasolinera sin pasar por el terminal de carga sigue siendo inválido.
+        assert.equal((await post({ ...body, tramos: [{ orden: 1, id_trayecto: 3 }], detalles: [body.detalles[1]] })).status, 400);
     } finally {
         model.create = original;
         if (server) await new Promise(resolve => server.close(resolve));
