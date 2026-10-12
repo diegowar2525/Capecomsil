@@ -1,6 +1,8 @@
 const pool = require("../config/database");
 const viajeModel = require("../models/viaje.model");
 const tramoModel = require("../models/tramo_viaje.model");
+const trayectoModel = require("../models/trayecto.model");
+const { validateRecorrido } = require("../utils/validators/tramo_viaje.validators");
 const detalleModel = require("../models/detalle_viaje.model");
 const vehiculoModel = require("../models/vehiculo.model");
 const choferModel = require("../models/chofer.model");
@@ -16,6 +18,15 @@ const createViaje = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        const trayectos = new Map();
+        for (const id of [...new Set(validado.tramos.map(t => t.id_trayecto))].sort((a, b) => a - b)) {
+            const trayecto = await trayectoModel.findByIdForShare(client, id);
+            if (!trayecto) throw createHttpError("El trayecto indicado no existe", 400);
+            if (!trayecto.estado) throw createHttpError("El trayecto indicado está inactivo", 409);
+            trayectos.set(id, trayecto);
+        }
+        const recorrido = validado.tramos.map(t => ({ ...trayectos.get(t.id_trayecto), ...t }));
+        validateRecorrido(recorrido, validado.detalles);
         if (!await vehiculoModel.findByIdForShare(client, validado.id_vehiculo)) throw createHttpError("El vehículo no existe", 400);
         if (!await choferModel.findByIdForShare(client, validado.id_chofer)) throw createHttpError("El chofer no existe", 400);
         const capacidad = await vehiculoModel.getCapacidadViaje(client, validado.id_vehiculo, validado.detalles.map(d => d.galones));
@@ -37,7 +48,7 @@ const createViaje = async (data) => {
         }
         const viaje = await viajeModel.create(client, validado);
         const tramos = [];
-        for (const tramo of validado.tramos) {
+        for (const tramo of recorrido) {
             tramos.push(await tramoModel.create(client, viaje.id_viaje, tramo));
         }
         const detalles = [];
