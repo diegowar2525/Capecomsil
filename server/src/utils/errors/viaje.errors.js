@@ -4,7 +4,6 @@ const translateViajeError = (error) => {
     }
     if (error.code === "23514") {
         const mensajes = {
-            trayecto_historial: "No se pueden cambiar las ubicaciones de un trayecto utilizado",
             trayecto_activo: "El trayecto está inactivo",
             tramo_kilometros_historial: "Los kilómetros históricos no se modifican manualmente",
             viaje_recorrido: "El recorrido debe empezar en una gasolinera hacia un terminal y ser continuo y consecutivo",
