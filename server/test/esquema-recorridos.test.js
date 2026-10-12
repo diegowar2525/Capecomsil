@@ -15,6 +15,19 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         const seed = fs.readFileSync(path.join(__dirname, "../../database/seed.sql"), "utf8")
             .replace(/^BEGIN;/m, "").replace(/^COMMIT;/m, "");
         await client.query(seed);
+        for (const [tabla, esperado] of Object.entries({ terminal: 5, gasolinera: 17, vehiculo: 8, chofer: 7, tarifa: 42, trayecto: 66 })) {
+            assert.equal((await client.query(`SELECT count(*)::int n FROM ${tabla}`)).rows[0].n, esperado);
+        }
+        assert.equal((await client.query("SELECT count(*)::int n FROM tarifa WHERE valor_por_galon <= 0 OR fecha_inicio <> DATE '2026-01-01' OR fecha_fin <> DATE '2026-12-31'")).rows[0].n, 0);
+        assert.equal((await client.query("SELECT count(*)::int n FROM trayecto WHERE observacion NOT LIKE 'ESTIMACIÓN DE PRUEBA:%'")).rows[0].n, 0);
+        const mechita = (await client.query(`SELECT t.kilometros FROM trayecto t
+            JOIN gasolinera g ON g.id_gasolinera=t.id_gasolinera_origen
+            JOIN terminal te ON te.id_terminal=t.id_terminal_destino
+            WHERE g.nombre='MECHITA' AND te.nombre='Terminal La Troncal'`)).rows[0];
+        assert.equal(mechita.kilometros, "11.00");
+        await client.query("SAVEPOINT seed_repetido");
+        await assert.rejects(client.query(seed), /catálogos vacíos/);
+        await client.query("ROLLBACK TO SAVEPOINT seed_repetido");
         const invalid = async (sql) => {
             await client.query("SAVEPOINT invalid_case");
             await assert.rejects(async () => {
@@ -26,12 +39,12 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         await invalid("INSERT INTO producto(id_categoria,nombre,unidad_medida) VALUES (1,'Llanta sin condición','unidad')");
         await invalid("INSERT INTO producto(id_categoria,nombre,unidad_medida,condicion_llanta) VALUES (2,'Aceite','galón','NUEVA')");
         await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-01','2026-10-02')");
-        await client.query(`INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,20);
-            INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Llegada',1,2,80);
-            INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto) VALUES (1,1,1),(1,2,2);`);
+        const salida = (await client.query("INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,20) RETURNING id_trayecto")).rows[0].id_trayecto;
+        const llegada = (await client.query("INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Llegada',1,2,80) RETURNING id_trayecto")).rows[0].id_trayecto;
+        await client.query("INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto) VALUES (1,1,$1),(1,2,$2)", [salida, llegada]);
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         assert.equal((await client.query("SELECT sum(kilometros) AS km FROM tramo_viaje")).rows[0].km, "100.00");
-        await invalid("UPDATE trayecto SET id_terminal_origen=2 WHERE id_trayecto=2");
+        await invalid(`UPDATE trayecto SET id_terminal_origen=2 WHERE id_trayecto=${llegada}`);
         await invalid("UPDATE viaje SET fecha_fin='2026-09-01' WHERE id_viaje=1");
         await invalid("DELETE FROM tramo_viaje WHERE orden=1");
         await client.query("INSERT INTO mantenimiento(id_vehiculo,fecha,tipo,monto) VALUES (1,'2026-10-01','Prueba',10)");
