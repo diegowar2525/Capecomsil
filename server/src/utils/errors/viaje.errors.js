@@ -6,7 +6,7 @@ const translateViajeError = (error) => {
         const mensajes = {
             trayecto_activo: "El trayecto está inactivo",
             tramo_kilometros_historial: "Los kilómetros históricos no se modifican manualmente",
-            viaje_recorrido: "El recorrido debe empezar en una gasolinera hacia un terminal y ser continuo y consecutivo",
+            viaje_recorrido: "El recorrido debe contener tramos continuos y consecutivos desde 1",
             viaje_recorrido_entregas: "El recorrido debe visitar el terminal antes de cada entrega",
             chk_viaje_fechas: "La fecha de fin no puede ser anterior al inicio"
         };

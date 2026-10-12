@@ -16,9 +16,6 @@ const validateTramos = (data) => {
 };
 
 const validateRecorrido = (tramos, detalles) => {
-    if (!tramos[0].id_gasolinera_origen || !tramos[0].id_terminal_destino) {
-        throw createHttpError("El recorrido debe comenzar en una gasolinera hacia un terminal", 400);
-    }
     tramos.forEach((tramo, index) => {
         if (tramo.orden !== index + 1) throw createHttpError("El orden de los tramos debe ser consecutivo desde 1", 400);
         const anterior = tramos[index - 1];
@@ -27,8 +24,9 @@ const validateRecorrido = (tramos, detalles) => {
         }
     });
     for (const detalle of detalles) {
-        if (!tramos.some(carga => carga.id_terminal_destino === detalle.id_terminal && tramos.some(entrega =>
-            entrega.orden > carga.orden && entrega.id_gasolinera_destino === detalle.id_gasolinera))) {
+        if (!tramos.some(entrega => entrega.id_gasolinera_destino === detalle.id_gasolinera && tramos.some(carga =>
+            (carga.id_terminal_origen === detalle.id_terminal && carga.orden <= entrega.orden)
+            || (carga.id_terminal_destino === detalle.id_terminal && carga.orden < entrega.orden)))) {
             throw createHttpError("El recorrido debe visitar el terminal antes de la gasolinera de cada entrega", 400);
         }
     }
