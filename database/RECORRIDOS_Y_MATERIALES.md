@@ -23,4 +23,4 @@ La configuración y el cálculo automático de costos no forman parte de esta mi
 
 Validación específica: desde `server`, ejecutar `node --test test/esquema-recorridos.test.js`. Crea un esquema temporal y revierte todas las pruebas.
 
-El catálogo de trayectos está definido y el registro de viajes lo consulta, pero su CRUD se implementará en el siguiente paso. No se cargaron datos iniciales tras recrear la base local.
+El catálogo de trayectos tiene CRUD en /api/trayectos y el registro de viajes lo consulta. Ver server/TRAYECTOS.md. No se cargaron datos iniciales tras recrear la base local.
