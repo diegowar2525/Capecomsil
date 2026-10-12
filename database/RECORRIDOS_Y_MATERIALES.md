@@ -3,7 +3,7 @@
 - `viaje.fecha` se sustituye por `fecha_inicio` y `fecha_fin`, ambas obligatorias. La vigencia de tarifas usa `fecha_inicio`.
 - `trayecto`: PK `id_trayecto`; `nombre`; cuatro FK opcionales de origen/destino hacia terminal o gasolinera; `kilometros`; `estado`; `observacion`.
 - `tramo_viaje`: PK `id_tramo_viaje`; FK obligatorias `id_viaje` e `id_trayecto`; `orden`; `kilometros` históricos; `observacion`. Las cuatro FK de ubicaciones pertenecen ahora al catálogo, no al tramo.
-- Cada extremo selecciona exactamente una ubicación. El recorrido empieza en una gasolinera hacia un terminal; no exige retorno al origen. Los números de orden comienzan en 1 y son consecutivos. La continuidad y las visitas a terminales antes de las entregas se validan al finalizar la transacción.
+- Cada extremo selecciona exactamente una ubicación. El recorrido puede empezar en una gasolinera o un terminal; no exige retorno al origen. Los números de orden comienzan en 1 y son consecutivos. La continuidad y las visitas a terminales antes de las entregas se validan al finalizar la transacción.
 - `categoria_producto.es_llanta` identifica las categorías que requieren condición sin depender de nombres o IDs. No puede cambiarse si la categoría tiene productos.
 - `producto.condicion_llanta`: `NUEVA` o `REENCAUCHADA`, obligatoria para llantas, nula para otros productos. Cada medida/condición tiene su propio producto. Medida y condición no pueden cambiarse si hay historial.
 - `detalle_mantenimiento.origen_producto`: `INVENTARIO` (predeterminado, también para registros existentes) o `EXTERNO`. `id_producto` ahora es opcional: obligatorio para inventario y nulo para externos. `descripcion_producto` es obligatoria para externos.

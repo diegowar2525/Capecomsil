@@ -70,7 +70,7 @@ La migración es transaccional y se aplica una sola vez a la versión anterior. 
 
 El modelo tramo_viaje se utiliza dentro del servicio de viajes, sin CRUD independiente. Cada tramo recibe orden, id_trayecto y observacion opcional. El trayecto debe existir y estar activo. El servidor resuelve las ubicaciones y copia sus kilómetros; ubicaciones o kilómetros adicionales enviados en el JSON se ignoran. Se ordenan por orden y se exige secuencia desde 1 sin huecos ni duplicados.
 
-El primer tramo sale de una gasolinera hacia un terminal. Cada origen siguiente coincide con el destino anterior. El recorrido debe pasar por el terminal de cada entrega antes de llegar a la gasolinera destinataria. No se exige regresar al origen. Las ubicaciones deben existir.
+El primer tramo puede partir de una gasolinera o un terminal; su destino no tiene que ser un terminal. Un terminal de origen también cuenta como punto de carga anterior a la entrega. Cada origen siguiente coincide con el destino anterior. El recorrido debe pasar por el terminal de cada entrega antes de llegar a la gasolinera destinataria. No se exige regresar al origen. Las ubicaciones deben existir.
 
 Los kilómetros se configuran en TRAYECTO, no se calculan mediante mapas; el backend suma los tramos con NUMERIC. POST, GET individual y anulación devuelven tramos; GET individual y anulación añaden nombres de origen/destino. El listado incluye kilometros_recorridos. Estos kilómetros todavía no generan COSTO_VIAJE automáticamente.
 
