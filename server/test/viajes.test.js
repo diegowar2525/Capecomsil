@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Pool } = require("pg");
 const { validateData, validateFiltros } = require("../src/utils/validators/viaje.validators");
-const body = { fecha_inicio: "2026-10-08", fecha_fin: "2026-10-09", id_vehiculo: 1, id_chofer: 1, tramos: [
+const body = { fecha: "2026-10-08", id_vehiculo: 1, id_chofer: 1, tramos: [
     { orden: 1, id_trayecto: 1 },
     { orden: 2, id_trayecto: 2 },
     { orden: 3, id_trayecto: 3 }
@@ -15,13 +15,13 @@ const body = { fecha_inicio: "2026-10-08", fecha_fin: "2026-10-09", id_vehiculo:
 
 test("Viajes: validación de entregas", () => {
     for (const patch of [
-        { fecha_fin: "2026-10-07" }, { fecha_inicio: "2026-10-08T24:00:00" },
+        { fecha_fin: "2026-10-07" }, { fecha: "2026-10-08T24:00:00" },
         { tramos: [] }, { tramos: [null] },
         { tramos: body.tramos.map(t => ({ ...t, orden: 1 })) },
         { tramos: body.tramos.map(t => ({ ...t, id_trayecto: true })) }
     ]) assert.throws(() => validateData({ ...body, ...patch }), { status: 400 });
-    assert.equal(validateData({ ...body, fecha_inicio: "2026-10-08T09:30" }).fecha_inicio, "2026-10-08T09:30:00");
-    for (const patch of [{ detalles: [] }, { detalles: [null] }, { fecha_inicio: "2026-02-30" },
+    assert.equal(validateData(body).fecha, "2026-10-08");
+    for (const patch of [{ detalles: [] }, { detalles: [null] }, { fecha: "2026-02-30" },
         { detalles: [body.detalles[0], body.detalles[0]] }, { id_chofer: true },
         ...["0", "-1", "0.001"].map(galones => ({ detalles: [{ ...body.detalles[0], galones }] }))]) {
         assert.throws(() => validateData({ ...body, ...patch }), { status: 400 });
@@ -48,8 +48,9 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         await admin.query("CREATE SCHEMA " + schema);
         await admin.query("SET LOCAL search_path TO " + schema + ",public");
         await admin.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
-        await admin.query(`INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100);
-            INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Test','TEST','SUELDO');
+        await admin.query(`INSERT INTO configuracion_remuneracion(importe_diario,adicional_dia_especial,fecha_inicio) VALUES (35,35,'2026-01-01');
+            INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100);
+            INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Test','TEST','DIARIO_FIJO');
             INSERT INTO gasolinera(nombre) VALUES ('A'),('B'); INSERT INTO terminal(nombre) VALUES ('T');
             INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones'),('Extra','galones');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio,fecha_fin,estado)
@@ -83,7 +84,7 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         for (const patch of [{ id_vehiculo: 999 }, { id_chofer: 999 }, { detalles: [{ ...body.detalles[0], id_producto_transportado: 999 }] }]) {
             assert.equal((await post({ ...body, ...patch })).status, 400);
         }
-        assert.equal((await post({ ...body, fecha_inicio: "2026-10-09" })).status, 409);
+        assert.equal((await post({ ...body, fecha: "2026-10-09" })).status, 409);
         const missingPlace = body.tramos.map(t => t.orden === 1 ? { ...t, id_trayecto: 999 } : t);
         assert.equal((await post({ ...body, tramos: missingPlace })).status, 400);
         assert.equal((await post({ ...body, tramos: body.tramos.slice(0,2) })).status, 400);
@@ -121,7 +122,7 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal(filtered.body[0].total_galones, "100.00");
         assert.equal((await request("?id_terminal=999")).body.length, 0);
         assert.equal((await request("?limit=1&offset=1")).body[0].id_viaje, id);
-        await isolated.query("UPDATE viaje SET fecha_inicio='2026-10-08 23:59:59' WHERE id_viaje=$1", [id]);
+        await isolated.query("UPDATE viaje SET fecha='2026-10-08' WHERE id_viaje=$1", [id]);
         assert.equal((await request("?fecha_desde=2026-10-08&fecha_hasta=2026-10-08")).body.length, 2);
         assert.equal((await request("?fecha_desde=2026-10-09")).body.length, 0);
         assert.equal((await request("/99999")).status, 404);

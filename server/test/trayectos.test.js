@@ -52,8 +52,8 @@ test("Trayectos: CRUD HTTP e historial", async () => {
         assert.equal((await request("PUT", `/${id}`, data)).status, 200);
         const removable = await request("POST");
         assert.equal((await request("DELETE", `/${removable.body.id_trayecto}`)).status, 200);
-        await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','SUELDO')");
-        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-12','2026-10-12')");
+        await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','DIARIO_FIJO')");
+        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha) VALUES (1,1,'2026-10-12')");
         await client.query("INSERT INTO tramo_viaje(id_viaje,id_trayecto,orden) VALUES (1,$1,1)", [id]);
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         assert.equal((await request("PUT", `/${id}`, { ...data, id_gasolinera_origen: 2 })).status, 409);

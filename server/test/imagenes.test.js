@@ -25,7 +25,7 @@ test("Imágenes: persistencia y lectura en los tres catálogos", async () => {
         pool.query = client.query.bind(client);
         for (const [entity, data] of [
             ["vehiculo", { placa: "TEST", marca: "Marca", modelo: "Modelo", anio: 2026, capacidad_galones: 100 }],
-            ["chofer", { nombre: "Test", cedula: "TEST", tipo_remuneracion: "SUELDO" }],
+            ["chofer", { nombre: "Test", cedula: "TEST", tipo_remuneracion: "DIARIO_FIJO" }],
             ["producto", { id_categoria: 1, nombre: "Test", unidad_medida: "unidad" }]
         ]) {
             const model = require(`../src/models/${entity}.model`);
