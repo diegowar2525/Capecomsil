@@ -1,6 +1,6 @@
 # Cambios de esquema — migración 010
 
-- `viaje.fecha` se sustituye por `fecha_inicio` y `fecha_fin`, ambas obligatorias. La vigencia de tarifas usa `fecha_inicio`.
+- `viaje.fecha` es DATE y representa el día completo del viaje. La vigencia de tarifas y la remuneración usan esta fecha; no se registran horas.
 - `trayecto`: PK `id_trayecto`; `nombre`; cuatro FK opcionales de origen/destino hacia terminal o gasolinera; `kilometros`; `estado`; `observacion`.
 - `tramo_viaje`: PK `id_tramo_viaje`; FK obligatorias `id_viaje` e `id_trayecto`; `orden`; `kilometros` históricos; `observacion`. Las cuatro FK de ubicaciones pertenecen ahora al catálogo, no al tramo.
 - Cada extremo selecciona exactamente una ubicación. El recorrido puede empezar en una gasolinera o un terminal; no exige retorno al origen. Los números de orden comienzan en 1 y son consecutivos. La continuidad y las visitas a terminales antes de las entregas se validan al finalizar la transacción.
@@ -17,7 +17,7 @@ La migración elimina viajes y entregas sin reconstruir distancias desconocidas.
 
 ## Backend adaptado
 
-Los endpoints de viajes utilizan `fecha_inicio`, `fecha_fin` y `tramos`, con un modelo propio e inserción transaccional. El contrato anterior con `fecha` ya no es compatible. Consultas y anulaciones incluyen los tramos, y el total de kilómetros se calcula en PostgreSQL.
+Los endpoints de viajes utilizan `fecha` y `tramos`, con un modelo propio e inserción transaccional. Consultas y anulaciones incluyen los tramos, y el total de kilómetros se calcula en PostgreSQL. La migración 012 sustituye los anteriores campos de inicio y fin; ver MER_REMUNERACIONES.md.
 Los CRUD de categorías y productos admiten `es_llanta` y `condicion_llanta`. Los mantenimientos admiten materiales externos y las anulaciones revierten únicamente los movimientos existentes. Ver ejemplos en `server/VIAJES.md` y `server/RECORRIDOS_Y_MATERIALES.md`.
 La configuración y el cálculo automático de costos no forman parte de esta migración.
 
