@@ -1,12 +1,11 @@
-const { validateId, validateDate, validateDateTime, validateDecimal } = require("./common.validators");
+const { validateId, validateDate, validateDecimal } = require("./common.validators");
 const { validateTramos } = require("./tramo_viaje.validators");
 const { createHttpError } = require("../errors/http.error");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) throw createHttpError("Los datos del viaje son obligatorios", 400);
-    const fecha_inicio = validateDateTime(data.fecha_inicio);
-    const fecha_fin = validateDateTime(data.fecha_fin);
-    if (fecha_fin < fecha_inicio) throw createHttpError("La fecha de fin no puede ser anterior al inicio", 400);
+    if (data.fecha_inicio !== undefined || data.fecha_fin !== undefined) throw createHttpError("Use fecha (YYYY-MM-DD) en lugar de fecha_inicio y fecha_fin", 400);
+    const fecha = validateDate(data.fecha);
     const id_vehiculo = validateId(data.id_vehiculo);
     const id_chofer = validateId(data.id_chofer);
     if (!Array.isArray(data.detalles) || !data.detalles.length) throw createHttpError("El viaje debe tener al menos una entrega", 400);
@@ -24,7 +23,7 @@ const validateData = (data) => {
         return { id_gasolinera, id_terminal, id_producto_transportado, galones };
     });
     const tramos = validateTramos(data.tramos, detalles);
-    return { fecha_inicio, fecha_fin, id_vehiculo, id_chofer, detalles, tramos };
+    return { fecha, id_vehiculo, id_chofer, detalles, tramos };
 };
 
 const validateFiltros = (query) => {
