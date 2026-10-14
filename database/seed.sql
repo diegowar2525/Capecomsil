@@ -63,13 +63,13 @@ INSERT INTO vehiculo (placa, capacidad_galones) VALUES
 -- SUELDO: remuneración fija diaria confirmada por el usuario; no POR_VIAJE.
 
 INSERT INTO chofer (nombre, cedula, tipo_remuneracion) VALUES
-    ('AREVALO', 'PENDIENTE-001', 'SUELDO'),
-    ('CASTRO', 'PENDIENTE-002', 'SUELDO'),
-    ('ESPINOZA', 'PENDIENTE-003', 'SUELDO'),
-    ('GUERRERO', 'PENDIENTE-004', 'SUELDO'),
-    ('ORTEGA', 'PENDIENTE-005', 'SUELDO'),
-    ('PEREZ', 'PENDIENTE-006', 'SUELDO'),
-    ('VICUÑA', 'PENDIENTE-007', 'SUELDO');
+    ('AREVALO', 'PENDIENTE-001', 'DIARIO_FIJO'),
+    ('CASTRO', 'PENDIENTE-002', 'DIARIO_FIJO'),
+    ('ESPINOZA', 'PENDIENTE-003', 'DIARIO_FIJO'),
+    ('GUERRERO', 'PENDIENTE-004', 'DIARIO_FIJO'),
+    ('ORTEGA', 'PENDIENTE-005', 'DIARIO_FIJO'),
+    ('PEREZ', 'PENDIENTE-006', 'DIARIO_FIJO'),
+    ('VICUÑA', 'PENDIENTE-007', 'DIARIO_FIJO');
 
 -- CLIENTES!G3:G4; sin datos fiscales inventados.
 
@@ -872,4 +872,6 @@ FROM gasolinera g CROSS JOIN terminal t
 WHERE g.nombre='CADME CORP' AND t.nombre='Terminal Manta';
 
 
+INSERT INTO configuracion_remuneracion(importe_diario,adicional_dia_especial,fecha_inicio,observacion)
+VALUES (35,35,'2026-01-01','Importes diarios acordados; feriados deben configurarse antes de generar remuneraciones');
 COMMIT;
