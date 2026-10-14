@@ -77,6 +77,12 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
         assert.equal((await request("/configuraciones-remuneracion/1","PUT",config)).status,200);
         assert.equal((await request("/configuraciones-remuneracion","POST",{...config,fecha_inicio:"2026-12-31",fecha_fin:null})).status,409);
         assert.equal((await request("/configuraciones-remuneracion","POST",{...config,fecha_inicio:"2027-01-01",fecha_fin:null,importe_diario:"40"})).status,201);
+        const configuraciones = await request("/configuraciones-remuneracion");
+        assert.equal(configuraciones.status, 200);
+        assert.deepEqual(configuraciones.body.map(r => r.fecha_inicio), ["2027-01-01", "2026-01-01"]);
+        const feriados = await request("/feriados");
+        assert.equal(feriados.status, 200);
+        assert.deepEqual(feriados.body.map(r => r.fecha), ["2026-10-12", "2026-10-11"]);
         assert.equal((await generar(1,"2027-01-04")).body[0].total,"40.00");
         assert.equal((await generar(1,"2026-10-10")).body[0].total,"35.00");
         await isolated.query("UPDATE chofer SET tipo_remuneracion='DIA_TRABAJADO' WHERE id_chofer=1");
