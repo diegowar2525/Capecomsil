@@ -1,3 +1,4 @@
+const { translateRemuneracionError } = require("./remuneracion.errors");
 const { translateTarifaError } = require("./tarifa.errors");
 const { translateViajeError } = require("./viaje.errors");
 const { translateProductoError } = require("./producto.errors");
@@ -6,6 +7,7 @@ const { translateFacturaProveedorError } = require("./factura_proveedor.errors")
 const { translateTrayectoError } = require("./trayecto.errors");
 
 const translators = [
+    translateRemuneracionError,
     translateTrayectoError,
     translateViajeError,
     translateTarifaError,
