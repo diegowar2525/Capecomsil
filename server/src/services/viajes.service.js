@@ -1,3 +1,5 @@
+const costoModel = require("../models/costo_viaje.model");
+const remuneracionModel = require("../models/remuneracion_chofer.model");
 const pool = require("../config/database");
 const viajeModel = require("../models/viaje.model");
 const tramoModel = require("../models/tramo_viaje.model");
@@ -18,6 +20,7 @@ const createViaje = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        await remuneracionModel.lock(client);
         const trayectos = new Map();
         for (const id of [...new Set(validado.tramos.map(t => t.id_trayecto))].sort((a, b) => a - b)) {
             const trayecto = await trayectoModel.findByIdForShare(client, id);
@@ -41,7 +44,7 @@ const createViaje = async (data) => {
         for (const detalle of ordenados) {
             const clave = `${detalle.id_gasolinera}:${detalle.id_terminal}`;
             if (!tarifas.has(clave)) {
-                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha_inicio.slice(0, 10));
+                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha);
                 if (!tarifa) throw createHttpError(`No existe tarifa vigente para gasolinera ${detalle.id_gasolinera} y terminal ${detalle.id_terminal}`);
                 tarifas.set(clave, tarifa);
             }
@@ -56,9 +59,11 @@ const createViaje = async (data) => {
             const tarifa = tarifas.get(`${detalle.id_gasolinera}:${detalle.id_terminal}`);
             detalles.push(await detalleModel.create(client, viaje.id_viaje, detalle, tarifa));
         }
+        await remuneracionModel.recalcular(client, validado.id_chofer, validado.fecha);
         const totales = await viajeModel.getTotales(client, viaje.id_viaje);
+        const costos = await costoModel.findByViaje(viaje.id_viaje, client);
         await client.query("COMMIT");
-        return { ...viaje, ...totales, detalles, tramos };
+        return { ...viaje, ...totales, detalles, tramos, costos };
     } catch (error) {
         await client.query("ROLLBACK");
         if (error.code === "22003") throw createHttpError("Los importes del viaje exceden el límite permitido", 400);
@@ -76,7 +81,7 @@ const getViajeById = async (id) => {
     id = validateId(id);
     const viaje = await viajeModel.findById(id);
     if (!viaje) throw createHttpError("Viaje no encontrado", 404);
-    return { ...viaje, detalles: await detalleModel.findByViaje(id), tramos: await tramoModel.findByViaje(id) };
+    return { ...viaje, costos: await costoModel.findByViaje(id), detalles: await detalleModel.findByViaje(id), tramos: await tramoModel.findByViaje(id) };
 };
 
 const anularViaje = async (id, data) => {
@@ -85,17 +90,20 @@ const anularViaje = async (id, data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        await remuneracionModel.lock(client);
         const viaje = await viajeModel.findByIdForUpdate(client, id);
         if (!viaje) throw createHttpError("Viaje no encontrado", 404);
         if (viaje.estado === "ANULADO") throw createHttpError("El viaje ya está anulado");
         const detalles = await detalleModel.findByViajeForUpdate(client, id);
         if (detalles.some(d => d.id_liquidacion !== null)) throw createHttpError("No se puede anular un viaje con entregas asociadas a una liquidación");
         await viajeModel.anular(client, id, motivo);
+        await remuneracionModel.recalcular(client, viaje.id_chofer, viaje.fecha);
         const resultado = await viajeModel.findById(id, client);
         const entregas = await detalleModel.findByViaje(id, client);
         const tramos = await tramoModel.findByViaje(id, client);
+        const costos = await costoModel.findByViaje(id, client);
         await client.query("COMMIT");
-        return { ...resultado, detalles: entregas, tramos };
+        return { ...resultado, detalles: entregas, tramos, costos };
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -104,4 +112,9 @@ const anularViaje = async (id, data) => {
     }
 };
 
-module.exports = { getViajes, getViajeById, anularViaje, createViaje };
+module.exports = { 
+    getViajes, 
+    getViajeById, 
+    anularViaje, 
+    createViaje 
+};
