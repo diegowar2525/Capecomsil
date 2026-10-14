@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 
-const findAll = async () => (await pool.query("SELECT *,fecha::text AS fecha FROM feriado ORDER BY fecha DESC")).rows;
+const findAll = async () => (await pool.query("SELECT *,fecha::text AS fecha FROM feriado ORDER BY feriado.fecha DESC")).rows;
 
 const findById = async (id) => (await pool.query("SELECT *,fecha::text AS fecha FROM feriado WHERE id_feriado=$1", [id])).rows[0];
 
