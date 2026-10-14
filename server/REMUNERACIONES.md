@@ -46,7 +46,11 @@ Ambos límites son inclusivos. No se permite modificar importes ya utilizados ni
 `/api/feriados`: GET lista, GET /:id, POST, PUT /:id, DELETE /:id.
 
 ```json
-{ "fecha": "2026-12-25", "descripcion": "Navidad", "observacion": null }
+{ 
+  "fecha": "2026-12-25", 
+  "descripcion": "Navidad", 
+  "observacion": null 
+}
 ```
 
 `POST /api/remuneraciones-chofer/generar` genera/recalcula el período explícito de un chofer (máximo 366 días).
@@ -54,7 +58,11 @@ Incluye días sin viajes y es idempotente: no duplica fechas. No se infiere fech
 El operador debe elegir únicamente su período de actividad; una configuración faltante revierte toda la operación.
 
 ```json
-{ "id_chofer": 1, "fecha_desde": "2026-10-01", "fecha_hasta": "2026-10-31" }
+{ 
+  "id_chofer": 1, 
+  "fecha_desde": "2026-10-01", 
+  "fecha_hasta": "2026-10-31" 
+}
 ```
 
 `GET /api/remuneraciones-chofer?id_chofer=1&fecha_desde=2026-10-01&fecha_hasta=2026-10-31`

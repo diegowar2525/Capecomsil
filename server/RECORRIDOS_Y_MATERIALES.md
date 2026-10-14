@@ -5,7 +5,11 @@
 `POST /api/categorias-producto`:
 
 ```json
-{ "nombre": "Neumáticos", "es_llanta": true, "estado": true }
+{ 
+  "nombre": "Neumáticos", 
+  "es_llanta": true, 
+  "estado": true 
+}
 ```
 
 `es_llanta` admite booleanos, por defecto false. En PUT enviar el objeto completo, incluyendo este campo. No se permite cambiarlo si la categoría ya tiene productos. El nombre sí puede cambiarse.
