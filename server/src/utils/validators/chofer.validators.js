@@ -31,8 +31,8 @@ const validateData = (data) => {
 
     const tipoRemuneracionValidado = tipo_remuneracion.trim().toUpperCase();
 
-    if (!["SUELDO", "POR_VIAJE"].includes(tipoRemuneracionValidado)) {
-        const error = new Error("El tipo de remuneración debe ser SUELDO o POR_VIAJE.");
+    if (!["DIARIO_FIJO", "DIA_TRABAJADO"].includes(tipoRemuneracionValidado)) {
+        const error = new Error("El tipo de remuneración debe ser DIARIO_FIJO o DIA_TRABAJADO.");
         error.status = 400;
         throw error;
     }
