@@ -47,4 +47,7 @@ router.use(
     productosTransportadosRoutes
 );
 
+router.use("/configuraciones-remuneracion", require("./configuracion_remuneracion.routes"));
+router.use("/feriados", require("./feriado.routes"));
+router.use("/remuneraciones-chofer", require("./remuneraciones.routes"));
 module.exports = router;
