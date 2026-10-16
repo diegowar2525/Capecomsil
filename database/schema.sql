@@ -233,6 +233,10 @@ CREATE TABLE viaje (
     fecha_anulacion TIMESTAMP,
     motivo_anulacion VARCHAR(150),
     CONSTRAINT chk_viaje_estado CHECK (estado IN ('REGISTRADO', 'ANULADO')),
+    CONSTRAINT horario_viaje_vehiculo EXCLUDE USING gist
+        (id_vehiculo WITH =, tsrange(fecha_inicio,fecha_fin,'[)') WITH &&) WHERE (estado='REGISTRADO'),
+    CONSTRAINT horario_viaje_chofer EXCLUDE USING gist
+        (id_chofer WITH =, tsrange(fecha_inicio,fecha_fin,'[)') WITH &&) WHERE (estado='REGISTRADO'),
 
     CONSTRAINT fk_viaje_vehiculo
         FOREIGN KEY (id_vehiculo)
@@ -664,6 +668,8 @@ CREATE TABLE mantenimiento (
     fecha_inicio TIMESTAMP NOT NULL,
     fecha_fin TIMESTAMP,
     CHECK (fecha_fin IS NULL OR fecha_fin > fecha_inicio),
+    CONSTRAINT horario_mantenimiento EXCLUDE USING gist
+        (id_vehiculo WITH =, tsrange(fecha_inicio,fecha_fin,'[)') WITH &&) WHERE (estado='REGISTRADO'),
     tipo VARCHAR(100) NOT NULL,
     monto NUMERIC(14, 2) NOT NULL,
     descripcion TEXT,
@@ -1154,6 +1160,77 @@ END;
 $$;
 CREATE TRIGGER configuracion_remuneracion_historial BEFORE UPDATE OR DELETE ON configuracion_remuneracion
     FOR EACH ROW EXECUTE FUNCTION proteger_configuracion_remuneracion();
+
+-- El mismo bloqueo que usa la API coordina horarios, configuraciones y costos.
+CREATE FUNCTION validar_disponibilidad_vehiculo() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    IF NEW.estado='ANULADO' THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='viaje' THEN
+        IF EXISTS (SELECT 1 FROM mantenimiento m WHERE m.id_vehiculo=NEW.id_vehiculo
+            AND m.estado='REGISTRADO'
+            AND tsrange(m.fecha_inicio,m.fecha_fin,'[)') && tsrange(NEW.fecha_inicio,NEW.fecha_fin,'[)')) THEN
+            RAISE EXCEPTION 'El vehículo está en mantenimiento durante ese horario'
+                USING ERRCODE='23514', CONSTRAINT='horario_cruce_mantenimiento';
+        END IF;
+    ELSE
+        IF EXISTS (SELECT 1 FROM viaje v WHERE v.id_vehiculo=NEW.id_vehiculo AND v.estado='REGISTRADO'
+            AND tsrange(v.fecha_inicio,v.fecha_fin,'[)') && tsrange(NEW.fecha_inicio,NEW.fecha_fin,'[)')) THEN
+            RAISE EXCEPTION 'El mantenimiento coincide con un viaje del vehículo'
+                USING ERRCODE='23514', CONSTRAINT='horario_cruce_viaje';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER viaje_disponibilidad BEFORE INSERT OR UPDATE ON viaje
+    FOR EACH ROW EXECUTE FUNCTION validar_disponibilidad_vehiculo();
+CREATE TRIGGER mantenimiento_disponibilidad BEFORE INSERT OR UPDATE ON mantenimiento
+    FOR EACH ROW EXECUTE FUNCTION validar_disponibilidad_vehiculo();
+
+CREATE FUNCTION proteger_configuracion_costos() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE usada BOOLEAN; fuera BOOLEAN; cambio BOOLEAN;
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    IF TG_OP='INSERT' THEN RETURN NEW; END IF;
+    IF TG_TABLE_NAME='configuracion_combustible' THEN
+        SELECT EXISTS(SELECT 1 FROM costo_viaje WHERE id_configuracion_combustible=OLD.id_configuracion_combustible) INTO usada;
+        IF TG_OP='UPDATE' THEN
+            cambio := NEW.consumo_galones_km<>OLD.consumo_galones_km OR NEW.precio_por_galon<>OLD.precio_por_galon;
+            SELECT EXISTS(SELECT 1 FROM costo_viaje c JOIN viaje v USING(id_viaje)
+                WHERE c.id_configuracion_combustible=OLD.id_configuracion_combustible
+                AND (v.fecha_inicio::date<NEW.fecha_inicio OR v.fecha_inicio::date>NEW.fecha_fin)) INTO fuera;
+        END IF;
+    ELSIF TG_TABLE_NAME='configuracion_viatico' THEN
+        SELECT EXISTS(SELECT 1 FROM viatico_chofer WHERE id_configuracion_viatico=OLD.id_configuracion_viatico) INTO usada;
+        IF TG_OP='UPDATE' THEN
+            cambio := NEW.importe_diario<>OLD.importe_diario;
+            SELECT EXISTS(SELECT 1 FROM viatico_chofer WHERE id_configuracion_viatico=OLD.id_configuracion_viatico
+                AND (fecha<NEW.fecha_inicio OR fecha>NEW.fecha_fin)) INTO fuera;
+        END IF;
+    ELSE
+        SELECT EXISTS(SELECT 1 FROM tramo_viaje WHERE id_configuracion_peaje_trayecto=OLD.id_configuracion_peaje_trayecto) INTO usada;
+        IF TG_OP='UPDATE' THEN
+            cambio := NEW.importe<>OLD.importe OR NEW.id_trayecto<>OLD.id_trayecto;
+            SELECT EXISTS(SELECT 1 FROM tramo_viaje t JOIN viaje v USING(id_viaje)
+                WHERE t.id_configuracion_peaje_trayecto=OLD.id_configuracion_peaje_trayecto
+                AND (v.fecha_inicio::date<NEW.fecha_inicio OR v.fecha_inicio::date>NEW.fecha_fin)) INTO fuera;
+        END IF;
+    END IF;
+    IF usada AND (TG_OP='DELETE' OR cambio OR fuera) THEN
+        RAISE EXCEPTION 'La configuración ya fue utilizada; conserve sus importes y las fechas históricas'
+            USING ERRCODE='23514', CONSTRAINT='costos_configuracion_historial';
+    END IF;
+    IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER combustible_historial BEFORE INSERT OR UPDATE OR DELETE ON configuracion_combustible
+    FOR EACH ROW EXECUTE FUNCTION proteger_configuracion_costos();
+CREATE TRIGGER viatico_historial BEFORE INSERT OR UPDATE OR DELETE ON configuracion_viatico
+    FOR EACH ROW EXECUTE FUNCTION proteger_configuracion_costos();
+CREATE TRIGGER peaje_historial BEFORE INSERT OR UPDATE OR DELETE ON configuracion_peaje_trayecto
+    FOR EACH ROW EXECUTE FUNCTION proteger_configuracion_costos();
 
 CREATE FUNCTION proteger_feriado() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
