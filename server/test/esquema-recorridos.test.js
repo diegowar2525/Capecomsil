@@ -15,11 +15,27 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         const seed = fs.readFileSync(path.join(__dirname, "../../database/seed.sql"), "utf8")
             .replace(/^BEGIN;/m, "").replace(/^COMMIT;/m, "");
         await client.query(seed);
-        for (const [tabla, esperado] of Object.entries({ terminal: 5, gasolinera: 17, vehiculo: 8, chofer: 7, tarifa: 42, trayecto: 66 })) {
+        for (const [tabla, esperado] of Object.entries({ terminal: 5, gasolinera: 17, vehiculo: 8, chofer: 7, tarifa: 42, trayecto: 248 })) {
             assert.equal((await client.query(`SELECT count(*)::int n FROM ${tabla}`)).rows[0].n, esperado);
         }
         assert.equal((await client.query("SELECT count(*)::int n FROM tarifa WHERE valor_por_galon <= 0 OR fecha_inicio <> DATE '2026-01-01' OR fecha_fin <> DATE '2026-12-31'")).rows[0].n, 0);
         assert.equal((await client.query("SELECT count(*)::int n FROM trayecto WHERE observacion NOT LIKE 'ESTIMACIÓN DE PRUEBA:%'")).rows[0].n, 0);
+        const grados = (await client.query(`SELECT id_gasolinera_origen,COUNT(*)::int n,
+            COUNT(DISTINCT id_gasolinera_destino)::int destinos FROM trayecto
+            WHERE id_gasolinera_origen IS NOT NULL AND id_gasolinera_destino IS NOT NULL
+            GROUP BY id_gasolinera_origen`)).rows;
+        assert.equal(grados.length, 14);
+        assert.ok(grados.every(r => r.n === 13 && r.destinos === 13));
+        assert.equal((await client.query(`SELECT count(*)::int n FROM trayecto t
+            WHERE t.id_gasolinera_origen IS NOT NULL AND t.id_gasolinera_destino IS NOT NULL
+            AND (t.id_gasolinera_origen=t.id_gasolinera_destino OR t.kilometros<=0 OR NOT EXISTS (
+                SELECT 1 FROM trayecto r WHERE r.id_gasolinera_origen=t.id_gasolinera_destino
+                    AND r.id_gasolinera_destino=t.id_gasolinera_origen))`)).rows[0].n, 0);
+        const entreGasolineras = (await client.query(`SELECT o.nombre AS origen,d.nombre AS destino,t.kilometros
+            FROM trayecto t JOIN gasolinera o ON o.id_gasolinera=t.id_gasolinera_origen
+            JOIN gasolinera d ON d.id_gasolinera=t.id_gasolinera_destino
+            WHERE o.nombre IN ('CECILIA','MECHITA') AND d.nombre IN ('CECILIA','MECHITA') ORDER BY o.nombre`)).rows;
+        assert.deepEqual(entreGasolineras.map(r => r.kilometros), ["1.40", "1.00"]);
         const mechita = (await client.query(`SELECT t.kilometros FROM trayecto t
             JOIN gasolinera g ON g.id_gasolinera=t.id_gasolinera_origen
             JOIN terminal te ON te.id_terminal=t.id_terminal_destino
