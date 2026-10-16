@@ -53,8 +53,9 @@ test("Trayectos: CRUD HTTP e historial", async () => {
         const removable = await request("POST");
         assert.equal((await request("DELETE", `/${removable.body.id_trayecto}`)).status, 200);
         await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','DIARIO_FIJO')");
-        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha) VALUES (1,1,'2026-10-12')");
-        await client.query("INSERT INTO tramo_viaje(id_viaje,id_trayecto,orden) VALUES (1,$1,1)", [id]);
+        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-12 08:00','2026-10-12 09:00')");
+        await client.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) VALUES ($1,0,'2026-01-01')", [id]);
+        await client.query("INSERT INTO tramo_viaje(id_viaje,id_trayecto,orden,id_configuracion_peaje_trayecto,peaje_aplicado) SELECT 1,id_trayecto,1,id_configuracion_peaje_trayecto,importe FROM configuracion_peaje_trayecto WHERE id_trayecto=$1", [id]);
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         assert.equal((await request("PUT", `/${id}`, { ...data, id_gasolinera_origen: 2 })).status, 409);
         assert.equal((await request("DELETE", `/${id}`)).status, 409);
