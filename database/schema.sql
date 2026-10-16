@@ -22,6 +22,11 @@ CREATE TABLE terminal (
 CREATE TABLE vehiculo (
     imagen_url VARCHAR(2048),
     id_vehiculo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    kilometraje_base NUMERIC(12,2) CHECK (kilometraje_base >= 0),
+    fecha_inicio_control_km TIMESTAMP,
+    CONSTRAINT vehiculo_inicio_control CHECK (
+        (kilometraje_base IS NULL) = (fecha_inicio_control_km IS NULL)
+    ),
     placa VARCHAR(20) NOT NULL UNIQUE,
     marca VARCHAR(100),
     modelo VARCHAR(100),
@@ -221,7 +226,9 @@ CREATE TABLE viaje (
     id_vehiculo INTEGER NOT NULL,
     id_chofer INTEGER NOT NULL,
 
-    fecha DATE NOT NULL,
+    fecha_inicio TIMESTAMP NOT NULL,
+    fecha_fin TIMESTAMP NOT NULL,
+    CONSTRAINT viaje_horario CHECK (fecha_fin > fecha_inicio AND fecha_fin::date = fecha_inicio::date),
     estado VARCHAR(30) NOT NULL DEFAULT 'REGISTRADO',
     fecha_anulacion TIMESTAMP,
     motivo_anulacion VARCHAR(150),
@@ -258,10 +265,61 @@ CREATE TABLE trayecto (
     )
 );
 
+
+-- Configuraciones con vigencia para costos automáticos.
+CREATE TABLE configuracion_combustible (
+    id_configuracion_combustible INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    consumo_galones_km NUMERIC(12,6) NOT NULL CHECK (consumo_galones_km > 0),
+    precio_por_galon NUMERIC(12,4) NOT NULL CHECK (precio_por_galon > 0),
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE,
+    observacion TEXT,
+    CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
+    EXCLUDE USING gist (daterange(fecha_inicio,fecha_fin,'[]') WITH &&)
+);
+
+CREATE TABLE configuracion_viatico (
+    id_configuracion_viatico INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    importe_diario NUMERIC(12,2) NOT NULL CHECK (importe_diario > 0),
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE,
+    observacion TEXT,
+    CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
+    EXCLUDE USING gist (daterange(fecha_inicio,fecha_fin,'[]') WITH &&)
+);
+
+CREATE TABLE viatico_chofer (
+    id_viatico_chofer INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_chofer INTEGER NOT NULL REFERENCES chofer(id_chofer),
+    id_configuracion_viatico INTEGER NOT NULL REFERENCES configuracion_viatico(id_configuracion_viatico),
+    fecha DATE NOT NULL,
+    importe_diario_aplicado NUMERIC(12,2) NOT NULL CHECK (importe_diario_aplicado > 0),
+    total NUMERIC(12,2) NOT NULL,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (id_chofer,fecha),
+    CHECK (total = 0 OR total = importe_diario_aplicado)
+);
+
+CREATE TABLE configuracion_peaje_trayecto (
+    id_configuracion_peaje_trayecto INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_trayecto INTEGER NOT NULL REFERENCES trayecto(id_trayecto),
+    importe NUMERIC(12,2) NOT NULL CHECK (importe >= 0),
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE,
+    observacion TEXT,
+    UNIQUE (id_configuracion_peaje_trayecto,id_trayecto),
+    CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
+    EXCLUDE USING gist (id_trayecto WITH =, daterange(fecha_inicio,fecha_fin,'[]') WITH &&)
+);
+
 CREATE TABLE tramo_viaje (
     id_tramo_viaje INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_viaje INTEGER NOT NULL REFERENCES viaje(id_viaje),
     id_trayecto INTEGER NOT NULL REFERENCES trayecto(id_trayecto),
+    id_configuracion_peaje_trayecto INTEGER NOT NULL,
+    peaje_aplicado NUMERIC(12,2) NOT NULL CHECK (peaje_aplicado >= 0),
+    FOREIGN KEY (id_configuracion_peaje_trayecto,id_trayecto)
+        REFERENCES configuracion_peaje_trayecto(id_configuracion_peaje_trayecto,id_trayecto),
     orden INTEGER NOT NULL CHECK (orden > 0),
     kilometros NUMERIC(10,2) NOT NULL CHECK (kilometros > 0),
     observacion TEXT,
@@ -355,7 +413,27 @@ CREATE TABLE costo_viaje (
     id_costo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_viaje INTEGER NOT NULL,
     id_remuneracion_chofer INTEGER REFERENCES remuneracion_chofer(id_remuneracion_chofer),
+    id_viatico_chofer INTEGER REFERENCES viatico_chofer(id_viatico_chofer),
+    id_configuracion_combustible INTEGER REFERENCES configuracion_combustible(id_configuracion_combustible),
+    kilometros_aplicados NUMERIC(12,2),
+    consumo_galones_km_aplicado NUMERIC(12,6),
+    precio_por_galon_aplicado NUMERIC(12,4),
+    galones_estimados NUMERIC(18,6),
     UNIQUE (id_viaje,id_remuneracion_chofer),
+    UNIQUE (id_viaje,tipo_costo),
+    CHECK (tipo_costo IN ('CHOFER','VIATICO','COMBUSTIBLE','PEAJE')),
+    CHECK ((tipo_costo='VIATICO') = (id_viatico_chofer IS NOT NULL)),
+    CHECK (
+        (tipo_costo='COMBUSTIBLE'
+            AND id_configuracion_combustible IS NOT NULL
+            AND kilometros_aplicados IS NOT NULL AND kilometros_aplicados > 0
+            AND consumo_galones_km_aplicado IS NOT NULL AND consumo_galones_km_aplicado > 0
+            AND precio_por_galon_aplicado IS NOT NULL AND precio_por_galon_aplicado > 0
+            AND galones_estimados IS NOT NULL AND galones_estimados > 0)
+        OR (tipo_costo<>'COMBUSTIBLE'
+            AND num_nonnulls(id_configuracion_combustible,kilometros_aplicados,
+                consumo_galones_km_aplicado,precio_por_galon_aplicado,galones_estimados)=0)
+    ),
     CONSTRAINT remuneracion_costo_origen CHECK ((tipo_costo='CHOFER') = (id_remuneracion_chofer IS NOT NULL)),
     tipo_costo VARCHAR(100) NOT NULL,
     valor NUMERIC(12, 2) NOT NULL,
@@ -429,6 +507,16 @@ CREATE TABLE gasto (
     id_vehiculo INTEGER,
     id_proveedor INTEGER,
 
+    id_viatico_chofer INTEGER REFERENCES viatico_chofer(id_viatico_chofer),
+    estado VARCHAR(20) NOT NULL DEFAULT 'REGISTRADO' CHECK (estado IN ('REGISTRADO','ANULADO')),
+    fecha_anulacion TIMESTAMP,
+    motivo_anulacion VARCHAR(150),
+    CHECK (
+        (estado='REGISTRADO' AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
+        OR (estado='ANULADO' AND fecha_anulacion IS NOT NULL
+            AND motivo_anulacion IS NOT NULL AND btrim(motivo_anulacion)<>'')
+    ),
+    CHECK (id_viatico_chofer IS NULL OR (tipo_gasto='VIATICO' AND id_viaje IS NULL)),
     fecha DATE NOT NULL DEFAULT CURRENT_DATE,
     tipo_gasto VARCHAR(100) NOT NULL,
     monto NUMERIC(14, 2) NOT NULL,
@@ -573,7 +661,9 @@ CREATE TABLE mantenimiento (
     id_vehiculo INTEGER NOT NULL,
     id_proveedor INTEGER,
 
-    fecha DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_inicio TIMESTAMP NOT NULL,
+    fecha_fin TIMESTAMP,
+    CHECK (fecha_fin IS NULL OR fecha_fin > fecha_inicio),
     tipo VARCHAR(100) NOT NULL,
     monto NUMERIC(14, 2) NOT NULL,
     descripcion TEXT,
@@ -734,7 +824,7 @@ BEGIN
             OR EXISTS (
                 SELECT 1 FROM detalle_viaje d JOIN viaje v USING (id_viaje)
                 WHERE d.id_tarifa = OLD.id_tarifa
-                AND (v.fecha < NEW.fecha_inicio OR v.fecha > NEW.fecha_fin)
+                AND (v.fecha_inicio::date < NEW.fecha_inicio OR v.fecha_inicio::date > NEW.fecha_fin)
             ) THEN
             RAISE EXCEPTION 'La modificación altera el historial de viajes'
                 USING ERRCODE = '23514', CONSTRAINT = 'tarifa_historial';
@@ -752,7 +842,7 @@ CREATE FUNCTION validar_vigencia_tarifa_viaje() RETURNS trigger LANGUAGE plpgsql
 DECLARE vigente tarifa%ROWTYPE;
         fecha_viaje DATE;
 BEGIN
-    SELECT fecha INTO fecha_viaje FROM viaje WHERE id_viaje=NEW.id_viaje FOR UPDATE;
+    SELECT fecha_inicio::date INTO fecha_viaje FROM viaje WHERE id_viaje=NEW.id_viaje FOR UPDATE;
     SELECT * INTO vigente FROM tarifa WHERE id_tarifa = NEW.id_tarifa FOR UPDATE;
     IF FOUND AND (fecha_viaje::date < vigente.fecha_inicio OR fecha_viaje::date > vigente.fecha_fin) THEN
         RAISE EXCEPTION 'La tarifa no cubre la fecha del viaje'
@@ -772,7 +862,7 @@ BEGIN
         WHERE t.id_tarifa IN (SELECT d.id_tarifa FROM detalle_viaje d WHERE d.id_viaje=NEW.id_viaje)
         ORDER BY t.id_tarifa FOR UPDATE
     LOOP
-        IF NEW.fecha < vigente.fecha_inicio OR NEW.fecha > vigente.fecha_fin THEN
+        IF NEW.fecha_inicio::date < vigente.fecha_inicio OR NEW.fecha_inicio::date > vigente.fecha_fin THEN
             RAISE EXCEPTION 'La tarifa no cubre la fecha del viaje'
                 USING ERRCODE = '23514', CONSTRAINT = 'viaje_tarifa_vigente';
         END IF;
@@ -781,7 +871,7 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER viaje_validar_fecha BEFORE UPDATE OF fecha ON viaje
+CREATE TRIGGER viaje_validar_fecha BEFORE UPDATE OF fecha_inicio ON viaje
     FOR EACH ROW EXECUTE FUNCTION validar_fecha_viaje();
 
 CREATE INDEX idx_detalle_viaje_tarifa ON detalle_viaje(id_tarifa);
@@ -1085,7 +1175,7 @@ BEGIN
         SELECT id_feriado INTO feriado_id FROM feriado WHERE fecha=p_fecha;
     END IF;
     domingo := EXTRACT(DOW FROM p_fecha)=0;
-    trabajado := EXISTS (SELECT 1 FROM viaje WHERE id_chofer=p_chofer AND fecha=p_fecha AND estado='REGISTRADO');
+    trabajado := EXISTS (SELECT 1 FROM viaje WHERE id_chofer=p_chofer AND fecha_inicio::date=p_fecha AND estado='REGISTRADO');
     base := CASE WHEN trabajado OR (modalidad='DIARIO_FIJO' AND NOT domingo) THEN c.importe_diario ELSE 0 END;
     adicional := CASE WHEN trabajado AND (domingo OR feriado_id IS NOT NULL) THEN c.adicional_dia_especial ELSE 0 END;
     IF r.id_remuneracion_chofer IS NULL THEN
@@ -1105,7 +1195,7 @@ BEGIN
         (div(r.total*100,n) + CASE WHEN posicion<=mod(r.total*100,n) THEN 1 ELSE 0 END)/100,
         'Asignación de la remuneración diaria',r.id_remuneracion_chofer
     FROM (SELECT id_viaje,COUNT(*) OVER () AS n,ROW_NUMBER() OVER (ORDER BY id_viaje) AS posicion
-        FROM viaje WHERE id_chofer=p_chofer AND fecha=p_fecha AND estado='REGISTRADO') viajes
+        FROM viaje WHERE id_chofer=p_chofer AND fecha_inicio::date=p_fecha AND estado='REGISTRADO') viajes
     ON CONFLICT (id_viaje,id_remuneracion_chofer) DO UPDATE SET valor=EXCLUDED.valor;
     RETURN r.id_remuneracion_chofer;
 END;
