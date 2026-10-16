@@ -682,9 +682,49 @@ CREATE TABLE mantenimiento (
 );
 
 -- =====================================================
--- DETALLE_MANTENIMIENTO
+-- PLANES DE MANTENIMIENTO Y ABASTECIMIENTOS
 -- =====================================================
 
+-- Planes independientes por vehículo; no generan consumos de inventario.
+CREATE TABLE plan_mantenimiento_vehiculo (
+    id_plan_mantenimiento_vehiculo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_vehiculo INTEGER NOT NULL REFERENCES vehiculo(id_vehiculo),
+    nombre VARCHAR(150) NOT NULL CHECK (btrim(nombre) <> ''),
+    intervalo_km NUMERIC(12,2) NOT NULL CHECK (intervalo_km > 0),
+    kilometraje_referencia_inicial NUMERIC(12,2) NOT NULL CHECK (kilometraje_referencia_inicial >= 0),
+    anticipacion_aviso_km NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (anticipacion_aviso_km >= 0),
+    estado BOOLEAN NOT NULL DEFAULT TRUE,
+    observacion TEXT
+);
+CREATE INDEX idx_plan_mantenimiento_vehiculo ON plan_mantenimiento_vehiculo(id_vehiculo);
+
+CREATE TABLE cumplimiento_plan_mantenimiento (
+    id_cumplimiento_plan_mantenimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_mantenimiento INTEGER NOT NULL REFERENCES mantenimiento(id_mantenimiento),
+    id_plan_mantenimiento_vehiculo INTEGER NOT NULL REFERENCES plan_mantenimiento_vehiculo(id_plan_mantenimiento_vehiculo),
+    kilometraje_aplicado NUMERIC(12,2) NOT NULL CHECK (kilometraje_aplicado >= 0),
+    UNIQUE (id_mantenimiento,id_plan_mantenimiento_vehiculo)
+);
+CREATE INDEX idx_cumplimiento_plan ON cumplimiento_plan_mantenimiento(id_plan_mantenimiento_vehiculo);
+
+-- El importe, comprobante y estado de anulación pertenecen al gasto asociado.
+-- Un gasto puede respaldar una sola carga; no se duplican importes aquí.
+CREATE TABLE abastecimiento_combustible (
+    id_abastecimiento_combustible INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_vehiculo INTEGER NOT NULL REFERENCES vehiculo(id_vehiculo),
+    id_gasto INTEGER NOT NULL UNIQUE REFERENCES gasto(id_gasto),
+    fecha_hora TIMESTAMP NOT NULL,
+    kilometraje_odometro NUMERIC(12,2) NOT NULL CHECK (kilometraje_odometro >= 0),
+    galones NUMERIC(12,4) NOT NULL CHECK (galones > 0),
+    precio_por_galon NUMERIC(12,4) NOT NULL CHECK (precio_por_galon > 0),
+    tanque_lleno BOOLEAN NOT NULL,
+    observacion TEXT
+);
+CREATE INDEX idx_abastecimiento_vehiculo_fecha ON abastecimiento_combustible(id_vehiculo,fecha_hora);
+
+-- =====================================================
+-- DETALLE_MANTENIMIENTO
+-- =====================================================
 CREATE TABLE detalle_mantenimiento (
     id_detalle_mantenimiento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_mantenimiento INTEGER NOT NULL,
