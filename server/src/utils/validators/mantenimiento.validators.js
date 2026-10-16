@@ -71,5 +71,11 @@ const validateData = (data) => {
 };
 
 module.exports = {
+    validateFinalizacion: (data) => {
+        if (!data || typeof data.fecha_fin !== "string" || data.fecha_fin.length <= 10) {
+            throw createHttpError("Indique fecha_fin con fecha y hora", 400);
+        }
+        return validateDateTime(data.fecha_fin);
+    },
     validateData
 };
