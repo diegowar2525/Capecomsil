@@ -1,0 +1,508 @@
+{
+  "fecha_consulta": "2026-10-16",
+  "proveedor": "OSRM demo / OpenStreetMap",
+  "perfil": "driving",
+  "unidad": "metros",
+  "url": "https://router.project-osrm.org/table/v1/driving/-79.34669009935,-2.42179953603599;-79.3465419,-2.4286941;-79.4444298,-2.3284252;-79.49404515569086,-1.8078657973822667;-79.66012345207646,-1.7933771017180802;-80.00902943391539,-1.9718205566436964;-80.00915203634081,-1.9724908946380393;-80.58175826660543,-1.3538517212166927;-80.5871018215515,-1.3707139520084095;-79.3046997,-2.4651418;-79.3521459,-2.41268;-79.471378,-2.3153497;-79.292953125,-2.4683625;-78.89220312500001,-2.7039375000000003?annotations=distance",
+  "estaciones": [
+    "CECILIA",
+    "MECHITA",
+    "RIO VERDE",
+    "BBHY SILVAN 1",
+    "BABA SILVAN 2",
+    "1PETRILLO",
+    "2PETRILLO",
+    "2JIPIJAPA",
+    "3JIPIJAPA",
+    "COCHANCAY",
+    "RIRCAY",
+    "MA. DEL CISNE",
+    "SAN JACINTO",
+    "ROCIO"
+  ],
+  "respuesta": {
+    "code": "Ok",
+    "distances": [
+      [
+        0,
+        1431.6,
+        33392.1,
+        106180,
+        122733.4,
+        103506,
+        103489.8,
+        213105.3,
+        212455.2,
+        8722,
+        1331.1,
+        29911.3,
+        10337.3,
+        128917.3
+      ],
+      [
+        968.3,
+        0,
+        35357.3,
+        108145.2,
+        124698.5,
+        105471.2,
+        105454.9,
+        215070.5,
+        214420.4,
+        7603.8,
+        2023,
+        31876.5,
+        9219.1,
+        127799.1
+      ],
+      [
+        17931.5,
+        19815.2,
+        0,
+        94419.2,
+        110972.6,
+        91745.3,
+        91729,
+        201344.6,
+        200694.4,
+        25530.3,
+        16729.8,
+        18150.6,
+        27145.7,
+        145725.6
+      ],
+      [
+        106397.9,
+        108281.6,
+        88639.6,
+        0,
+        25053.8,
+        93707.7,
+        93713.3,
+        192661.3,
+        192011.1,
+        113996.7,
+        105196.2,
+        85158.8,
+        115612.1,
+        234192
+      ],
+      [
+        122667.7,
+        124551.3,
+        104909.3,
+        25171.8,
+        0,
+        68702.3,
+        68707.9,
+        167655.9,
+        167005.8,
+        130266.5,
+        121465.9,
+        101428.5,
+        131881.8,
+        250461.8
+      ],
+      [
+        104882.1,
+        106765.8,
+        87123.7,
+        93584.7,
+        68461.3,
+        0,
+        143.6,
+        109651.5,
+        109001.3,
+        112480.9,
+        103680.3,
+        83643,
+        114096.3,
+        232676.2
+      ],
+      [
+        104791,
+        106674.7,
+        87032.6,
+        93721.2,
+        68597.8,
+        188.7,
+        0,
+        109788,
+        109137.9,
+        112389.8,
+        103589.2,
+        83551.9,
+        114005.2,
+        232585.1
+      ],
+      [
+        214139.2,
+        216022.9,
+        196380.9,
+        192498.1,
+        167374.8,
+        109395.1,
+        109400.7,
+        0,
+        2836.8,
+        221738,
+        212937.4,
+        192900.1,
+        223353.4,
+        341933.3
+      ],
+      [
+        211329.2,
+        213212.8,
+        193570.8,
+        189688.1,
+        164564.7,
+        106585,
+        106590.6,
+        3117.4,
+        0,
+        218928,
+        210127.4,
+        190090,
+        220543.3,
+        339123.3
+      ],
+      [
+        8858.1,
+        7335.3,
+        40967.8,
+        113755.7,
+        130309,
+        111081.7,
+        111065.4,
+        220681,
+        220030.9,
+        0,
+        11038,
+        37487,
+        1615.4,
+        120195.3
+      ],
+      [
+        1201.8,
+        2633.4,
+        32061,
+        104848.8,
+        121402.2,
+        102174.9,
+        102158.6,
+        211774.2,
+        211124,
+        11108.8,
+        0,
+        28580.2,
+        12724.2,
+        131304.1
+      ],
+      [
+        21289.6,
+        23173.2,
+        3531.2,
+        97777.3,
+        114330.6,
+        95103.3,
+        95087,
+        204702.6,
+        204052.4,
+        28888.4,
+        20087.8,
+        0,
+        30503.7,
+        149083.7
+      ],
+      [
+        11041,
+        9518.3,
+        43150.8,
+        115938.6,
+        132492,
+        113264.7,
+        113248.4,
+        222864,
+        222213.8,
+        2183,
+        13220.9,
+        39670,
+        0,
+        118579.9
+      ],
+      [
+        129015.6,
+        127492.9,
+        161125.4,
+        233913.2,
+        250466.6,
+        231239.3,
+        231223,
+        340838.6,
+        340188.4,
+        120157.6,
+        131195.5,
+        157644.6,
+        119059.9,
+        0
+      ]
+    ],
+    "destinations": [
+      {
+        "hint": "dbZ8hv___38OAAAAQgAAAA8AAAAYAAAAu_h3QR7kZUKYyINBadWdQA4AAABCAAAADwAAABgAAAB8mAAAJ0RF-z0M2__-Q0X72Avb_wIADwcAAAAA",
+        "location": [
+          -79.346649,
+          -2.421699
+        ],
+        "name": "Avenida 25 de Agosto",
+        "distance": 12.06327927
+      },
+      {
+        "hint": "rm97hf___38tAAAAcgAAAAcAAAAAAAAAcVr-QVvaPULPMZhAAAAAAC0AAAByAAAABwAAAAAAAAB8mAAARERF-_zw2v-SREX76vDa_wIA3wAAAAAA",
+        "location": [
+          -79.34662,
+          -2.428676
+        ],
+        "name": "Heroes de Paquisha",
+        "distance": 8.900596392
+      },
+      {
+        "hint": "K8xqhtMP6IwJAAAAJQAAAPkAAACAAQAA1BcGQC9v8ECheU9CovKfQgQAAAATAAAAfAAAAMAAAAB8mAAAeMZD-wB53P8yxkP7l3jc_wYA_xIAAAAA",
+        "location": [
+          -79.44436,
+          -2.32832
+        ],
+        "name": "",
+        "distance": 13.97945551
+      },
+      {
+        "hint": "Qjr9g8CiJo0uAAAANQAAAGUAAAA4AAAAwIgaQcLILkGPzahBB8I7QRcAAAAaAAAAMwAAABwAAAB8mAAAaQRD-_9p5P9jBEP7Bmrk_wIAjw4AAAAA",
+        "location": [
+          -79.494039,
+          -1.807873
+        ],
+        "name": "",
+        "distance": 1.022146109
+      },
+      {
+        "hint": "F_xQihn8UIoaAAAAJQAAAI0AAABMAAAADQoxQQI_cEGrzmtC1iz8QRoAAAAlAAAAjQAAAEwAAAB8mAAAmntA-92i5P-le0D7n6Lk_wQATxAAAAAA",
+        "location": [
+          -79.660134,
+          -1.793315
+        ],
+        "name": "",
+        "distance": 6.964067306
+      },
+      {
+        "hint": "Xx0Sjf___38WAAAAMwAAAAAAAABNAAAAgIMSQUXvP0EAAAAA7DT_QRYAAAAzAAAAAAAAAE0AAAB8mAAA_ig7-8jp4f-7KDv7k-nh_wAAHxQAAAAA",
+        "location": [
+          -80.008962,
+          -1.971768
+        ],
+        "name": "",
+        "distance": 9.481968467
+      },
+      {
+        "hint": "yp7qjP___38QAAAAJgAAAEgAAACKAAAAe0DeQPJjDUEDue9B5IpmQhAAAAAmAAAASAAAAIoAAAB8mAAA9ic7--nm4f9AKDv79ebh_wIAvwoAAAAA",
+        "location": [
+          -80.009226,
+          -1.972503
+        ],
+        "name": "",
+        "distance": 8.339027204
+      },
+      {
+        "hint": "w2KBhT8FIY4XAAAADAAAAAAAAAAAAAAAzaUOQpyLlEEAAAAAAAAAABcAAAAMAAAAAAAAAAAAAAB8mAAACWwy-51X6_-CazL7hFfr_wAA3xUAAAAA",
+        "location": [
+          -80.581623,
+          -1.353827
+        ],
+        "name": "Cotopaxi",
+        "distance": 15.27603724
+      },
+      {
+        "hint": "SSMRjv___38GAAAAHgAAAEkAAABOAAAA_f0rQCi6HEFci_VBwf4CQgYAAAAeAAAASQAAAE4AAAB8mAAAg1Yy-4AV6_-iVjL7phXr_wQADwgAAAAA",
+        "location": [
+          -80.587133,
+          -1.370752
+        ],
+        "name": "",
+        "distance": 5.436675912
+      },
+      {
+        "hint": "pTshibE7IYkFAAAAEwAAAF8AAAAAAAAA5oIeQQqVFkKSAj5DAAAAAAUAAAATAAAAXwAAAAAAAAB8mAAAfOhF-_Fi2v8E6EX7imLa_wYA_xMAAAAA",
+        "location": [
+          -79.30458,
+          -2.465039
+        ],
+        "name": "Vía Zhud Suscal La Troncal",
+        "distance": 17.54514975
+      },
+      {
+        "hint": "VTlThwgzKo0mAAAAGgAAADcBAAAAAAAAWOcoQjES50FKvBtEAAAAACYAAAAaAAAANwEAAAAAAAB8mAAA-i1F-9Uu2_-uLkX7eC_b_wQAnwgAAAAA",
+        "location": [
+          -79.352326,
+          -2.412843
+        ],
+        "name": "Avenida 25 de Agosto",
+        "distance": 26.93788846
+      },
+      {
+        "hint": "2Q_ojNsP6Iw7AAAAAAAAABMBAAAXAQAA5_xEQQAAAAAFUmVCPPVoQh4AAAAAAAAAigAAAIwAAAB8mAAA7lxD-6qr3P_uXEP7qqvc_wIAvxMAAAAA",
+        "location": [
+          -79.471378,
+          -2.31535
+        ],
+        "name": "",
+        "distance": 0
+      },
+      {
+        "hint": "6IGIi____38WAAAANwAAAAAAAAAAAAAAvxjJQeXtDUIAAAAAAAAAABYAAAA3AAAAAAAAAAAAAAB8mAAA5xVG-wNW2v_nFUb79VXa_wAArwUAAAAA",
+        "location": [
+          -79.292953,
+          -2.468349
+        ],
+        "name": "Vía Zhud Suscal La Troncal",
+        "distance": 1.54806885
+      },
+      {
+        "hint": "PSekg1l914UEAAAABAAAAAoAAABRAAAA3XEYQeKouUCatYtBqosQQwQAAAAEAAAACgAAAFEAAAB8mAAAJTNM-1y-1v9VM0z7vr3W_wIA3w8AAAAA",
+        "location": [
+          -78.892251,
+          -2.70378
+        ],
+        "name": "Avenida Alberto Ochoa",
+        "distance": 18.26821255
+      }
+    ],
+    "sources": [
+      {
+        "hint": "dbZ8hv___38OAAAAQgAAAA8AAAAYAAAAu_h3QR7kZUKYyINBadWdQA4AAABCAAAADwAAABgAAAB8mAAAJ0RF-z0M2__-Q0X72Avb_wIADwcAAAAA",
+        "location": [
+          -79.346649,
+          -2.421699
+        ],
+        "name": "Avenida 25 de Agosto",
+        "distance": 12.06327927
+      },
+      {
+        "hint": "rm97hf___38tAAAAcgAAAAcAAAAAAAAAcVr-QVvaPULPMZhAAAAAAC0AAAByAAAABwAAAAAAAAB8mAAARERF-_zw2v-SREX76vDa_wIA3wAAAAAA",
+        "location": [
+          -79.34662,
+          -2.428676
+        ],
+        "name": "Heroes de Paquisha",
+        "distance": 8.900596392
+      },
+      {
+        "hint": "K8xqhtMP6IwJAAAAJQAAAPkAAACAAQAA1BcGQC9v8ECheU9CovKfQgQAAAATAAAAfAAAAMAAAAB8mAAAeMZD-wB53P8yxkP7l3jc_wYA_xIAAAAA",
+        "location": [
+          -79.44436,
+          -2.32832
+        ],
+        "name": "",
+        "distance": 13.97945551
+      },
+      {
+        "hint": "Qjr9g8CiJo0uAAAANQAAAGUAAAA4AAAAwIgaQcLILkGPzahBB8I7QRcAAAAaAAAAMwAAABwAAAB8mAAAaQRD-_9p5P9jBEP7Bmrk_wIAjw4AAAAA",
+        "location": [
+          -79.494039,
+          -1.807873
+        ],
+        "name": "",
+        "distance": 1.022146109
+      },
+      {
+        "hint": "F_xQihn8UIoaAAAAJQAAAI0AAABMAAAADQoxQQI_cEGrzmtC1iz8QRoAAAAlAAAAjQAAAEwAAAB8mAAAmntA-92i5P-le0D7n6Lk_wQATxAAAAAA",
+        "location": [
+          -79.660134,
+          -1.793315
+        ],
+        "name": "",
+        "distance": 6.964067306
+      },
+      {
+        "hint": "Xx0Sjf___38WAAAAMwAAAAAAAABNAAAAgIMSQUXvP0EAAAAA7DT_QRYAAAAzAAAAAAAAAE0AAAB8mAAA_ig7-8jp4f-7KDv7k-nh_wAAHxQAAAAA",
+        "location": [
+          -80.008962,
+          -1.971768
+        ],
+        "name": "",
+        "distance": 9.481968467
+      },
+      {
+        "hint": "yp7qjP___38QAAAAJgAAAEgAAACKAAAAe0DeQPJjDUEDue9B5IpmQhAAAAAmAAAASAAAAIoAAAB8mAAA9ic7--nm4f9AKDv79ebh_wIAvwoAAAAA",
+        "location": [
+          -80.009226,
+          -1.972503
+        ],
+        "name": "",
+        "distance": 8.339027204
+      },
+      {
+        "hint": "w2KBhT8FIY4XAAAADAAAAAAAAAAAAAAAzaUOQpyLlEEAAAAAAAAAABcAAAAMAAAAAAAAAAAAAAB8mAAACWwy-51X6_-CazL7hFfr_wAA3xUAAAAA",
+        "location": [
+          -80.581623,
+          -1.353827
+        ],
+        "name": "Cotopaxi",
+        "distance": 15.27603724
+      },
+      {
+        "hint": "SSMRjv___38GAAAAHgAAAEkAAABOAAAA_f0rQCi6HEFci_VBwf4CQgYAAAAeAAAASQAAAE4AAAB8mAAAg1Yy-4AV6_-iVjL7phXr_wQADwgAAAAA",
+        "location": [
+          -80.587133,
+          -1.370752
+        ],
+        "name": "",
+        "distance": 5.436675912
+      },
+      {
+        "hint": "pTshibE7IYkFAAAAEwAAAF8AAAAAAAAA5oIeQQqVFkKSAj5DAAAAAAUAAAATAAAAXwAAAAAAAAB8mAAAfOhF-_Fi2v8E6EX7imLa_wYA_xMAAAAA",
+        "location": [
+          -79.30458,
+          -2.465039
+        ],
+        "name": "Vía Zhud Suscal La Troncal",
+        "distance": 17.54514975
+      },
+      {
+        "hint": "VTlThwgzKo0mAAAAGgAAADcBAAAAAAAAWOcoQjES50FKvBtEAAAAACYAAAAaAAAANwEAAAAAAAB8mAAA-i1F-9Uu2_-uLkX7eC_b_wQAnwgAAAAA",
+        "location": [
+          -79.352326,
+          -2.412843
+        ],
+        "name": "Avenida 25 de Agosto",
+        "distance": 26.93788846
+      },
+      {
+        "hint": "2Q_ojNsP6Iw7AAAAAAAAABMBAAAXAQAA5_xEQQAAAAAFUmVCPPVoQh4AAAAAAAAAigAAAIwAAAB8mAAA7lxD-6qr3P_uXEP7qqvc_wIAvxMAAAAA",
+        "location": [
+          -79.471378,
+          -2.31535
+        ],
+        "name": "",
+        "distance": 0
+      },
+      {
+        "hint": "6IGIi____38WAAAANwAAAAAAAAAAAAAAvxjJQeXtDUIAAAAAAAAAABYAAAA3AAAAAAAAAAAAAAB8mAAA5xVG-wNW2v_nFUb79VXa_wAArwUAAAAA",
+        "location": [
+          -79.292953,
+          -2.468349
+        ],
+        "name": "Vía Zhud Suscal La Troncal",
+        "distance": 1.54806885
+      },
+      {
+        "hint": "PSekg1l914UEAAAABAAAAAoAAABRAAAA3XEYQeKouUCatYtBqosQQwQAAAAEAAAACgAAAFEAAAB8mAAAJTNM-1y-1v9VM0z7vr3W_wIA3w8AAAAA",
+        "location": [
+          -78.892251,
+          -2.70378
+        ],
+        "name": "Avenida Alberto Ochoa",
+        "distance": 18.26821255
+      }
+    ]
+  }
+}

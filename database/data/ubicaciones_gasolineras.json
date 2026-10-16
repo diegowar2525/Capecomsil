@@ -1,0 +1,123 @@
+{
+  "fecha_consulta": "2026-10-16",
+  "sistema_coordenadas": "WGS84",
+  "ubicadas": [
+    {
+      "nombre": "CECILIA",
+      "latitud": -2.42179953603599,
+      "longitud": -79.34669009935,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS CECILIA, La Troncal"
+    },
+    {
+      "nombre": "MECHITA",
+      "latitud": -2.4286941,
+      "longitud": -79.3465419,
+      "fuente": "https://www.openstreetmap.org/node/3032423986",
+      "referencia": "Gasolinera Mechita, La Troncal"
+    },
+    {
+      "nombre": "RIO VERDE",
+      "latitud": -2.3284252,
+      "longitud": -79.4444298,
+      "fuente": "https://www.openstreetmap.org/node/3953713548",
+      "referencia": "Rio Verde, El Triunfo; contrastado con dirección vía Durán-Tambo km 51 del directorio ecuapinoo.com"
+    },
+    {
+      "nombre": "BBHY SILVAN 1",
+      "latitud": -1.8078657973822667,
+      "longitud": -79.49404515569086,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS SILVAN 1, Babahoyo"
+    },
+    {
+      "nombre": "BABA SILVAN 2",
+      "latitud": -1.7933771017180802,
+      "longitud": -79.66012345207646,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS SILVAN 2, vía Baba-Babahoyo"
+    },
+    {
+      "nombre": "1PETRILLO",
+      "latitud": -1.9718205566436964,
+      "longitud": -80.00902943391539,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS PETRILLO 1, km 30 vía Guayaquil-Daule"
+    },
+    {
+      "nombre": "2PETRILLO",
+      "latitud": -1.9724908946380393,
+      "longitud": -80.00915203634081,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS PETRILLO 2, km 29,5 vía Guayaquil-Daule"
+    },
+    {
+      "nombre": "2JIPIJAPA",
+      "latitud": -1.3538517212166927,
+      "longitud": -80.58175826660543,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS JIPIJAPA 2, Cotopaxi y Olmedo"
+    },
+    {
+      "nombre": "3JIPIJAPA",
+      "latitud": -1.3707139520084095,
+      "longitud": -80.5871018215515,
+      "fuente": "https://terpelecuador.com/a-nivel-nacional",
+      "referencia": "Enlace Google Maps de EDS JIPIJAPA 3, km 1 vía Jipijapa-Guayaquil"
+    },
+    {
+      "nombre": "COCHANCAY",
+      "latitud": -2.4651418,
+      "longitud": -79.3046997,
+      "fuente": "https://www.openstreetmap.org/node/3874195140",
+      "referencia": "Estación Cochancay; no confundir con el punto PSY situado más al este"
+    },
+    {
+      "nombre": "RIRCAY",
+      "latitud": -2.41268,
+      "longitud": -79.3521459,
+      "fuente": "https://www.openstreetmap.org/node/3032424025",
+      "referencia": "Rircay, avenida 25 de Agosto, La Troncal"
+    },
+    {
+      "nombre": "MA. DEL CISNE",
+      "latitud": -2.3153497,
+      "longitud": -79.471378,
+      "fuente": "https://www.openstreetmap.org/node/9150373423",
+      "referencia": "María del Cisne, El Triunfo; no se presupone que sea el mismo establecimiento que KM. 48"
+    },
+    {
+      "nombre": "SAN JACINTO",
+      "latitud": -2.4683625,
+      "longitud": -79.292953125,
+      "fuente": "Ubicación confirmada por el usuario el 2026-10-16",
+      "referencia": "GPJ4+MR3, Cochancay",
+      "codigo_completo": "6792GPJ4+MR3"
+    },
+    {
+      "nombre": "ROCIO",
+      "latitud": -2.7039375000000003,
+      "longitud": -78.89220312500001,
+      "fuente": "Ubicación confirmada por el usuario el 2026-10-16",
+      "referencia": "74W5+C4F, Av Alberto Ochoa, Biblián",
+      "codigo_completo": "679374W5+C4F"
+    }
+  ],
+  "pendientes": [
+    {
+      "nombre": "KM. 48",
+      "motivo": "Lumar S.A. figura como Estación de Servicio KM48. No está confirmada su ubicación física diferenciada de María del Cisne",
+      "fuente": "https://encuentra.ec/en/company/lumar-s-a-0993388968001/"
+    },
+    {
+      "nombre": "SANTA MARTHA",
+      "motivo": "Existe E/S Flota Santa Martha en Bucay, pero falta vincularla inequívocamente con el nombre del Excel y confirmar el punto",
+      "fuente": "https://petroleosyservicios.com/web/mapa/locator/estaciones-de-servicio-pys"
+    },
+    {
+      "nombre": "CADME CORP",
+      "motivo": "El RUC del seed corresponde a una constructora; su oficina de Las Américas no acredita el lugar de entrega de combustible",
+      "fuente": "https://encuentra.ec/en/company/cadmecorp-asociados-s-a-0992395206001/"
+    }
+  ]
+}
