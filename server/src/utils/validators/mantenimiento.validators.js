@@ -1,4 +1,5 @@
 const { createHttpError } = require("../errors/http.error");
+const { validatePlanesCumplidos } = require("./plan_mantenimiento.validators");
 const { validateId, validateDateTime, validateDecimal, validateOptionalText } = require("./common.validators");
 
 const validateData = (data) => {
@@ -57,7 +58,10 @@ const validateData = (data) => {
         };
     });
 
+    const planes_cumplidos = validatePlanesCumplidos(data.planes_cumplidos);
+    if (planes_cumplidos.length && !fecha_fin) throw createHttpError("Indique los planes cumplidos al finalizar el mantenimiento",400);
     return {
+        planes_cumplidos,
         id_vehiculo,
         id_proveedor,
         fecha_inicio,
