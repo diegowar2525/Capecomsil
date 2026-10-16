@@ -1,3 +1,4 @@
+const { lock } = require("../utils/transaction.lock");
 const pool = require("../config/database");
 const model = require("../models/remuneracion_chofer.model");
 const historialModel = require("../models/historial_remuneracion_chofer.model");
@@ -10,7 +11,7 @@ const generar = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        await model.lock(client);
+        await lock(client);
         await model.generar(client, validado);
         const resultado = await model.findAll(validado, client);
         await client.query("COMMIT");

@@ -1,9 +1,5 @@
 const pool = require("../config/database");
 
-const lock = async (client) => {
-    await client.query("SELECT pg_advisory_xact_lock(72631,1)");
-};
-
 const recalcular = async (client, id, fecha) => {
     return (await client.query("SELECT recalcular_remuneracion($1,$2) AS id", [id, fecha])).rows[0].id;
 };
@@ -33,7 +29,6 @@ const generar = async (client, f) => {
 };
 
 module.exports = {
-    lock,
     recalcular,
     findAll,
     findById,

@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-const { lock } = require("../models/remuneracion_chofer.model");
+const { lock } = require("../utils/transaction.lock");
 const { createHttpError } = require("../utils/errors/http.error");
 const { validateFinalizacion } = require("../utils/validators/mantenimiento.validators");
 const mantenimientoModel = require("../models/mantenimiento.model");

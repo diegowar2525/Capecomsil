@@ -1,3 +1,4 @@
+const { lock } = require("../utils/transaction.lock");
 const peajeModel = require("../models/configuracion_peaje_trayecto.model");
 const viaticoModel = require("../models/viatico_chofer.model");
 const costoModel = require("../models/costo_viaje.model");
@@ -22,7 +23,7 @@ const createViaje = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        await remuneracionModel.lock(client);
+        await lock(client);
         const trayectos = new Map();
         for (const id of [...new Set(validado.tramos.map(t => t.id_trayecto))].sort((a, b) => a - b)) {
             const trayecto = await trayectoModel.findByIdForShare(client, id);
@@ -98,7 +99,7 @@ const anularViaje = async (id, data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        await remuneracionModel.lock(client);
+        await lock(client);
         const viaje = await viajeModel.findByIdForUpdate(client, id);
         if (!viaje) throw createHttpError("Viaje no encontrado", 404);
         if (viaje.estado === "ANULADO") throw createHttpError("El viaje ya está anulado");

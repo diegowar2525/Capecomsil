@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 const model = require("../models/feriado.model");
-const { lock } = require("../models/remuneracion_chofer.model");
+const { lock } = require("../utils/transaction.lock");
 const { validateFeriado } = require("../utils/validators/remuneracion.validators");
 const { validateId } = require("../utils/validators/common.validators");
 const { createHttpError } = require("../utils/errors/http.error");

@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const { lock } = require("../utils/transaction.lock");
 const recepcionModel = require("../models/recepcion_compra.model");
 const mantenimientoModel = require("../models/mantenimiento.model");
 const movimientoModel = require("../models/movimiento_inventario.model");
@@ -19,6 +20,7 @@ const ejecutar = async (tipo, id, data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        if (tipo === "mantenimiento") await lock(client);
         const model = tipo === "recepcion" ? recepcionModel : tipo === "mantenimiento" ? mantenimientoModel : movimientoModel;
         const original = await model.findForUpdate(client, id);
         if (!original) errorOperacion("Registro no encontrado", 404);

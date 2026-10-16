@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 const trayectoModel = require("../models/trayecto.model");
 const model = require("../models/configuracion_peaje_trayecto.model");
-const { lock } = require("../models/remuneracion_chofer.model");
+const { lock } = require("../utils/transaction.lock");
 const { validateConfiguracion } = require("../utils/validators/configuracion_peaje_trayecto.validators");
 const { validateId } = require("../utils/validators/common.validators");
 const { createHttpError } = require("../utils/errors/http.error");
