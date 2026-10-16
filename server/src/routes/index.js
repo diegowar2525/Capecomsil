@@ -50,4 +50,7 @@ router.use(
 router.use("/configuraciones-remuneracion", require("./configuracion_remuneracion.routes"));
 router.use("/feriados", require("./feriado.routes"));
 router.use("/remuneraciones-chofer", require("./remuneraciones.routes"));
+router.use("/configuraciones-combustible", require("./configuracion_combustible.routes"));
+router.use("/configuraciones-viatico", require("./configuracion_viatico.routes"));
+router.use("/configuraciones-peaje-trayecto", require("./configuracion_peaje_trayecto.routes"));
 module.exports = router;
