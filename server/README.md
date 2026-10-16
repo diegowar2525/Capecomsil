@@ -1,5 +1,7 @@
 # API de CAPECOMSIL
 
+Horarios, configuraciones y costos automáticos: [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
+
 Consultas de inventario, ajustes y anulaciones: [INVENTARIO.md](INVENTARIO.md).
 Pagos a proveedores, saldos y cuentas por pagar: [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md).
 
@@ -263,7 +265,7 @@ Se pueden modificar sus fechas solo si siguen incluyendo todos sus viajes, y cam
 Para cambiar el precio, cerrar la tarifa anterior y crear otra con vigencia posterior.
 PostgreSQL aplica estas reglas también a escrituras directas y serializa la asignación de
 viajes con las modificaciones de tarifas. La fecha del viaje se compara por su día calendario
-(`viaje.fecha` es timestamp sin zona horaria).
+(`viaje.fecha_inicio` es timestamp sin zona horaria).
 
 Respuestas: 400 para datos o referencias inválidos, 404 si no existe la tarifa y 409
 para solapamientos o cambios que afectan al historial.
