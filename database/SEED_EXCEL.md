@@ -9,7 +9,7 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
 | Vehículo | 8 |
 | Chofer | 7 |
 | Tarifa | 42 |
-| Trayecto | 66 |
+| Trayecto | 248 (66 del Excel + 182 entre gasolineras) |
 
 ## Criterios de carga
 
@@ -18,12 +18,13 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
 - Fechas de tarifa: del 1 de enero al 31 de diciembre de 2026 para pruebas, por solicitud del usuario. El archivo no contiene fechas contractuales de vigencia; la extensión hasta diciembre no procede del Excel. TRANS contiene operaciones de enero; sus 12 pares con tarifa positiva coinciden con DATOS.
 - Gasolineras: DATOS!B5:F21 y nombres adicionales de reportes. Se normalizan espacios; no se reconstruyen nombres de filas vacías. Nombres de reportes históricos se conservan para pruebas sin asegurar actividad actual.
 - Vehículos: DATOS!AS5:AT12. Solo placa y capacidad; no se inventan marca, modelo ni año.
-- Choferes: siete nombres de TRANS!E4:E330; documentos PENDIENTE-* autorizados por el usuario. Se usa SUELDO por remuneración fija diaria confirmada, sin incorporar importes al chofer.
+- Choferes: siete nombres de TRANS!E4:E330; documentos PENDIENTE-* autorizados por el usuario. Se usa DIARIO_FIJO por remuneración fija diaria confirmada, sin incorporar importes al chofer.
 - Proveedores: TEDASA y CEPSA, CLIENTES!G3:G4. Categorías, cinco productos de inventario y cuatro combustibles se conservan como ejemplos del seed previo.
 - Agente de retención: SI/NO de DATOS se convierte a booleano. Para estaciones presentes solo en reportes se usa false como valor provisional del esquema, pendiente de confirmar.
 - C de DATOS contiene razones sociales y algunos nombres personales: no se copia indiscriminadamente como representante legal.
 - Trayectos: mitad de cada distancia positiva de ida/vuelta, en ambos sentidos, con advertencia en observacion (estimación de prueba autorizada). Ceros/vacíos no se convierten en distancias. Manta repite 130 km en el catálogo; se conserva como 65 km por sentido para pruebas, no como distancia verificada.
-- No hay distancias entre gasolineras: no se inventan. No se importan viajes ni TRAMO_VIAJE, porque TRANS son entregas sin identificador confiable de viaje físico.
+- El Excel no aporta distancias entre gasolineras. Se agregan 182 trayectos investigados externamente entre 14 estaciones ubicadas; tres siguen pendientes. Fuentes, método y limitaciones en [TRAYECTOS_GASOLINERAS.md](TRAYECTOS_GASOLINERAS.md).
+- No se importan viajes ni TRAMO_VIAJE, porque TRANS son entregas sin identificador confiable de viaje físico.
 
 ## RUC compartidos pendientes
 
