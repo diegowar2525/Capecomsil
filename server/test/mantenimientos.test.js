@@ -5,7 +5,7 @@ const path = require("node:path");
 const { Pool } = require("pg");
 const { validateData } = require("../src/utils/validators/mantenimiento.validators");
 
-const body = { id_vehiculo: 1, fecha: "2026-10-05", tipo: "Cambio de filtros", monto: "25.00", detalles: [{ id_producto: 1, cantidad: "2.00" }] };
+const body = { id_vehiculo: 1, fecha_inicio: "2026-10-05T08:00:00", fecha_fin: "2026-10-05T12:00:00", tipo: "Cambio de filtros", monto: "25.00", detalles: [{ id_producto: 1, cantidad: "2.00" }] };
 
 test("Mantenimiento: cantidades, referencias y datos obligatorios", () => {
     for (const detalle of [

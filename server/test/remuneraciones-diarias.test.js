@@ -25,6 +25,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
             INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (1,1,0.035,'2026-01-01');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Prueba',1,1,10);`);
+        await admin.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) SELECT id_trayecto,0,'2025-01-01' FROM trayecto");
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
@@ -37,7 +38,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
             return { status: response.status, body: await response.json() };
         };
         const generar = (id, desde, hasta=desde) => request("/remuneraciones-chofer/generar", "POST", { id_chofer: id, fecha_desde: desde, fecha_hasta: hasta });
-        const viaje = (id, fecha) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha,
+        const viaje = (id, fecha) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha_inicio: fecha+"T08:00:00", fecha_fin: fecha+"T12:00:00",
             tramos: [{ orden: 1, id_trayecto: 1 }], detalles: [{ id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "50" }] });
         const anular = id => request(`/viajes/${id}/anular`, "POST", { motivo: "Prueba" });
         for (const fecha of ["2026-10-11", "2026-10-12"]) {
