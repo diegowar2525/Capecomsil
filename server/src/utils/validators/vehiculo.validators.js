@@ -1,4 +1,4 @@
-const { validateImagenUrl } = require("./common.validators");
+const { validateImagenUrl, validateDecimal, validateDateTime } = require("./common.validators");
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         const error = new Error("Los datos del vehículo son obligatorios");
@@ -58,7 +58,14 @@ const validateData = (data) => {
         throw error;
     }
 
+    if ((data.kilometraje_base == null) !== (data.fecha_inicio_control_km == null)) {
+        const error = new Error("Indique juntos kilometraje_base y fecha_inicio_control_km");
+        error.status = 400;
+        throw error;
+    }
     return {
+        kilometraje_base: data.kilometraje_base == null ? null : validateDecimal(data.kilometraje_base, "kilometraje_base", 10, 2),
+        fecha_inicio_control_km: data.fecha_inicio_control_km == null ? null : validateDateTime(data.fecha_inicio_control_km),
         imagen_url: validateImagenUrl(data.imagen_url),
         placa: placa.trim().toUpperCase(),
         marca: marca.trim(),

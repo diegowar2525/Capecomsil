@@ -65,7 +65,7 @@ const createMantenimiento = async (data) => {
             const creado = await detalleMantenimientoModel.create(client, mantenimiento.id_mantenimiento, detalle);
             if (detalle.origen_producto === "INVENTARIO") await movimientoInventarioModel.createSalida(client, {
                 id_producto: detalle.id_producto,
-                fecha: datosValidados.fecha,
+                fecha: datosValidados.fecha_inicio,
                 cantidad: detalle.cantidad,
                 id_detalle_mantenimiento: creado.id_detalle_mantenimiento
             });

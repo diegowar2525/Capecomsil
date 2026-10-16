@@ -1,5 +1,5 @@
 const { createHttpError } = require("../errors/http.error");
-const { validateId, validateDate, validateDecimal, validateOptionalText } = require("./common.validators");
+const { validateId, validateDateTime, validateDecimal, validateOptionalText } = require("./common.validators");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -10,7 +10,11 @@ const validateData = (data) => {
 
     const id_vehiculo = validateId(data.id_vehiculo);
     const id_proveedor = data.id_proveedor == null ? null : validateId(data.id_proveedor);
-    const fecha = validateDate(data.fecha);
+    if (data.fecha !== undefined) throw createHttpError("Use fecha_inicio y fecha_fin con fecha y hora", 400);
+    const fecha_inicio = validateDateTime(data.fecha_inicio);
+    const fecha_fin = data.fecha_fin == null ? null : validateDateTime(data.fecha_fin);
+    if (data.fecha_inicio.length <= 10 || (fecha_fin && data.fecha_fin.length <= 10)) throw createHttpError("Indique la hora del mantenimiento", 400);
+    if (fecha_fin && fecha_fin <= fecha_inicio) throw createHttpError("El fin debe ser posterior al inicio", 400);
 
     if (typeof data.tipo !== "string" || !data.tipo.trim() || data.tipo.trim().length > 100) {
         const error = new Error("El tipo de mantenimiento es obligatorio y admite máximo 100 caracteres");
@@ -56,7 +60,8 @@ const validateData = (data) => {
     return {
         id_vehiculo,
         id_proveedor,
-        fecha,
+        fecha_inicio,
+        fecha_fin,
         tipo: data.tipo.trim(),
         monto: validateDecimal(data.monto, "monto", 12, 2),
         descripcion: validateOptionalText(data.descripcion, "descripcion"),

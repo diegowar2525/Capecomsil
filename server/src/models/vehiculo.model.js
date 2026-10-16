@@ -9,6 +9,8 @@ const findAll = async () => {
       modelo,
       anio,
       capacidad_galones,
+      kilometraje_base,
+      to_char(fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km,
       imagen_url,
       estado
     FROM vehiculo
@@ -28,6 +30,8 @@ const findById = async (id) => {
         modelo,
         anio,
         capacidad_galones,
+        kilometraje_base,
+        to_char(fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km,
         imagen_url,
         estado
       FROM vehiculo
@@ -45,6 +49,8 @@ const create = async ({
     modelo,
     anio,
     capacidad_galones,
+    kilometraje_base,
+    fecha_inicio_control_km,
     imagen_url,
     estado
 }) => {
@@ -56,11 +62,13 @@ const create = async ({
         modelo,
         anio,
         capacidad_galones,
+        kilometraje_base,
+        fecha_inicio_control_km,
         imagen_url,
         estado
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *, to_char(fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km
     `,
         [
             placa,
@@ -68,6 +76,8 @@ const create = async ({
             modelo,
             anio,
             capacidad_galones,
+            kilometraje_base,
+            fecha_inicio_control_km,
             imagen_url,
             estado
         ]
@@ -84,6 +94,8 @@ const update = async (
         modelo,
         anio,
         capacidad_galones,
+        kilometraje_base,
+        fecha_inicio_control_km,
         imagen_url,
         estado
     }
@@ -97,11 +109,13 @@ const update = async (
         modelo = $3,
         anio = $4,
         capacidad_galones = $5,
-        imagen_url = $6,
+        kilometraje_base = $6,
+        fecha_inicio_control_km = $7,
+        imagen_url = $8,
 
-        estado = $7
-      WHERE id_vehiculo = $8
-      RETURNING *
+        estado = $9
+      WHERE id_vehiculo = $10
+      RETURNING *, to_char(fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km
     `,
         [
             placa,
@@ -109,6 +123,8 @@ const update = async (
             modelo,
             anio,
             capacidad_galones,
+            kilometraje_base,
+            fecha_inicio_control_km,
             imagen_url,
             estado,
             id
@@ -123,7 +139,7 @@ const remove = async (id) => {
         `
       DELETE FROM vehiculo
       WHERE id_vehiculo = $1
-      RETURNING *
+      RETURNING *, to_char(fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km
     `,
         [id]
     );

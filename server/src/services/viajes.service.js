@@ -1,3 +1,4 @@
+const peajeModel = require("../models/configuracion_peaje_trayecto.model");
 const costoModel = require("../models/costo_viaje.model");
 const remuneracionModel = require("../models/remuneracion_chofer.model");
 const pool = require("../config/database");
@@ -26,6 +27,10 @@ const createViaje = async (data) => {
             const trayecto = await trayectoModel.findByIdForShare(client, id);
             if (!trayecto) throw createHttpError("El trayecto indicado no existe", 400);
             if (!trayecto.estado) throw createHttpError("El trayecto indicado está inactivo", 409);
+            const peaje = await peajeModel.findVigenteForShare(client, id, validado.fecha_inicio.slice(0,10));
+            if (!peaje) throw createHttpError(`Falta configurar el peaje vigente del trayecto ${id}; indique cero si no tiene peaje`, 409);
+            trayecto.id_configuracion_peaje_trayecto = peaje.id_configuracion_peaje_trayecto;
+            trayecto.peaje_aplicado = peaje.importe;
             trayectos.set(id, trayecto);
         }
         const recorrido = validado.tramos.map(t => ({ ...trayectos.get(t.id_trayecto), ...t }));
@@ -44,7 +49,7 @@ const createViaje = async (data) => {
         for (const detalle of ordenados) {
             const clave = `${detalle.id_gasolinera}:${detalle.id_terminal}`;
             if (!tarifas.has(clave)) {
-                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha);
+                const tarifa = await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, validado.fecha_inicio.slice(0,10));
                 if (!tarifa) throw createHttpError(`No existe tarifa vigente para gasolinera ${detalle.id_gasolinera} y terminal ${detalle.id_terminal}`);
                 tarifas.set(clave, tarifa);
             }
@@ -59,7 +64,7 @@ const createViaje = async (data) => {
             const tarifa = tarifas.get(`${detalle.id_gasolinera}:${detalle.id_terminal}`);
             detalles.push(await detalleModel.create(client, viaje.id_viaje, detalle, tarifa));
         }
-        await remuneracionModel.recalcular(client, validado.id_chofer, validado.fecha);
+        await remuneracionModel.recalcular(client, validado.id_chofer, validado.fecha_inicio.slice(0,10));
         const totales = await viajeModel.getTotales(client, viaje.id_viaje);
         const costos = await costoModel.findByViaje(viaje.id_viaje, client);
         await client.query("COMMIT");
@@ -97,7 +102,7 @@ const anularViaje = async (id, data) => {
         const detalles = await detalleModel.findByViajeForUpdate(client, id);
         if (detalles.some(d => d.id_liquidacion !== null)) throw createHttpError("No se puede anular un viaje con entregas asociadas a una liquidación");
         await viajeModel.anular(client, id, motivo);
-        await remuneracionModel.recalcular(client, viaje.id_chofer, viaje.fecha);
+        await remuneracionModel.recalcular(client, viaje.id_chofer, viaje.fecha_inicio.slice(0,10));
         const resultado = await viajeModel.findById(id, client);
         const entregas = await detalleModel.findByViaje(id, client);
         const tramos = await tramoModel.findByViaje(id, client);

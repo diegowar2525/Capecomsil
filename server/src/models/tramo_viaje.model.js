@@ -2,9 +2,9 @@ const pool = require("../config/database");
 
 const create = async (client, id, data) => {
     return (await client.query(`INSERT INTO tramo_viaje
-        (id_viaje, orden, id_trayecto, kilometros, observacion)
-        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [id, data.orden, data.id_trayecto, data.kilometros, data.observacion])).rows[0];
+        (id_viaje, orden, id_trayecto, kilometros, observacion, id_configuracion_peaje_trayecto, peaje_aplicado)
+        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [id, data.orden, data.id_trayecto, data.kilometros, data.observacion, data.id_configuracion_peaje_trayecto, data.peaje_aplicado])).rows[0];
 };
 
 const findByViaje = async (id, client = pool) => {
