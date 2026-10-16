@@ -1,5 +1,7 @@
 # API de CAPECOMSIL
 
+Planes, kilometraje y avisos de mantenimiento: [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md).
+
 Horarios, configuraciones y costos automáticos: [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
 
 Consultas de inventario, ajustes y anulaciones: [INVENTARIO.md](INVENTARIO.md).
