@@ -15,11 +15,14 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         const seed = fs.readFileSync(path.join(__dirname, "../../database/seed.sql"), "utf8")
             .replace(/^BEGIN;/m, "").replace(/^COMMIT;/m, "");
         await client.query(seed);
-        for (const [tabla, esperado] of Object.entries({ terminal: 5, gasolinera: 17, vehiculo: 8, chofer: 7, tarifa: 42, trayecto: 248 })) {
+        for (const [tabla, esperado] of Object.entries({ terminal: 5, gasolinera: 17, vehiculo: 8, chofer: 7, tarifa: 42, trayecto: 248, configuracion_combustible: 1, configuracion_viatico: 1, configuracion_peaje_trayecto: 248, plan_mantenimiento_vehiculo: 16 })) {
             assert.equal((await client.query(`SELECT count(*)::int n FROM ${tabla}`)).rows[0].n, esperado);
         }
         assert.equal((await client.query("SELECT count(*)::int n FROM tarifa WHERE valor_por_galon <= 0 OR fecha_inicio <> DATE '2026-01-01' OR fecha_fin <> DATE '2026-12-31'")).rows[0].n, 0);
         assert.equal((await client.query("SELECT count(*)::int n FROM trayecto WHERE observacion NOT LIKE 'ESTIMACIÓN DE PRUEBA:%'")).rows[0].n, 0);
+        assert.equal((await client.query("SELECT count(*)::int n FROM trayecto t WHERE NOT EXISTS (SELECT 1 FROM configuracion_peaje_trayecto c WHERE c.id_trayecto=t.id_trayecto AND DATE '2026-10-16' BETWEEN c.fecha_inicio AND c.fecha_fin)")).rows[0].n, 0);
+        assert.equal((await client.query("SELECT count(*)::int n FROM vehiculo WHERE kilometraje_base=0 AND fecha_inicio_control_km=TIMESTAMP '2026-01-01 00:00'")).rows[0].n, 8);
+        assert.equal((await client.query("SELECT importe_diario FROM configuracion_viatico")).rows[0].importe_diario, "12.00");
         const grados = (await client.query(`SELECT id_gasolinera_origen,COUNT(*)::int n,
             COUNT(DISTINCT id_gasolinera_destino)::int destinos FROM trayecto
             WHERE id_gasolinera_origen IS NOT NULL AND id_gasolinera_destino IS NOT NULL
@@ -57,7 +60,7 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-01 08:00','2026-10-01 09:00')");
         const salida = (await client.query("INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,20) RETURNING id_trayecto")).rows[0].id_trayecto;
         const llegada = (await client.query("INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Llegada',1,2,80) RETURNING id_trayecto")).rows[0].id_trayecto;
-        await client.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) SELECT id_trayecto,0,'2026-01-01' FROM trayecto");
+        await client.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) SELECT id_trayecto,0,'2026-01-01' FROM trayecto WHERE id_trayecto IN ($1,$2)", [salida, llegada]);
         await client.query("INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto,id_configuracion_peaje_trayecto,peaje_aplicado) SELECT 1,CASE WHEN id_trayecto=$1 THEN 1 ELSE 2 END,id_trayecto,id_configuracion_peaje_trayecto,importe FROM configuracion_peaje_trayecto WHERE id_trayecto IN ($1,$2)", [salida, llegada]);
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         assert.equal((await client.query("SELECT sum(kilometros) AS km FROM tramo_viaje")).rows[0].km, "100.00");
