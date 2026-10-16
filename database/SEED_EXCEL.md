@@ -10,6 +10,31 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
 | Chofer | 7 |
 | Tarifa | 42 |
 | Trayecto | 248 (66 del Excel + 182 entre gasolineras) |
+| Configuración de remuneración | 1 |
+| Configuración de combustible | 1 |
+| Configuración de viático | 1 |
+| Configuración de peaje por trayecto | 248 |
+| Plan de mantenimiento por vehículo | 16 (dos por vehículo) |
+
+## Configuraciones de costos y mantenimiento
+
+- Combustible: ejemplo de desarrollo con consumo **0,153800 galones/km** y precio
+  **$3,1030/galón**, tomados de `COSTO OPERATIVOS TRANSPORTE.xlsx`, hoja
+  `MECH-ROC-CECI-SJ`, celdas D15 y D17. El libro contiene otros valores por ruta;
+  este ejemplo no acredita un factor único validado ni el precio actual.
+- Viático: **$12 diarios**, confirmado por el cliente. No se generan viáticos diarios
+  hasta registrar viajes; el backend los distribuye entre los viajes del chofer.
+- Combustible, viáticos y peajes tienen vigencia de prueba del **01/01/2026 al 31/12/2026**.
+  Para viajes fuera de ese intervalo se requieren nuevas configuraciones.
+- Peajes: **cero provisional para cada trayecto y sentido**, señalado en observaciones.
+  Esto permite probar la API, pero no confirma que las rutas carezcan de peajes.
+  Completar los valores antes de registrar operaciones reales: los utilizados quedan protegidos.
+- Los ocho vehículos empiezan con contador relativo cero desde el 01/01/2026.
+  No es una lectura de odómetro. Cada uno tiene planes independientes de **8.000 y 80.000 km**,
+  con referencia inicial y anticipación de aviso en cero como valores provisionales.
+  La referencia cero no demuestra que se haya realizado un mantenimiento previo.
+- No se crean viajes, costos, gastos, cargas de combustible ni cumplimientos ficticios.
+  Las configuraciones y los planes son catálogos; los movimientos se registran mediante sus flujos.
 
 ## Criterios de carga
 

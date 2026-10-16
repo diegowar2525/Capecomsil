@@ -11,7 +11,12 @@ DO $$ BEGIN
     IF EXISTS (SELECT 1 FROM terminal) OR EXISTS (SELECT 1 FROM gasolinera)
         OR EXISTS (SELECT 1 FROM vehiculo) OR EXISTS (SELECT 1 FROM chofer)
         OR EXISTS (SELECT 1 FROM proveedor) OR EXISTS (SELECT 1 FROM categoria_producto)
-        OR EXISTS (SELECT 1 FROM producto_transportado) THEN
+        OR EXISTS (SELECT 1 FROM producto_transportado)
+        OR EXISTS (SELECT 1 FROM configuracion_remuneracion)
+        OR EXISTS (SELECT 1 FROM configuracion_combustible)
+        OR EXISTS (SELECT 1 FROM configuracion_viatico)
+        OR EXISTS (SELECT 1 FROM configuracion_peaje_trayecto)
+        OR EXISTS (SELECT 1 FROM plan_mantenimiento_vehiculo) THEN
         RAISE EXCEPTION 'El seed requiere catálogos vacíos; no mezclar con datos existentes';
     END IF;
 END $$;
@@ -1071,4 +1076,42 @@ FROM (VALUES
 JOIN gasolinera origen ON origen.nombre=r.origen
 JOIN gasolinera destino ON destino.nombre=r.destino;
 -- FIN TRAYECTOS ENTRE GASOLINERAS (generado)
+-- Configuraciones para probar viajes en 2026; no son precios actuales verificados.
+-- COSTO OPERATIVOS TRANSPORTE.xlsx, MECH-ROC-CECI-SJ!D15 y D17.
+-- El archivo contiene otros valores por ruta; se adopta este ejemplo como factor común
+-- de DESARROLLO. Confirmar consumo y precio reales antes de uso operativo.
+INSERT INTO configuracion_combustible
+    (consumo_galones_km,precio_por_galon,fecha_inicio,fecha_fin,observacion)
+VALUES (0.153800,3.1030,'2026-01-01','2026-12-31',
+    'PRUEBA: consumo y precio de MECH-ROC-CECI-SJ!D15/D17; vigencia 2026 ficticia. No acredita el precio actual del diésel.');
+
+INSERT INTO configuracion_viatico(importe_diario,fecha_inicio,fecha_fin,observacion)
+VALUES (12.00,'2026-01-01','2026-12-31',
+    'Importe diario confirmado por el cliente; solo con viajes válidos. Vigencia 2026 de prueba.');
+
+-- Una configuración por sentido, incluidos los trayectos generados anteriormente.
+-- CERO PROVISIONAL: permite probar el flujo; NO confirma ausencia de peajes.
+-- Completar los importes antes de crear viajes reales (luego se protege el histórico).
+INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio,fecha_fin,observacion)
+SELECT id_trayecto,0.00,'2026-01-01','2026-12-31',
+    'PRUEBA: peaje cero provisional, pendiente de confirmar para este sentido. No es una ruta verificada sin peaje.'
+FROM trayecto ORDER BY id_trayecto;
+
+-- Inicio del contador relativo de desarrollo; cero NO es una lectura real del odómetro.
+UPDATE vehiculo SET kilometraje_base=0.00,fecha_inicio_control_km='2026-01-01 00:00:00';
+
+-- Dos planes independientes por vehículo, sin inventar mantenimientos realizados.
+-- Referencia cero provisional en la misma escala del contador de desarrollo.
+INSERT INTO plan_mantenimiento_vehiculo
+    (id_vehiculo,nombre,intervalo_km,kilometraje_referencia_inicial,anticipacion_aviso_km,estado,observacion)
+SELECT v.id_vehiculo,p.nombre,p.intervalo_km,0.00,0.00,TRUE,
+    'PRUEBA: referencia inicial cero; no acredita un servicio previo. Confirmar referencia y anticipación antes de operar.'
+FROM vehiculo v CROSS JOIN (VALUES
+    ('Mantenimiento de 8.000 km',8000.00),
+    ('Mantenimiento de 80.000 km',80000.00)
+) AS p(nombre,intervalo_km)
+ORDER BY v.id_vehiculo,p.intervalo_km;
+
+-- Viajes, costos, viáticos diarios, cumplimientos, gastos y abastecimientos permanecen
+-- vacíos: sus registros se generan al ejecutar las operaciones, no desde supuestos.
 COMMIT;
