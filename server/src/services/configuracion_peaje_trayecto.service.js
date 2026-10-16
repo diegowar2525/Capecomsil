@@ -1,0 +1,50 @@
+const pool = require("../config/database");
+const trayectoModel = require("../models/trayecto.model");
+const model = require("../models/configuracion_peaje_trayecto.model");
+const { lock } = require("../models/remuneracion_chofer.model");
+const { validateConfiguracion } = require("../utils/validators/configuracion_peaje_trayecto.validators");
+const { validateId } = require("../utils/validators/common.validators");
+const { createHttpError } = require("../utils/errors/http.error");
+
+const mutate = async (action, id, data) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await lock(client);
+        if (action !== "remove" && !await trayectoModel.findByIdForShare(client, data.id_trayecto)) {
+            throw createHttpError("El trayecto indicado no existe", 400);
+        }
+        const result = action === "create" ? await model.create(client, data)
+            : action === "update" ? await model.update(client, id, data) : await model.remove(client, id);
+        if (!result) throw createHttpError("Registro no encontrado", 404);
+        await client.query("COMMIT");
+        return result;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+const findAll = async () => model.findAll();
+
+const findById = async (id) => {
+    const result = await model.findById(validateId(id));
+    if (!result) throw createHttpError("Registro no encontrado", 404);
+    return result;
+};
+
+const create = async (data) => mutate("create", null, validateConfiguracion(data));
+
+const update = async (id, data) => mutate("update", validateId(id), validateConfiguracion(data));
+
+const remove = async (id) => mutate("remove", validateId(id));
+
+module.exports = {
+    findAll,
+    findById,
+    create,
+    update,
+    remove
+};
