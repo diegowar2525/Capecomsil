@@ -49,7 +49,10 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const url = `http://127.0.0.1:${server.address().port}/api/mantenimientos`;
+        let dia = 1;
         const post = async data => {
+            const fecha = '2026-10-' + String(dia++).padStart(2,'0');
+            data = { ...data, fecha_inicio: fecha+'T08:00:00', fecha_fin: fecha+'T09:00:00' };
             const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
             return { status: response.status, body: await response.json() };
         };

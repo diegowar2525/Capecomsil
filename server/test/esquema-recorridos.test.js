@@ -54,16 +54,17 @@ test("Esquema: recorridos continuos, llantas y materiales externos", async () =>
         };
         await invalid("INSERT INTO producto(id_categoria,nombre,unidad_medida) VALUES (1,'Llanta sin condición','unidad')");
         await invalid("INSERT INTO producto(id_categoria,nombre,unidad_medida,condicion_llanta) VALUES (2,'Aceite','galón','NUEVA')");
-        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha) VALUES (1,1,'2026-10-01')");
+        await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-01 08:00','2026-10-01 09:00')");
         const salida = (await client.query("INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,20) RETURNING id_trayecto")).rows[0].id_trayecto;
         const llegada = (await client.query("INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Llegada',1,2,80) RETURNING id_trayecto")).rows[0].id_trayecto;
-        await client.query("INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto) VALUES (1,1,$1),(1,2,$2)", [salida, llegada]);
+        await client.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) SELECT id_trayecto,0,'2026-01-01' FROM trayecto");
+        await client.query("INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto,id_configuracion_peaje_trayecto,peaje_aplicado) SELECT 1,CASE WHEN id_trayecto=$1 THEN 1 ELSE 2 END,id_trayecto,id_configuracion_peaje_trayecto,importe FROM configuracion_peaje_trayecto WHERE id_trayecto IN ($1,$2)", [salida, llegada]);
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         assert.equal((await client.query("SELECT sum(kilometros) AS km FROM tramo_viaje")).rows[0].km, "100.00");
         await invalid(`UPDATE trayecto SET id_terminal_origen=2 WHERE id_trayecto=${llegada}`);
 
         await invalid("DELETE FROM tramo_viaje WHERE orden=1");
-        await client.query("INSERT INTO mantenimiento(id_vehiculo,fecha,tipo,monto) VALUES (1,'2026-10-01','Prueba',10)");
+        await client.query("INSERT INTO mantenimiento(id_vehiculo,fecha_inicio,fecha_fin,tipo,monto) VALUES (1,'2026-10-01 09:00','2026-10-01 10:00','Prueba',10)");
         await client.query(`INSERT INTO detalle_mantenimiento(id_mantenimiento,origen_producto,descripcion_producto,cantidad)
             VALUES (1,'EXTERNO','Llanta del taller',1)`);
         await invalid(`INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo,id_detalle_mantenimiento)

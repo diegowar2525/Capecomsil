@@ -39,7 +39,7 @@ test("Anulaciones: historial, stock, pendientes, rollback y doble reversión con
         });
         assert.equal(invoice.status, 201);
         const receiptRoute = "/recepciones-compra/" + invoice.body.recepcion_inicial.id_recepcion_compra + "/anular";
-        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha: "2026-10-02", tipo: "Filtros", monto: "1", detalles: [{ id_producto: 1, cantidad: "2" }] });
+        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha_inicio: "2026-10-02T08:00:00", fecha_fin: "2026-10-02T09:00:00", tipo: "Filtros", monto: "1", detalles: [{ id_producto: 1, cantidad: "2" }] });
         assert.equal(maintenance.status, 201);
         assert.equal(await stock(), 3);
         assert.equal((await request(receiptRoute, motivo)).status, 409);

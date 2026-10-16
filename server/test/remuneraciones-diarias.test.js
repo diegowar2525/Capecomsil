@@ -26,6 +26,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (1,1,0.035,'2026-01-01');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('Prueba',1,1,10);`);
         await admin.query("INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) SELECT id_trayecto,0,'2025-01-01' FROM trayecto");
+        await admin.query("INSERT INTO configuracion_combustible(consumo_galones_km,precio_por_galon,fecha_inicio) VALUES (0.1,3,'2025-01-01'); INSERT INTO configuracion_viatico(importe_diario,fecha_inicio) VALUES (12,'2025-01-01')");
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
@@ -38,7 +39,9 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
             return { status: response.status, body: await response.json() };
         };
         const generar = (id, desde, hasta=desde) => request("/remuneraciones-chofer/generar", "POST", { id_chofer: id, fecha_desde: desde, fecha_hasta: hasta });
-        const viaje = (id, fecha) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha_inicio: fecha+"T08:00:00", fecha_fin: fecha+"T12:00:00",
+        const horarios = new Map();
+        const hora = fecha => { const h = (horarios.get(fecha) ?? 7) + 1; horarios.set(fecha,h); return String(h).padStart(2,'0'); };
+        const viaje = (id, fecha, h = hora(fecha)) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha_inicio: fecha+"T"+h+":00:00", fecha_fin: fecha+"T"+h+":30:00",
             tramos: [{ orden: 1, id_trayecto: 1 }], detalles: [{ id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "50" }] });
         const anular = id => request(`/viajes/${id}/anular`, "POST", { motivo: "Prueba" });
         for (const fecha of ["2026-10-11", "2026-10-12"]) {
@@ -48,7 +51,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
         assert.deepEqual((await generar(2,"2026-10-10","2026-10-12")).body.map(r=>r.total), ["0.00","0.00","0.00"]);
         const simultaneos = await Promise.all([viaje(1,"2026-10-12"),viaje(1,"2026-10-12"),viaje(1,"2026-10-12")]);
         assert.ok(simultaneos.every(r=>r.status===201), JSON.stringify(simultaneos));
-        const costos = await isolated.query("SELECT valor FROM costo_viaje ORDER BY id_viaje");
+        const costos = await isolated.query("SELECT valor FROM costo_viaje WHERE tipo_costo='CHOFER' ORDER BY id_viaje");
         assert.deepEqual(costos.rows.map(r=>r.valor), ["23.34","23.33","23.33"]);
         const diario = (await generar(1,"2026-10-12")).body[0];
         assert.equal(diario.total,"70.00");
@@ -56,7 +59,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
         assert.equal(diario.costo_sin_asignar,"0.00");
         assert.deepEqual((await request(`/remuneraciones-chofer/${diario.id_remuneracion_chofer}`)).body.historial,[]);
         assert.equal((await anular(simultaneos[0].body.id_viaje)).status,200);
-        assert.deepEqual((await isolated.query("SELECT valor FROM costo_viaje ORDER BY id_viaje")).rows.map(r=>r.valor), ["35.00","35.00"]);
+        assert.deepEqual((await isolated.query("SELECT valor FROM costo_viaje WHERE tipo_costo='CHOFER' ORDER BY id_viaje")).rows.map(r=>r.valor), ["35.00","35.00"]);
         await anular(simultaneos[1].body.id_viaje);
         await anular(simultaneos[2].body.id_viaje);
         const sinViajes=(await generar(1,"2026-10-12")).body[0];
