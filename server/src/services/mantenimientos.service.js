@@ -1,4 +1,7 @@
 const pool = require("../config/database");
+const { lock } = require("../models/remuneracion_chofer.model");
+const { createHttpError } = require("../utils/errors/http.error");
+const { validateFinalizacion } = require("../utils/validators/mantenimiento.validators");
 const mantenimientoModel = require("../models/mantenimiento.model");
 const detalleMantenimientoModel = require("../models/detalle_mantenimiento.model");
 const movimientoInventarioModel = require("../models/movimiento_inventario.model");
@@ -31,6 +34,7 @@ const createMantenimiento = async (data) => {
 
     try {
         await client.query("BEGIN");
+        await lock(client);
         if (!await vehiculoModel.findByIdForShare(client, datosValidados.id_vehiculo)) {
             const error = new Error("El vehículo indicado no existe");
             error.status = 400;
@@ -82,7 +86,31 @@ const createMantenimiento = async (data) => {
     }
 };
 
+const finalizarMantenimiento = async (id, data) => {
+    id = validateId(id);
+    const fecha = validateFinalizacion(data);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await lock(client);
+        const actual = await mantenimientoModel.findForUpdate(client, id);
+        if (!actual) throw createHttpError("Mantenimiento no encontrado", 404);
+        if (actual.estado === "ANULADO") throw createHttpError("El mantenimiento está anulado", 409);
+        if (actual.fecha_fin !== null) throw createHttpError("El mantenimiento ya está finalizado", 409);
+        if (fecha <= actual.fecha_inicio) throw createHttpError("El fin debe ser posterior al inicio", 400);
+        const resultado = await mantenimientoModel.finalizar(client, id, fecha);
+        await client.query("COMMIT");
+        return resultado;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
+    finalizarMantenimiento,
     getMantenimientos,
     getMantenimientoById,
     createMantenimiento

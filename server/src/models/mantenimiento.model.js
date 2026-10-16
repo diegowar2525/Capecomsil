@@ -59,7 +59,11 @@ const anular = async (client, id, motivo) => {
     return result.rows[0];
 };
 
+const finalizar = async (client, id, fecha) => (await client.query(
+    `UPDATE mantenimiento SET fecha_fin=$2 WHERE id_mantenimiento=$1 RETURNING *, ${fechas}`, [id, fecha])).rows[0];
+
 module.exports = {
+    finalizar,
     findForUpdate,
     anular,
     findAll,
