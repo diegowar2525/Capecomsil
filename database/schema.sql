@@ -1232,6 +1232,134 @@ CREATE TRIGGER viatico_historial BEFORE INSERT OR UPDATE OR DELETE ON configurac
 CREATE TRIGGER peaje_historial BEFORE INSERT OR UPDATE OR DELETE ON configuracion_peaje_trayecto
     FOR EACH ROW EXECUTE FUNCTION proteger_configuracion_costos();
 
+-- Kilometraje derivado: no incluye viajes anulados, anteriores al control ni
+-- viajes que todavía no hayan terminado a la fecha de corte.
+CREATE FUNCTION kilometraje_vehiculo(p_vehiculo INTEGER, p_hasta TIMESTAMP)
+RETURNS NUMERIC LANGUAGE sql STABLE AS $$
+    SELECT CASE WHEN v.fecha_inicio_control_km IS NULL OR p_hasta<v.fecha_inicio_control_km THEN NULL
+        ELSE v.kilometraje_base + COALESCE((SELECT SUM(t.kilometros)
+            FROM viaje j JOIN tramo_viaje t USING(id_viaje)
+            WHERE j.id_vehiculo=v.id_vehiculo AND j.estado='REGISTRADO'
+                AND j.fecha_inicio>=v.fecha_inicio_control_km AND j.fecha_fin<=p_hasta),0) END
+    FROM vehiculo v WHERE v.id_vehiculo=p_vehiculo;
+$$;
+
+CREATE FUNCTION validar_plan_mantenimiento() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE base NUMERIC;
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    SELECT kilometraje_base INTO base FROM vehiculo WHERE id_vehiculo=NEW.id_vehiculo FOR SHARE;
+    IF base IS NOT NULL AND NEW.kilometraje_referencia_inicial>base THEN
+        RAISE EXCEPTION 'La referencia del último servicio no puede superar el kilometraje base del vehículo'
+            USING ERRCODE='23514', CONSTRAINT='seguimiento_referencia_inicial';
+    END IF;
+    IF TG_OP='UPDATE' AND (NEW.id_vehiculo<>OLD.id_vehiculo
+        OR NEW.kilometraje_referencia_inicial<>OLD.kilometraje_referencia_inicial)
+        AND EXISTS(SELECT 1 FROM cumplimiento_plan_mantenimiento
+            WHERE id_plan_mantenimiento_vehiculo=OLD.id_plan_mantenimiento_vehiculo) THEN
+        RAISE EXCEPTION 'El plan tiene cumplimientos: no se puede cambiar su vehículo ni su referencia inicial'
+            USING ERRCODE='23514', CONSTRAINT='seguimiento_plan_historial';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER plan_mantenimiento_validar BEFORE INSERT OR UPDATE ON plan_mantenimiento_vehiculo
+    FOR EACH ROW EXECUTE FUNCTION validar_plan_mantenimiento();
+
+CREATE FUNCTION validar_referencia_kilometraje() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    IF TG_OP='UPDATE' AND (NEW.kilometraje_base IS DISTINCT FROM OLD.kilometraje_base
+        OR NEW.fecha_inicio_control_km IS DISTINCT FROM OLD.fecha_inicio_control_km) THEN
+        IF EXISTS(SELECT 1 FROM mantenimiento m JOIN cumplimiento_plan_mantenimiento c USING(id_mantenimiento)
+            WHERE m.id_vehiculo=OLD.id_vehiculo) THEN
+            RAISE EXCEPTION 'El vehículo tiene cumplimientos: no se puede cambiar el origen de su kilometraje'
+                USING ERRCODE='23514', CONSTRAINT='seguimiento_base_historial';
+        END IF;
+        IF EXISTS(SELECT 1 FROM plan_mantenimiento_vehiculo WHERE id_vehiculo=OLD.id_vehiculo
+            AND kilometraje_referencia_inicial>NEW.kilometraje_base) THEN
+            RAISE EXCEPTION 'El kilometraje base dejaría referencias de planes fuera de su escala'
+                USING ERRCODE='23514', CONSTRAINT='seguimiento_referencia_inicial';
+        END IF;
+    END IF;
+    IF EXISTS(SELECT 1 FROM viaje WHERE id_vehiculo=NEW.id_vehiculo AND estado='REGISTRADO'
+        AND fecha_inicio<NEW.fecha_inicio_control_km AND fecha_fin>NEW.fecha_inicio_control_km) THEN
+        RAISE EXCEPTION 'El inicio del control de kilómetros no puede estar dentro de un viaje'
+            USING ERRCODE='23514', CONSTRAINT='seguimiento_corte_viaje';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER vehiculo_referencia_km BEFORE INSERT OR UPDATE ON vehiculo
+    FOR EACH ROW EXECUTE FUNCTION validar_referencia_kilometraje();
+
+CREATE FUNCTION validar_cumplimiento_mantenimiento() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE m mantenimiento%ROWTYPE; p plan_mantenimiento_vehiculo%ROWTYPE; km NUMERIC;
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    SELECT * INTO m FROM mantenimiento WHERE id_mantenimiento=NEW.id_mantenimiento FOR SHARE;
+    SELECT * INTO p FROM plan_mantenimiento_vehiculo
+        WHERE id_plan_mantenimiento_vehiculo=NEW.id_plan_mantenimiento_vehiculo FOR SHARE;
+    IF m.id_mantenimiento IS NULL OR p.id_plan_mantenimiento_vehiculo IS NULL THEN
+        RAISE EXCEPTION 'Mantenimiento o plan inexistente'
+            USING ERRCODE='23514', CONSTRAINT='seguimiento_referencia_invalida';
+    END IF;
+    IF TG_OP='INSERT' OR NEW.id_mantenimiento<>OLD.id_mantenimiento
+        OR NEW.id_plan_mantenimiento_vehiculo<>OLD.id_plan_mantenimiento_vehiculo THEN
+        IF m.estado<>'REGISTRADO' OR m.fecha_fin IS NULL OR NOT p.estado OR m.id_vehiculo<>p.id_vehiculo THEN
+            RAISE EXCEPTION 'El cumplimiento requiere un mantenimiento finalizado y un plan activo del mismo vehículo'
+                USING ERRCODE='23514', CONSTRAINT='seguimiento_cumplimiento_invalido';
+        END IF;
+    END IF;
+    km := kilometraje_vehiculo(m.id_vehiculo,m.fecha_inicio);
+    IF km IS NULL THEN
+        RAISE EXCEPTION 'Configure el kilometraje base y un inicio de control anterior al mantenimiento'
+            USING ERRCODE='23514', CONSTRAINT='seguimiento_sin_control';
+    END IF;
+    NEW.kilometraje_aplicado := km;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER cumplimiento_calcular BEFORE INSERT OR UPDATE ON cumplimiento_plan_mantenimiento
+    FOR EACH ROW EXECUTE FUNCTION validar_cumplimiento_mantenimiento();
+
+-- Se ejecuta al final de la transacción para ver todos los tramos del viaje.
+CREATE FUNCTION reconciliar_cumplimientos_viaje() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE vehiculos INTEGER[]; control TIMESTAMP;
+BEGIN
+    PERFORM pg_advisory_xact_lock(72631,1);
+    IF TG_TABLE_NAME='viaje' THEN
+        IF TG_OP='DELETE' THEN vehiculos := ARRAY[OLD.id_vehiculo];
+        ELSIF TG_OP='INSERT' THEN vehiculos := ARRAY[NEW.id_vehiculo];
+        ELSE vehiculos := ARRAY[OLD.id_vehiculo,NEW.id_vehiculo]; END IF;
+        IF TG_OP<>'DELETE' AND NEW.estado='REGISTRADO' THEN
+            SELECT fecha_inicio_control_km INTO control FROM vehiculo WHERE id_vehiculo=NEW.id_vehiculo;
+            IF NEW.fecha_inicio<control AND NEW.fecha_fin>control THEN
+                RAISE EXCEPTION 'El viaje atraviesa el inicio del control de kilómetros'
+                    USING ERRCODE='23514', CONSTRAINT='seguimiento_corte_viaje';
+            END IF;
+        END IF;
+    ELSE
+        IF TG_OP='INSERT' THEN
+            SELECT ARRAY[id_vehiculo] INTO vehiculos FROM viaje WHERE id_viaje=NEW.id_viaje;
+        ELSIF TG_OP='DELETE' THEN
+            SELECT ARRAY[id_vehiculo] INTO vehiculos FROM viaje WHERE id_viaje=OLD.id_viaje;
+        ELSE
+            SELECT array_agg(DISTINCT id_vehiculo) INTO vehiculos FROM viaje WHERE id_viaje IN (OLD.id_viaje,NEW.id_viaje);
+        END IF;
+    END IF;
+    UPDATE cumplimiento_plan_mantenimiento c SET kilometraje_aplicado=kilometraje_vehiculo(m.id_vehiculo,m.fecha_inicio)
+    FROM mantenimiento m WHERE c.id_mantenimiento=m.id_mantenimiento AND m.id_vehiculo=ANY(vehiculos)
+        AND m.estado='REGISTRADO' AND m.fecha_fin IS NOT NULL
+        AND c.kilometraje_aplicado IS DISTINCT FROM kilometraje_vehiculo(m.id_vehiculo,m.fecha_inicio);
+    RETURN NULL;
+END;
+$$;
+CREATE CONSTRAINT TRIGGER viaje_reconciliar_km AFTER INSERT OR UPDATE OR DELETE ON viaje
+    DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION reconciliar_cumplimientos_viaje();
+CREATE CONSTRAINT TRIGGER tramo_reconciliar_km AFTER INSERT OR UPDATE OR DELETE ON tramo_viaje
+    DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION reconciliar_cumplimientos_viaje();
+
 CREATE FUNCTION proteger_feriado() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     PERFORM pg_advisory_xact_lock(72631,1);
