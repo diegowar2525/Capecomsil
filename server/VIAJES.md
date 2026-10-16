@@ -4,7 +4,7 @@ Están implementados el esquema, el registro transaccional, las consultas y la a
 
 ## VIAJE
 
-`id_viaje` (PK), `id_vehiculo` (FK), `id_chofer` (FK), `fecha` (DATE), `estado` (REGISTRADO/ANULADO), `fecha_anulacion`, `motivo_anulacion`.
+`id_viaje` (PK), `id_vehiculo` (FK), `id_chofer` (FK), `fecha_inicio` y `fecha_fin` (TIMESTAMP), `estado` (REGISTRADO/ANULADO), `fecha_anulacion`, `motivo_anulacion`.
 
 ## DETALLE_VIAJE
 
@@ -22,7 +22,8 @@ No se incorporan compartimientos ni planificación. Se rechaza la suma de galone
 
 ```json
 {
-  "fecha": "2026-10-08",
+  "fecha_inicio": "2026-10-08T08:00:00",
+  "fecha_fin": "2026-10-08T12:00:00",
   "id_vehiculo": 1,
   "id_chofer": 1,
   "tramos": [
@@ -37,7 +38,7 @@ No se incorporan compartimientos ni planificación. Se rechaza la suma de galone
 }
 ```
 
-La fecha acepta únicamente YYYY-MM-DD, sin hora. Determina la vigencia de las tarifas y la remuneración diaria del chofer. Los galones deben ser positivos y admitir como máximo dos decimales. Debe existir una tarifa que cubra la fecha para cada gasolinera y terminal, sin importar su estado administrativo. Se rechaza repetir la misma combinación de gasolinera, terminal y combustible; un combustible sí puede entregarse a varios destinos.
+Inicio y fin requieren fecha y hora local sin zona, dentro del mismo día y con fin posterior al inicio. El día de inicio determina la vigencia de las tarifas y la remuneración diaria del chofer. Los galones deben ser positivos y admitir como máximo dos decimales. Debe existir una tarifa que cubra la fecha para cada gasolinera y terminal, sin importar su estado administrativo. Se rechaza repetir la misma combinación de gasolinera, terminal y combustible; un combustible sí puede entregarse a varios destinos.
 
 La respuesta 201 incluye viaje, detalles, tramos, `kilometros_recorridos`, `total_galones` y `valor_transporte`. Las cantidades e importes son cadenas decimales. El precio se copia de la tarifa y el importe se redondea a dos decimales por entrega en PostgreSQL NUMERIC. Los totales suman los detalles. `id_liquidacion` queda en null. Estado, tarifas e importes enviados por el cliente se ignoran.
 
@@ -53,7 +54,7 @@ Filtros opcionales: `fecha_desde`, `fecha_hasta` (YYYY-MM-DD, inclusivos sobre f
 
 Crear y anular un viaje recalcula la remuneración diaria y su distribución en la misma transacción.
 Se necesita configuración vigente de remuneración y registrar los feriados antes de generar el día.
-La creación y la consulta individual incluyen `costos`. Ver [REMUNERACIONES.md](REMUNERACIONES.md).
+La creación y la consulta individual incluyen `costos` de chofer, combustible, peajes y viático. Antes de registrar viajes deben existir las configuraciones vigentes: ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md).
 
 Ejemplo: `GET /api/viajes?id_gasolinera=2&fecha_desde=2026-10-01&fecha_hasta=2026-10-31&limit=50&offset=0`.
 

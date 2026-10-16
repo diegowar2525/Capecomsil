@@ -1,4 +1,5 @@
 const peajeModel = require("../models/configuracion_peaje_trayecto.model");
+const viaticoModel = require("../models/viatico_chofer.model");
 const costoModel = require("../models/costo_viaje.model");
 const remuneracionModel = require("../models/remuneracion_chofer.model");
 const pool = require("../config/database");
@@ -65,6 +66,8 @@ const createViaje = async (data) => {
             detalles.push(await detalleModel.create(client, viaje.id_viaje, detalle, tarifa));
         }
         await remuneracionModel.recalcular(client, validado.id_chofer, validado.fecha_inicio.slice(0,10));
+        await costoModel.crearAutomaticos(client, viaje.id_viaje, validado.fecha_inicio.slice(0,10));
+        await viaticoModel.recalcular(client, validado.id_chofer, validado.fecha_inicio.slice(0,10));
         const totales = await viajeModel.getTotales(client, viaje.id_viaje);
         const costos = await costoModel.findByViaje(viaje.id_viaje, client);
         await client.query("COMMIT");
@@ -103,6 +106,7 @@ const anularViaje = async (id, data) => {
         if (detalles.some(d => d.id_liquidacion !== null)) throw createHttpError("No se puede anular un viaje con entregas asociadas a una liquidación");
         await viajeModel.anular(client, id, motivo);
         await remuneracionModel.recalcular(client, viaje.id_chofer, viaje.fecha_inicio.slice(0,10));
+        await viaticoModel.recalcular(client, viaje.id_chofer, viaje.fecha_inicio.slice(0,10));
         const resultado = await viajeModel.findById(id, client);
         const entregas = await detalleModel.findByViaje(id, client);
         const tramos = await tramoModel.findByViaje(id, client);
