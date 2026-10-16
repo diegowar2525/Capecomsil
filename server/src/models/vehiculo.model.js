@@ -98,9 +98,10 @@ const update = async (
         fecha_inicio_control_km,
         imagen_url,
         estado
-    }
+    },
+    client = pool
 ) => {
-    const result = await pool.query(
+    const result = await client.query(
         `
       UPDATE vehiculo
       SET
@@ -163,7 +164,19 @@ const getCapacidadViaje = async (client, id, cantidades) => {
         FROM vehiculo WHERE id_vehiculo=$1`, [id, cantidades])).rows[0];
 };
 
+const getKilometraje = async (id, hasta) => (await pool.query(`
+    WITH corte AS (SELECT COALESCE($2::timestamp,CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil') hasta)
+    SELECT v.id_vehiculo,v.placa,v.kilometraje_base,
+        to_char(v.fecha_inicio_control_km,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km,
+        to_char(corte.hasta,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_corte,
+        kilometraje_vehiculo(v.id_vehiculo,corte.hasta) AS kilometraje_estimado,
+        kilometraje_vehiculo(v.id_vehiculo,corte.hasta)-v.kilometraje_base AS kilometros_acumulados,
+        CASE WHEN v.fecha_inicio_control_km IS NULL OR corte.hasta<v.fecha_inicio_control_km THEN 'SIN_CONFIGURAR'
+            ELSE 'CONFIGURADO' END AS estado_control
+    FROM vehiculo v CROSS JOIN corte WHERE v.id_vehiculo=$1`,[id,hasta])).rows[0];
+
 module.exports = {
+    getKilometraje,
     getCapacidadViaje,
     findByIdForShare,
     findAll,

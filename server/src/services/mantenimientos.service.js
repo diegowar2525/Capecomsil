@@ -3,6 +3,8 @@ const { lock } = require("../utils/transaction.lock");
 const { createHttpError } = require("../utils/errors/http.error");
 const { validateFinalizacion } = require("../utils/validators/mantenimiento.validators");
 const mantenimientoModel = require("../models/mantenimiento.model");
+const cumplimientoModel = require("../models/cumplimiento_plan_mantenimiento.model");
+const { validatePlanesCumplidos } = require("../utils/validators/plan_mantenimiento.validators");
 const detalleMantenimientoModel = require("../models/detalle_mantenimiento.model");
 const movimientoInventarioModel = require("../models/movimiento_inventario.model");
 const vehiculoModel = require("../models/vehiculo.model");
@@ -25,7 +27,7 @@ const getMantenimientoById = async (id) => {
     }
 
     const detalles = await detalleMantenimientoModel.findByMantenimiento(idNumerico);
-    return { ...mantenimiento, detalles };
+    return { ...mantenimiento, detalles, cumplimientos: await cumplimientoModel.findByMantenimiento(idNumerico) };
 };
 
 const createMantenimiento = async (data) => {
@@ -76,8 +78,10 @@ const createMantenimiento = async (data) => {
             detalles.push(creado);
         }
 
+        for (const plan of datosValidados.planes_cumplidos) await cumplimientoModel.create(client,mantenimiento.id_mantenimiento,plan);
+        const cumplimientos = await cumplimientoModel.findByMantenimiento(mantenimiento.id_mantenimiento,client);
         await client.query("COMMIT");
-        return { ...mantenimiento, detalles };
+        return { ...mantenimiento, detalles, cumplimientos };
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -89,6 +93,7 @@ const createMantenimiento = async (data) => {
 const finalizarMantenimiento = async (id, data) => {
     id = validateId(id);
     const fecha = validateFinalizacion(data);
+    const planes = validatePlanesCumplidos(data.planes_cumplidos);
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -99,6 +104,33 @@ const finalizarMantenimiento = async (id, data) => {
         if (actual.fecha_fin !== null) throw createHttpError("El mantenimiento ya está finalizado", 409);
         if (fecha <= actual.fecha_inicio) throw createHttpError("El fin debe ser posterior al inicio", 400);
         const resultado = await mantenimientoModel.finalizar(client, id, fecha);
+        for (const plan of planes) await cumplimientoModel.create(client,id,plan);
+        const cumplimientos = await cumplimientoModel.findByMantenimiento(id,client);
+        await client.query("COMMIT");
+        return { ...resultado, cumplimientos };
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+const registrarCumplimientos = async (id, data) => {
+    id = validateId(id);
+    const planes = validatePlanesCumplidos(data?.planes_cumplidos);
+    if (!planes.length) throw createHttpError("Indique al menos un plan cumplido",400);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await lock(client);
+        const mantenimiento = await mantenimientoModel.findForUpdate(client,id);
+        if (!mantenimiento) throw createHttpError("Mantenimiento no encontrado",404);
+        if (mantenimiento.estado !== "REGISTRADO" || !mantenimiento.fecha_fin) {
+            throw createHttpError("El mantenimiento debe estar finalizado y no anulado",409);
+        }
+        for (const plan of planes) await cumplimientoModel.create(client,id,plan);
+        const resultado = await cumplimientoModel.findByMantenimiento(id,client);
         await client.query("COMMIT");
         return resultado;
     } catch (error) {
@@ -110,6 +142,7 @@ const finalizarMantenimiento = async (id, data) => {
 };
 
 module.exports = {
+    registrarCumplimientos,
     finalizarMantenimiento,
     getMantenimientos,
     getMantenimientoById,

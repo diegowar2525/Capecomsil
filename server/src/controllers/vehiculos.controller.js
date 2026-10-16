@@ -63,6 +63,13 @@ const deleteVehiculo = async (req, res, next) => {
 };
 
 module.exports = {
+    getKilometraje: async (req, res, next) => {
+        try {
+            res.json(await require("../services/vehiculos.service").getKilometraje(req.params.id,req.query));
+        } catch (error) {
+            next(error);
+        }
+    },
     getVehiculos,
     getVehiculoById,
     createVehiculo,

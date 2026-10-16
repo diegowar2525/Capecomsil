@@ -1,4 +1,8 @@
 const vehiculoModel = require("../models/vehiculo.model");
+const pool = require("../config/database");
+const { lock } = require("../utils/transaction.lock");
+const { validateFiltros } = require("../utils/validators/plan_mantenimiento.validators");
+const { createHttpError } = require("../utils/errors/http.error");
 const { validateId } = require("../utils/validators/common.validators");
 const { validateData } = require("../utils/validators/vehiculo.validators");
 
@@ -30,18 +34,20 @@ const updateVehiculo = async (id, data) => {
     const idNumerico = validateId(id);
     const datosValidados = validateData(data);
 
-    const vehiculo = await vehiculoModel.update(
-        idNumerico,
-        datosValidados
-    );
-
-    if (!vehiculo) {
-        const error = new Error("Vehículo no encontrado");
-        error.status = 404;
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await lock(client);
+        const vehiculo = await vehiculoModel.update(idNumerico,datosValidados,client);
+        if (!vehiculo) throw createHttpError("Vehículo no encontrado",404);
+        await client.query("COMMIT");
+        return vehiculo;
+    } catch (error) {
+        await client.query("ROLLBACK");
         throw error;
+    } finally {
+        client.release();
     }
-
-    return vehiculo;
 };
 
 const deleteVehiculo = async (id) => {
@@ -60,6 +66,12 @@ const deleteVehiculo = async (id) => {
 
 
 module.exports = {
+    getKilometraje: async (id, query) => {
+        const filtros = validateFiltros(query);
+        const resultado = await vehiculoModel.getKilometraje(validateId(id),filtros.fecha_hasta);
+        if (!resultado) throw createHttpError("Vehículo no encontrado",404);
+        return resultado;
+    },
     getVehiculos,
     getVehiculoById,
     createVehiculo,

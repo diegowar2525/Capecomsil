@@ -7,6 +7,7 @@ const {
 } = require("../controllers/mantenimientos.controller");
 
 const router = express.Router();
+router.post("/:id/cumplimientos", require("../controllers/mantenimientos.controller").registrarCumplimientos);
 router.post("/:id/finalizar", require("../controllers/mantenimientos.controller").finalizarMantenimiento);
 router.post("/:id/anular", anularMantenimiento);
 

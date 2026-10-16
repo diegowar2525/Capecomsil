@@ -9,6 +9,7 @@ const {
 } = require("../controllers/vehiculos.controller");
 
 const router = express.Router();
+router.get("/:id/kilometraje", require("../controllers/vehiculos.controller").getKilometraje);
 
 router.get("/", getVehiculos);
 router.get("/:id", getVehiculoById);

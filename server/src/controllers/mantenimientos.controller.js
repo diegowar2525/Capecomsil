@@ -28,6 +28,13 @@ const createMantenimiento = async (req, res, next) => {
 };
 
 module.exports = {
+    registrarCumplimientos: async (req, res, next) => {
+        try {
+            res.status(201).json(await mantenimientosService.registrarCumplimientos(req.params.id,req.body));
+        } catch (error) {
+            next(error);
+        }
+    },
     finalizarMantenimiento: async (req, res, next) => {
         try {
             res.json(await mantenimientosService.finalizarMantenimiento(req.params.id, req.body));
