@@ -1,5 +1,7 @@
 # API de CAPECOMSIL
 
+Gastos reales y cargas de combustible: [GASTOS_ABASTECIMIENTOS.md](GASTOS_ABASTECIMIENTOS.md).
+
 Planes, kilometraje y avisos de mantenimiento: [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md).
 
 Horarios, configuraciones y costos automáticos: [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
