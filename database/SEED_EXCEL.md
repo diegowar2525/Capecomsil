@@ -15,6 +15,14 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
 | Configuración de viático | 1 |
 | Configuración de peaje por trayecto | 248 |
 | Plan de mantenimiento por vehículo | 16 (dos por vehículo) |
+| Viaje sintético | 4 (3 válidos y 1 anulado) |
+| Tramo de viaje sintético | 8 |
+| Detalle de viaje sintético | 4 |
+| Costo de viaje sintético | 14 |
+| Remuneración diaria sintética | 4 |
+| Viático diario sintético | 2 |
+| Gasto sintético | 9 (8 válidos y 1 anulado) |
+| Abastecimiento sintético | 3 |
 
 ## Configuraciones de costos y mantenimiento
 
@@ -22,8 +30,8 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
   **$3,1030/galón**, tomados de `COSTO OPERATIVOS TRANSPORTE.xlsx`, hoja
   `MECH-ROC-CECI-SJ`, celdas D15 y D17. El libro contiene otros valores por ruta;
   este ejemplo no acredita un factor único validado ni el precio actual.
-- Viático: **$12 diarios**, confirmado por el cliente. No se generan viáticos diarios
-  hasta registrar viajes; el backend los distribuye entre los viajes del chofer.
+- Viático: **$12 diarios**, confirmado por el cliente. El escenario de informes incluye
+  dos días de viático, distribuidos entre los viajes válidos del chofer.
 - Combustible, viáticos y peajes tienen vigencia de prueba del **01/01/2026 al 31/12/2026**.
   Para viajes fuera de ese intervalo se requieren nuevas configuraciones.
 - Peajes: **cero provisional para cada trayecto y sentido**, señalado en observaciones.
@@ -33,8 +41,10 @@ Fuente: `ENERO -2026-new.xlsm`. Se leyó sin modificar ni ejecutar macros.
   No es una lectura de odómetro. Cada uno tiene planes independientes de **8.000 y 80.000 km**,
   con referencia inicial y anticipación de aviso en cero como valores provisionales.
   La referencia cero no demuestra que se haya realizado un mantenimiento previo.
-- No se crean viajes, costos, gastos, cargas de combustible ni cumplimientos ficticios.
-  Las configuraciones y los planes son catálogos; los movimientos se registran mediante sus flujos.
+- Se incluye un escenario **sintético** de viajes, costos, gastos y abastecimientos para
+  probar informes. No procede del Excel ni representa operaciones reales del cliente.
+  Resultados esperados y consultas en [SEED_INFORMES.md](SEED_INFORMES.md).
+  No se agregan mantenimientos, cumplimientos ni movimientos de inventario.
 
 ## Criterios de carga
 
