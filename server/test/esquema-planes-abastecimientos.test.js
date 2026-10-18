@@ -30,15 +30,15 @@ test("Esquema: planes independientes, cumplimiento único y gasto por abastecimi
             VALUES (1,1,80000)`, "23505");
         await rechazar("UPDATE plan_mantenimiento_vehiculo SET intervalo_km=0 WHERE id_plan_mantenimiento_vehiculo=1", "23514");
         await rechazar("DELETE FROM plan_mantenimiento_vehiculo WHERE id_plan_mantenimiento_vehiculo=1", "23503");
-        await client.query("INSERT INTO gasto(id_vehiculo,tipo_gasto,monto) VALUES (1,'COMBUSTIBLE',60)");
+        const idGasto = (await client.query("INSERT INTO gasto(id_vehiculo,tipo_gasto,monto) VALUES (1,'COMBUSTIBLE',60) RETURNING id_gasto")).rows[0].id_gasto;
         const carga = `INSERT INTO abastecimiento_combustible
             (id_vehiculo,id_gasto,fecha_hora,kilometraje_odometro,galones,precio_por_galon,tanque_lleno)
-            VALUES (1,1,'2026-10-16 13:00',80000,20,3,true)`;
+            VALUES (1,${idGasto},'2026-10-16 13:00',80000,20,3,true)`;
         await client.query(carga);
         await rechazar(carga, "23505");
         await rechazar("UPDATE abastecimiento_combustible SET galones=0", "23514");
         await rechazar("UPDATE abastecimiento_combustible SET kilometraje_odometro=-1", "23514");
-        await rechazar("DELETE FROM gasto WHERE id_gasto=1", "23503");
+        await rechazar(`DELETE FROM gasto WHERE id_gasto=${idGasto}`, "23503");
         assert.equal((await client.query("SELECT count(*)::int n FROM cumplimiento_plan_mantenimiento")).rows[0].n, 2);
     } finally {
         await client.query("ROLLBACK");

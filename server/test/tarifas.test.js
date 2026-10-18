@@ -53,9 +53,11 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
         await rejected("UPDATE detalle_viaje SET id_viaje=2 WHERE id_viaje=1", '23514');
         // Un mismo viaje puede entregar a otra gasolinera y liquidarse por detalle.
         await client.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (2,'2026-05-01','2026-05-31')");
-        await client.query("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_liquidacion,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) SELECT 1,id_tarifa,1,1,20,0.05,1 FROM tarifa WHERE id_gasolinera=2");
+        const entrega = (await client.query("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) SELECT 1,id_tarifa,1,20,0.05,1 FROM tarifa WHERE id_gasolinera=2 RETURNING id_detalle_viaje")).rows[0].id_detalle_viaje;
+        await client.query("INSERT INTO detalle_liquidacion(id_liquidacion,id_detalle_viaje) VALUES (1,$1)",[entrega]);
         await rejected("UPDATE tarifa SET valor_por_galon=0.06 WHERE id_gasolinera=2", '23514');
-        await client.query("DELETE FROM detalle_viaje WHERE id_liquidacion=1");
+        await client.query("DELETE FROM detalle_liquidacion WHERE id_liquidacion=1");
+        await client.query("DELETE FROM detalle_viaje WHERE id_detalle_viaje=$1",[entrega]);
         await client.query("UPDATE tarifa SET fecha_fin='2026-05-15', estado=true WHERE id_tarifa=1");
         await client.query('DELETE FROM tarifa WHERE id_gasolinera=2');
         await rejected(`INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio)

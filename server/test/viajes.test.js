@@ -141,10 +141,10 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal((await request(`/${id}/anular`, { motivo: " " })).status, 400);
         assert.equal((await request("/99999/anular", motivo)).status, 404);
         await isolated.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (2,'2026-10-01','2026-10-31')");
-        await isolated.query("UPDATE detalle_viaje SET id_liquidacion=1 WHERE id_detalle_viaje=$1", [first.body.detalles[1].id_detalle_viaje]);
+        await isolated.query("INSERT INTO detalle_liquidacion(id_liquidacion,id_detalle_viaje) VALUES (1,$1)", [first.body.detalles[1].id_detalle_viaje]);
         assert.equal((await request(`/${id}/anular`, motivo)).status, 409);
         assert.equal((await request('/' + id)).body.estado, "REGISTRADO");
-        await isolated.query("UPDATE detalle_viaje SET id_liquidacion=NULL WHERE id_viaje=$1", [id]);
+        await isolated.query("DELETE FROM detalle_liquidacion WHERE id_liquidacion=1");
         const viajeModel = require("../src/models/viaje.model");
         const anularOriginal = viajeModel.anular;
         try {
