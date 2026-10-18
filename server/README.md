@@ -7,6 +7,7 @@ Sistema de gestión administrativa y operativa para una empresa ecuatoriana de t
 - Backend: Node.js, Express, JavaScript CommonJS y PostgreSQL mediante `pg`, sin ORM.
 - Frontend: React y Vite en `../client`.
 - Capas: rutas, controladores, servicios, modelos y validadores.
+- Convenciones de modelos, resultados y conexiones: [models/README.md](src/models/README.md).
 - API bajo `/api`; `GET /api/health` comprueba la respuesta HTTP, sin verificar la conexión con PostgreSQL.
 - Cálculos monetarios con NUMERIC de PostgreSQL y decimales devueltos como texto.
 - Transacciones y bloqueos para operaciones compuestas y controles de concurrencia.

@@ -1,31 +1,39 @@
 const pool = require("../config/database");
 
-const findAll = async () => {
-    const result = await pool.query(`
-        SELECT producto.*, categoria.nombre AS nombre_categoria
-        FROM producto
-        JOIN categoria_producto AS categoria USING (id_categoria)
-        ORDER BY id_producto DESC
+const findAll = async (client = pool) => {
+    const result = await client.query(`
+        SELECT
+            producto.*,
+            categoria.nombre AS nombre_categoria
+        FROM
+            producto
+            JOIN categoria_producto AS categoria USING (id_categoria)
+        ORDER BY
+            id_producto DESC
     `);
 
     return result.rows;
 };
 
-const findById = async (id) => {
-    const result = await pool.query(
+const findById = async (id, client = pool) => {
+    const result = await client.query(
         `
-        SELECT producto.*, categoria.nombre AS nombre_categoria
-        FROM producto
-        JOIN categoria_producto AS categoria USING (id_categoria)
-        WHERE id_producto = $1
-        `,
+        SELECT
+            producto.*,
+            categoria.nombre AS nombre_categoria
+        FROM
+            producto
+            JOIN categoria_producto AS categoria USING (id_categoria)
+        WHERE
+            id_producto = $1
+    `,
         [id]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const create = async (data) => {
+const create = async (data, client = pool) => {
     const {
         id_categoria,
         nombre,
@@ -39,25 +47,27 @@ const create = async (data) => {
         estado,
         condicion_llanta
     } = data;
-
-    const result = await pool.query(
+    const result = await client.query(
         `
-        INSERT INTO producto (
-            id_categoria,
-            nombre,
-            medida,
-            modelo,
-            marca,
-            descripcion,
-            unidad_medida,
-            stock_minimo,
-            imagen_url,
-            estado,
-            condicion_llanta
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING *
-        `,
+        INSERT INTO
+            producto (
+                id_categoria,
+                nombre,
+                medida,
+                modelo,
+                marca,
+                descripcion,
+                unidad_medida,
+                stock_minimo,
+                imagen_url,
+                estado,
+                condicion_llanta
+            )
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING
+            *
+    `,
         [
             id_categoria,
             nombre,
@@ -73,10 +83,10 @@ const create = async (data) => {
         ]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const update = async (id, data) => {
+const update = async (id, data, client = pool) => {
     const {
         id_categoria,
         nombre,
@@ -90,8 +100,7 @@ const update = async (id, data) => {
         estado,
         condicion_llanta
     } = data;
-
-    const result = await pool.query(
+    const result = await client.query(
         `
         UPDATE producto
         SET
@@ -106,9 +115,11 @@ const update = async (id, data) => {
             imagen_url = $9,
             estado = $10,
             condicion_llanta = $11
-        WHERE id_producto = $12
-        RETURNING *
-        `,
+        WHERE
+            id_producto = $12
+        RETURNING
+            *
+    `,
         [
             id_categoria,
             nombre,
@@ -125,33 +136,51 @@ const update = async (id, data) => {
         ]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const remove = async (id) => {
-    const result = await pool.query(
+const remove = async (id, client = pool) => {
+    const result = await client.query(
         `
         DELETE FROM producto
-        WHERE id_producto = $1
-        RETURNING *
-        `,
+        WHERE
+            id_producto = $1
+        RETURNING
+            *
+    `,
         [id]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const hasHistory = async (id) => {
-    const result = await pool.query(
+const hasHistory = async (id, client = pool) => {
+    const result = await client.query(
         `
-        SELECT EXISTS (
-            SELECT 1 FROM detalle_factura_proveedor WHERE id_producto = $1
-            UNION ALL
-            SELECT 1 FROM movimiento_inventario WHERE id_producto = $1
-            UNION ALL
-            SELECT 1 FROM detalle_mantenimiento WHERE id_producto = $1
-        ) AS tiene_historial
-        `,
+        SELECT
+            EXISTS (
+                SELECT
+                    1
+                FROM
+                    detalle_factura_proveedor
+                WHERE
+                    id_producto = $1
+                UNION ALL
+                SELECT
+                    1
+                FROM
+                    movimiento_inventario
+                WHERE
+                    id_producto = $1
+                UNION ALL
+                SELECT
+                    1
+                FROM
+                    detalle_mantenimiento
+                WHERE
+                    id_producto = $1
+            ) AS tiene_historial
+    `,
         [id]
     );
 
@@ -159,28 +188,66 @@ const hasHistory = async (id) => {
 };
 
 const findByIdForUpdate = async (client, id) => {
-    const result = await client.query("SELECT id_producto FROM producto WHERE id_producto=$1 FOR UPDATE", [id]);
-    return result.rows[0];
+    const result = await client.query(
+        `
+        SELECT
+            id_producto
+        FROM
+            producto
+        WHERE
+            id_producto = $1
+        FOR UPDATE
+    `,
+        [id]
+    );
+
+    return result.rows[0] ?? null;
 };
 
-const findStock = async (id = null, soloBajoStock = false) => {
-    const result = await pool.query(
+const findStock = async (id = null, soloBajoStock = false, client = pool) => {
+    const result = await client.query(
         `
-        SELECT p.id_producto, p.nombre, p.unidad_medida, p.estado,
-            p.imagen_url, p.medida, p.marca, p.modelo, p.condicion_llanta, p.stock_minimo, COALESCE(s.stock, 0)::text AS stock_actual,
+        SELECT
+            p.id_producto,
+            p.nombre,
+            p.unidad_medida,
+            p.estado,
+            p.imagen_url,
+            p.medida,
+            p.marca,
+            p.modelo,
+            p.condicion_llanta,
+            p.stock_minimo,
+            COALESCE(s.stock, 0)::text AS stock_actual,
             COALESCE(s.stock, 0) < p.stock_minimo AS bajo_stock
-        FROM producto p
-        LEFT JOIN (
-            SELECT id_producto, SUM(
-                CASE WHEN tipo_movimiento = 'SALIDA' THEN -cantidad ELSE cantidad END
-            ) AS stock
-            FROM movimiento_inventario
-            GROUP BY id_producto
-        ) s USING (id_producto)
-        WHERE ($1::integer IS NULL OR p.id_producto = $1)
-            AND (NOT $2::boolean OR COALESCE(s.stock, 0) < p.stock_minimo)
-        ORDER BY p.id_producto
-        `,
+        FROM
+            producto p
+            LEFT JOIN (
+                SELECT
+                    id_producto,
+                    SUM(
+                        CASE
+                            WHEN tipo_movimiento = 'SALIDA' THEN - cantidad
+                            ELSE cantidad
+                        END
+                    ) AS stock
+                FROM
+                    movimiento_inventario
+                GROUP BY
+                    id_producto
+            ) s USING (id_producto)
+        WHERE
+            (
+                $1::integer IS NULL
+                OR p.id_producto = $1
+            )
+            AND (
+                NOT $2::boolean
+                OR COALESCE(s.stock, 0) < p.stock_minimo
+            )
+        ORDER BY
+            p.id_producto
+    `,
         [id, soloBajoStock]
     );
 

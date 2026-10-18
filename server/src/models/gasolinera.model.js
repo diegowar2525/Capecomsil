@@ -1,23 +1,35 @@
 const pool = require("../config/database");
 
-const findAll = async () => {
-    const result = await pool.query(
-        "SELECT * FROM gasolinera ORDER BY id_gasolinera"
-    );
+const findAll = async (client = pool) => {
+    const result = await client.query(`
+        SELECT
+            *
+        FROM
+            gasolinera
+        ORDER BY
+            id_gasolinera
+    `);
 
     return result.rows;
 };
 
-const findById = async (id) => {
-    const result = await pool.query(
-        "SELECT * FROM gasolinera WHERE id_gasolinera = $1",
+const findById = async (id, client = pool) => {
+    const result = await client.query(
+        `
+        SELECT
+            *
+        FROM
+            gasolinera
+        WHERE
+            id_gasolinera = $1
+    `,
         [id]
     );
 
-    return result.rows[0] || null;
+    return result.rows[0] ?? null;
 };
 
-const create = async (data) => {
+const create = async (data, client = pool) => {
     const {
         nombre,
         ruc,
@@ -28,36 +40,31 @@ const create = async (data) => {
         agente_retencion,
         estado
     } = data;
-
-    const result = await pool.query(
-        `INSERT INTO gasolinera (
-            nombre,
-            ruc,
-            direccion,
-            telefono,
-            correo,
-            representante_legal,
-            agente_retencion,
-            estado
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *`,
-        [
-            nombre,
-            ruc,
-            direccion,
-            telefono,
-            correo,
-            representante_legal,
-            agente_retencion,
-            estado
-        ]
+    const result = await client.query(
+        `
+        INSERT INTO
+            gasolinera (
+                nombre,
+                ruc,
+                direccion,
+                telefono,
+                correo,
+                representante_legal,
+                agente_retencion,
+                estado
+            )
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING
+            *
+    `,
+        [nombre, ruc, direccion, telefono, correo, representante_legal, agente_retencion, estado]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const update = async (id, data) => {
+const update = async (id, data, client = pool) => {
     const {
         nombre,
         ruc,
@@ -68,9 +75,9 @@ const update = async (id, data) => {
         agente_retencion,
         estado
     } = data;
-
-    const result = await pool.query(
-        `UPDATE gasolinera
+    const result = await client.query(
+        `
+        UPDATE gasolinera
         SET
             nombre = $1,
             ruc = $2,
@@ -80,8 +87,11 @@ const update = async (id, data) => {
             representante_legal = $6,
             agente_retencion = $7,
             estado = $8
-        WHERE id_gasolinera = $9
-        RETURNING *`,
+        WHERE
+            id_gasolinera = $9
+        RETURNING
+            *
+    `,
         [
             nombre,
             ruc,
@@ -95,18 +105,22 @@ const update = async (id, data) => {
         ]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const remove = async (id) => {
-    const result = await pool.query(
-        `DELETE FROM gasolinera
-        WHERE id_gasolinera = $1
-        RETURNING *`,
+const remove = async (id, client = pool) => {
+    const result = await client.query(
+        `
+        DELETE FROM gasolinera
+        WHERE
+            id_gasolinera = $1
+        RETURNING
+            *
+    `,
         [id]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
 module.exports = {

@@ -3,8 +3,8 @@ const pool = require("../config/database");
 const fechas = `to_char(fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
     to_char(fecha_fin,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin`;
 
-const findAll = async () => {
-    const result = await pool.query(`
+const findAll = async (client = pool) => {
+    const result = await client.query(`
         SELECT mantenimiento.*, ${fechas}, vehiculo.placa, proveedor.nombre AS nombre_proveedor
         FROM mantenimiento
         JOIN vehiculo USING (id_vehiculo)
@@ -27,7 +27,7 @@ const findById = async (id, client = pool) => {
         [id]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
 const create = async (client, data) => {
@@ -39,16 +39,28 @@ const create = async (client, data) => {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *, ${fechas}
         `,
-        [data.id_vehiculo, data.id_proveedor, data.fecha_inicio, data.fecha_fin, data.tipo,
-        data.monto, data.descripcion, data.observacion]
+        [
+            data.id_vehiculo,
+            data.id_proveedor,
+            data.fecha_inicio,
+            data.fecha_fin,
+            data.tipo,
+            data.monto,
+            data.descripcion,
+            data.observacion
+        ]
     );
 
-    return result.rows[0];
+    return result.rows[0] ?? null;
 };
 
-const findForUpdate = async (client, id) => {
-    const result = await client.query(`SELECT *, ${fechas} FROM mantenimiento WHERE id_mantenimiento=$1 FOR UPDATE`, [id]);
-    return result.rows[0];
+const findByIdForUpdate = async (client, id) => {
+    const result = await client.query(
+        `SELECT *, ${fechas} FROM mantenimiento WHERE id_mantenimiento=$1 FOR UPDATE`,
+        [id]
+    );
+
+    return result.rows[0] ?? null;
 };
 
 const anular = async (client, id, motivo) => {
@@ -56,15 +68,22 @@ const anular = async (client, id, motivo) => {
         `UPDATE mantenimiento SET estado='ANULADO', fecha_anulacion=CURRENT_TIMESTAMP, motivo_anulacion=$2 WHERE id_mantenimiento=$1 RETURNING *, ${fechas}`,
         [id, motivo]
     );
-    return result.rows[0];
+
+    return result.rows[0] ?? null;
 };
 
-const finalizar = async (client, id, fecha) => (await client.query(
-    `UPDATE mantenimiento SET fecha_fin=$2 WHERE id_mantenimiento=$1 RETURNING *, ${fechas}`, [id, fecha])).rows[0];
+const finalizar = async (client, id, fecha) => {
+    const result = await client.query(
+        `UPDATE mantenimiento SET fecha_fin=$2 WHERE id_mantenimiento=$1 RETURNING *, ${fechas}`,
+        [id, fecha]
+    );
+
+    return result.rows[0] ?? null;
+};
 
 module.exports = {
     finalizar,
-    findForUpdate,
+    findByIdForUpdate,
     anular,
     findAll,
     findById,

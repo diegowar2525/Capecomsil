@@ -1,12 +1,15 @@
 const pool = require("../config/database");
 
 // Campo de consulta compatible con la API anterior; ya no es una columna de la entrega.
+
+// Campo de consulta compatible con la API anterior; ya no es una columna de la entrega.
 const liquidacionVigente = `(SELECT dl.id_liquidacion FROM detalle_liquidacion dl
     JOIN liquidacion l USING(id_liquidacion) WHERE dl.id_detalle_viaje=d.id_detalle_viaje
     AND l.estado<>'ANULADA') AS id_liquidacion`;
 
 const findByViaje = async (id, client = pool) => {
-    return (await client.query(`
+    const result = await client.query(
+        `
         SELECT 
             d.*, ${liquidacionVigente},
             t.id_gasolinera,
@@ -18,40 +21,55 @@ const findByViaje = async (id, client = pool) => {
         FROM detalle_viaje d JOIN tarifa t USING (id_tarifa)
         JOIN gasolinera g USING (id_gasolinera) JOIN terminal te USING (id_terminal)
         JOIN producto_transportado p USING (id_producto_transportado)
-        WHERE d.id_viaje=$1 ORDER BY d.id_detalle_viaje`, [id])).rows;
+        WHERE d.id_viaje=$1 ORDER BY d.id_detalle_viaje`,
+        [id]
+    );
+
+    return result.rows;
 };
 
 const findByViajeForUpdate = async (client, id) => {
-    return (await client.query(`
+    const result = await client.query(
+        `
         SELECT d.*, ${liquidacionVigente} FROM detalle_viaje d WHERE id_viaje=$1
-        ORDER BY id_detalle_viaje FOR UPDATE OF d`, [id])
-    ).rows;
+        ORDER BY id_detalle_viaje FOR UPDATE OF d`,
+        [id]
+    );
+
+    return result.rows;
 };
 
 const create = async (client, id, detalle, tarifa) => {
-    return (await client.query(`
-        INSERT INTO detalle_viaje (
-            id_viaje,
-            id_tarifa,
-            id_producto_transportado,
-            galones,
-            tarifa_aplicada,
-            valor_transporte
-        )
-        VALUES ($1,$2,$3,$4,$5,round($4::numeric*$5::numeric,2)) 
-        RETURNING *`,
+    const result = await client.query(
+        `
+        INSERT INTO
+            detalle_viaje (
+                id_viaje,
+                id_tarifa,
+                id_producto_transportado,
+                galones,
+                tarifa_aplicada,
+                valor_transporte
+            )
+        VALUES
+            ($1, $2, $3, $4, $5, round($4::numeric * $5::numeric, 2))
+        RETURNING
+            *
+    `,
         [
             id,
             tarifa.id_tarifa,
             detalle.id_producto_transportado,
             detalle.galones,
             tarifa.valor_por_galon
-        ])
-    ).rows[0];
+        ]
+    );
+
+    return result.rows[0] ?? null;
 };
 
-module.exports = { 
-    findByViaje, 
-    findByViajeForUpdate, 
-    create 
+module.exports = {
+    findByViaje,
+    findByViajeForUpdate,
+    create
 };
