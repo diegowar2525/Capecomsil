@@ -47,11 +47,10 @@ const findById = async (id, client = pool) => {
     return result.rows[0] ?? null;
 };
 
-const generar = async (client, filtros) => {
+const findFechasPeriodo = async (client, filtros) => {
     // El intervalo es explícito: no se infiere fecha de contratación ni antigüedad.
-    const fechas = (
-        await client.query(
-            `
+    const result = await client.query(
+        `
         SELECT
             ($1::date + n)::text AS fecha
         FROM
@@ -59,15 +58,15 @@ const generar = async (client, filtros) => {
         ORDER BY
             n
     `,
-            [filtros.fecha_desde, filtros.fecha_hasta]
-        )
-    ).rows;
-    for (const { fecha } of fechas) await recalcular(client, filtros.id_chofer, fecha);
+        [filtros.fecha_desde, filtros.fecha_hasta]
+    );
+
+    return result.rows;
 };
 
 module.exports = {
     recalcular,
     findAll,
     findById,
-    generar
+    findFechasPeriodo
 };

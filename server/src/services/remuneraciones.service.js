@@ -12,7 +12,10 @@ const generar = async (data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        await model.generar(client, validado);
+        const fechas = await model.findFechasPeriodo(client, validado);
+        for (const { fecha } of fechas) {
+            await model.recalcular(client, validado.id_chofer, fecha);
+        }
         const resultado = await model.findAll(validado, client);
         await client.query("COMMIT");
         return resultado;
