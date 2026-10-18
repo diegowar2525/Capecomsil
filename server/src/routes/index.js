@@ -56,4 +56,5 @@ router.use("/configuraciones-peaje-trayecto", require("./configuracion_peaje_tra
 router.use("/planes-mantenimiento", require("./planes_mantenimiento.routes"));
 router.use("/gastos", require("./gastos.routes"));
 router.use("/abastecimientos-combustible", require("./abastecimientos_combustible.routes"));
+router.use("/informes", require("./informes.routes"));
 module.exports = router;
