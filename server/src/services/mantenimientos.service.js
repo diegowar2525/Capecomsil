@@ -98,7 +98,7 @@ const finalizarMantenimiento = async (id, data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const actual = await mantenimientoModel.findForUpdate(client, id);
+        const actual = await mantenimientoModel.findByIdForUpdate(client, id);
         if (!actual) throw createHttpError("Mantenimiento no encontrado", 404);
         if (actual.estado === "ANULADO") throw createHttpError("El mantenimiento está anulado", 409);
         if (actual.fecha_fin !== null) throw createHttpError("El mantenimiento ya está finalizado", 409);
@@ -124,7 +124,7 @@ const registrarCumplimientos = async (id, data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const mantenimiento = await mantenimientoModel.findForUpdate(client,id);
+        const mantenimiento = await mantenimientoModel.findByIdForUpdate(client,id);
         if (!mantenimiento) throw createHttpError("Mantenimiento no encontrado",404);
         if (mantenimiento.estado !== "REGISTRADO" || !mantenimiento.fecha_fin) {
             throw createHttpError("El mantenimiento debe estar finalizado y no anulado",409);

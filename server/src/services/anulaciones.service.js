@@ -22,7 +22,7 @@ const ejecutar = async (tipo, id, data) => {
         await client.query("BEGIN");
         if (tipo === "mantenimiento") await lock(client);
         const model = tipo === "recepcion" ? recepcionModel : tipo === "mantenimiento" ? mantenimientoModel : movimientoModel;
-        const original = await model.findForUpdate(client, id);
+        const original = await model.findByIdForUpdate(client, id);
         if (!original) errorOperacion("Registro no encontrado", 404);
         if (["ANULADA", "ANULADO"].includes(original.estado)) errorOperacion("El registro ya está anulado");
         let movimientos;
