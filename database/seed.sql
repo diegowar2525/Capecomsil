@@ -1,6 +1,7 @@
 BEGIN;
 -- CAPECOMSIL: seed de desarrollo para una base VACÍA con schema.sql actualizado.
 -- Fuente: ENERO -2026-new.xlsm. No ejecuta macros ni importa viajes/entregas.
+-- Al final incluye operaciones SINTÉTICAS de octubre de 2026 para probar informes.
 -- Trayectos terminal/gasolinera: mitad de km ida/vuelta del Excel (pruebas).
 -- Trayectos entre gasolineras: estimaciones OSRM; ver TRAYECTOS_GASOLINERAS.md.
 -- Cédulas PENDIENTE-* son identificadores provisionales, no documentos reales.
@@ -1112,6 +1113,114 @@ FROM vehiculo v CROSS JOIN (VALUES
 ) AS p(nombre,intervalo_km)
 ORDER BY v.id_vehiculo,p.intervalo_km;
 
--- Viajes, costos, viáticos diarios, cumplimientos, gastos y abastecimientos permanecen
--- vacíos: sus registros se generan al ejecutar las operaciones, no desde supuestos.
+-- ESCENARIO SINTÉTICO DE INFORMES. No son operaciones importadas del cliente.
+-- Vehículo AAJ0810, chofer AREVALO; La Troncal -> CECILIA -> La Troncal (22 km).
+-- Se mantienen tarifas, distancias y configuraciones existentes del catálogo.
+-- Tres viajes válidos (dos el mismo día) y uno anulado. Ver SEED_INFORMES.md.
+DO $$
+DECLARE
+    vehiculo_id INTEGER;
+    chofer_id INTEGER;
+    producto_id INTEGER;
+    tarifa_prueba tarifa%ROWTYPE;
+    combustible configuracion_combustible%ROWTYPE;
+    viatico configuracion_viatico%ROWTYPE;
+    ida INTEGER;
+    vuelta INTEGER;
+    viaje_id INTEGER;
+    viajes_ids INTEGER[] := ARRAY[]::INTEGER[];
+    diario_id INTEGER;
+    gasto_id INTEGER;
+    r RECORD;
+BEGIN
+    SELECT id_vehiculo INTO STRICT vehiculo_id FROM vehiculo WHERE placa='AAJ0810';
+    SELECT id_chofer INTO STRICT chofer_id FROM chofer WHERE cedula='PENDIENTE-001';
+    SELECT id_producto_transportado INTO STRICT producto_id FROM producto_transportado WHERE nombre='Diésel';
+    SELECT ta.* INTO STRICT tarifa_prueba FROM tarifa ta
+        JOIN terminal te USING(id_terminal) JOIN gasolinera g USING(id_gasolinera)
+        WHERE te.nombre='Terminal La Troncal' AND g.nombre='CECILIA';
+    SELECT id_trayecto INTO STRICT ida FROM trayecto
+        WHERE id_terminal_origen=tarifa_prueba.id_terminal AND id_gasolinera_destino=tarifa_prueba.id_gasolinera;
+    SELECT id_trayecto INTO STRICT vuelta FROM trayecto
+        WHERE id_gasolinera_origen=tarifa_prueba.id_gasolinera AND id_terminal_destino=tarifa_prueba.id_terminal;
+    SELECT * INTO STRICT combustible FROM configuracion_combustible WHERE DATE '2026-10-05' BETWEEN fecha_inicio AND fecha_fin;
+    SELECT * INTO STRICT viatico FROM configuracion_viatico WHERE DATE '2026-10-05' BETWEEN fecha_inicio AND fecha_fin;
+
+    FOR r IN SELECT * FROM (VALUES
+        (TIMESTAMP '2026-10-05 08:00',TIMESTAMP '2026-10-05 10:00',5000, FALSE),
+        (TIMESTAMP '2026-10-05 13:00',TIMESTAMP '2026-10-05 15:00',4000, FALSE),
+        (TIMESTAMP '2026-10-06 08:00',TIMESTAMP '2026-10-06 10:00',6000, FALSE),
+        (TIMESTAMP '2026-10-07 08:00',TIMESTAMP '2026-10-07 10:00',3000, TRUE)
+    ) AS escenarios(inicio,fin,galones,anulado)
+    LOOP
+        INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin,estado,fecha_anulacion,motivo_anulacion)
+        VALUES(vehiculo_id,chofer_id,r.inicio,r.fin,CASE WHEN r.anulado THEN 'ANULADO' ELSE 'REGISTRADO' END,
+            CASE WHEN r.anulado THEN TIMESTAMP '2026-10-07 12:00' END,
+            CASE WHEN r.anulado THEN 'SEED: viaje de prueba anulado' END) RETURNING id_viaje INTO viaje_id;
+        viajes_ids := array_append(viajes_ids,viaje_id);
+        INSERT INTO tramo_viaje(id_viaje,id_trayecto,orden,id_configuracion_peaje_trayecto,peaje_aplicado,observacion)
+        SELECT viaje_id,t.id_trayecto,CASE WHEN t.id_trayecto=ida THEN 1 ELSE 2 END,
+            p.id_configuracion_peaje_trayecto,p.importe,'SEED: recorrido sintético para informes'
+        FROM trayecto t JOIN configuracion_peaje_trayecto p USING(id_trayecto)
+        WHERE t.id_trayecto IN (ida,vuelta) AND r.inicio::date BETWEEN p.fecha_inicio AND p.fecha_fin;
+        INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_producto_transportado,galones,tarifa_aplicada,valor_transporte)
+        VALUES(viaje_id,tarifa_prueba.id_tarifa,producto_id,r.galones,tarifa_prueba.valor_por_galon,
+            round(r.galones*tarifa_prueba.valor_por_galon,2));
+        INSERT INTO costo_viaje(id_viaje,tipo_costo,valor,descripcion,id_configuracion_combustible,
+            kilometros_aplicados,consumo_galones_km_aplicado,precio_por_galon_aplicado,galones_estimados)
+        SELECT viaje_id,'COMBUSTIBLE',round(round(sum(kilometros)*combustible.consumo_galones_km,6)*combustible.precio_por_galon,2),
+            'SEED: combustible estimado',combustible.id_configuracion_combustible,sum(kilometros),
+            combustible.consumo_galones_km,combustible.precio_por_galon,round(sum(kilometros)*combustible.consumo_galones_km,6)
+        FROM tramo_viaje WHERE id_viaje=viaje_id;
+        INSERT INTO costo_viaje(id_viaje,tipo_costo,valor,descripcion)
+        SELECT viaje_id,'PEAJE',sum(peaje_aplicado),'SEED: peajes estimados (cero provisional del catálogo)'
+        FROM tramo_viaje WHERE id_viaje=viaje_id;
+    END LOOP;
+
+    -- Incluye dos días de sueldo fijo sin viajes válidos (07 y 08 de octubre).
+    FOR r IN SELECT generate_series(DATE '2026-10-05',DATE '2026-10-08',INTERVAL '1 day')::date AS fecha LOOP
+        PERFORM recalcular_remuneracion(chofer_id,r.fecha);
+    END LOOP;
+    FOR r IN SELECT fecha_inicio::date AS fecha,count(*)::int AS cantidad FROM viaje
+        WHERE id_viaje=ANY(viajes_ids) AND estado='REGISTRADO' GROUP BY fecha_inicio::date ORDER BY fecha
+    LOOP
+        INSERT INTO viatico_chofer(id_chofer,id_configuracion_viatico,fecha,importe_diario_aplicado,total)
+        VALUES(chofer_id,viatico.id_configuracion_viatico,r.fecha,viatico.importe_diario,viatico.importe_diario)
+        RETURNING id_viatico_chofer INTO diario_id;
+        INSERT INTO costo_viaje(id_viaje,tipo_costo,valor,descripcion,id_viatico_chofer)
+        SELECT id_viaje,'VIATICO',
+            (div(viatico.importe_diario*100,r.cantidad)+CASE WHEN posicion<=mod(viatico.importe_diario*100,r.cantidad) THEN 1 ELSE 0 END)/100,
+            'SEED: asignación del viático diario',diario_id
+        FROM (SELECT id_viaje,row_number() OVER(ORDER BY id_viaje) posicion FROM viaje
+            WHERE id_viaje=ANY(viajes_ids) AND fecha_inicio::date=r.fecha AND estado='REGISTRADO') seleccionados;
+        IF r.fecha=DATE '2026-10-05' THEN
+            INSERT INTO gasto(fecha,tipo_gasto,monto,id_viatico_chofer,descripcion,numero_comprobante)
+            VALUES(r.fecha,'VIATICO',14,diario_id,'SEED: comida real, 2 dólares sobre el viático','SEED-COMIDA-001');
+        END IF;
+    END LOOP;
+
+    INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante) VALUES
+        ('2026-10-05','PEAJE',3,vehiculo_id,viajes_ids[1],'SEED: peaje pagado','SEED-PEAJE-001'),
+        ('2026-10-06','PEAJE',5,vehiculo_id,viajes_ids[3],'SEED: peaje pagado','SEED-PEAJE-002'),
+        ('2026-10-07','PEAJE',4,vehiculo_id,viajes_ids[4],'SEED: gasto conservado aunque se anuló el viaje','SEED-PEAJE-003');
+    INSERT INTO gasto(fecha,tipo_gasto,monto,descripcion,numero_comprobante)
+    VALUES('2026-10-06','OTRO',25,'SEED: gasto general sin vehículo ni viaje','SEED-GENERAL-001');
+    INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante,estado,fecha_anulacion,motivo_anulacion)
+    VALUES('2026-10-05','PEAJE',99,vehiculo_id,viajes_ids[1],'SEED: gasto anulado, excluido del informe','SEED-ANULADO-001',
+        'ANULADO','2026-10-05 18:00','SEED: comprobante duplicado');
+
+    -- Dos tanques completos con una carga parcial intermedia: 66 km y 12 galones.
+    FOR r IN SELECT * FROM (VALUES
+        (TIMESTAMP '2026-10-05 06:00',1000,20,TRUE,'SEED-CARGA-001'),
+        (TIMESTAMP '2026-10-05 17:00',1044,4,FALSE,'SEED-CARGA-002'),
+        (TIMESTAMP '2026-10-06 18:00',1066,8,TRUE,'SEED-CARGA-003')
+    ) AS cargas(fecha,odometro,galones,lleno,comprobante)
+    LOOP
+        INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,descripcion,numero_comprobante)
+        VALUES(r.fecha::date,'COMBUSTIBLE',round(r.galones*combustible.precio_por_galon,2),vehiculo_id,
+            'SEED: abastecimiento sintético',r.comprobante) RETURNING id_gasto INTO gasto_id;
+        INSERT INTO abastecimiento_combustible(id_vehiculo,id_gasto,fecha_hora,kilometraje_odometro,galones,precio_por_galon,tanque_lleno,observacion)
+        VALUES(vehiculo_id,gasto_id,r.fecha,r.odometro,r.galones,combustible.precio_por_galon,r.lleno,'SEED: lectura ficticia para informes');
+    END LOOP;
+END $$;
 COMMIT;
