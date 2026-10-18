@@ -1,9 +1,14 @@
 const pool = require("../config/database");
 
+// Campo de consulta compatible con la API anterior; ya no es una columna de la entrega.
+const liquidacionVigente = `(SELECT dl.id_liquidacion FROM detalle_liquidacion dl
+    JOIN liquidacion l USING(id_liquidacion) WHERE dl.id_detalle_viaje=d.id_detalle_viaje
+    AND l.estado<>'ANULADA') AS id_liquidacion`;
+
 const findByViaje = async (id, client = pool) => {
     return (await client.query(`
         SELECT 
-            d.*, 
+            d.*, ${liquidacionVigente},
             t.id_gasolinera,
             t.id_terminal,
             g.nombre AS nombre_gasolinera, 
@@ -18,8 +23,8 @@ const findByViaje = async (id, client = pool) => {
 
 const findByViajeForUpdate = async (client, id) => {
     return (await client.query(`
-        SELECT * FROM detalle_viaje WHERE id_viaje=$1
-        ORDER BY id_detalle_viaje FOR UPDATE`, [id])
+        SELECT d.*, ${liquidacionVigente} FROM detalle_viaje d WHERE id_viaje=$1
+        ORDER BY id_detalle_viaje FOR UPDATE OF d`, [id])
     ).rows;
 };
 
