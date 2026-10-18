@@ -148,7 +148,26 @@ const getTotales = async (client, id) => {
     return result.rows[0] ?? null;
 };
 
+const countRegistradosByChoferFecha = async (client, idChofer, fecha) => {
+    const result = await client.query(
+        `
+        SELECT
+            count(*)::int n
+        FROM
+            viaje
+        WHERE
+            id_chofer = $1
+            AND fecha_inicio::date = $2
+            AND estado = 'REGISTRADO'
+    `,
+        [idChofer, fecha]
+    );
+
+    return result.rows[0].n;
+};
+
 module.exports = {
+    countRegistradosByChoferFecha,
     findAll,
     findById,
     findByIdForUpdate,
