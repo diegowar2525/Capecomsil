@@ -1,17 +1,7 @@
 const pool = require("../config/database");
 
-const { createHttpError } = require("../utils/errors/http.error");
-
-const configuracionModel = require("./configuracion_combustible.model");
-
-const crearAutomaticos = async (client, id, fecha) => {
-    const config = await configuracionModel.findVigenteForShare(client, fecha);
-    if (!config)
-        throw createHttpError(
-            "No existe configuración de combustible vigente para la fecha del viaje",
-            409
-        );
-    // NUMERIC en PostgreSQL: redondeo de galones a 6 decimales e importe final a centavos.
+// El servicio selecciona la configuración vigente; NUMERIC conserva el redondeo monetario.
+const createCombustible = async (client, idViaje, config) => {
     await client.query(
         `
         INSERT INTO
@@ -42,12 +32,15 @@ const crearAutomaticos = async (client, id, fecha) => {
             id_viaje = $1
     `,
         [
-            id,
+            idViaje,
             config.id_configuracion_combustible,
             config.consumo_galones_km,
             config.precio_por_galon
         ]
     );
+};
+
+const createPeaje = async (client, idViaje) => {
     await client.query(
         `
         INSERT INTO
@@ -62,7 +55,66 @@ const crearAutomaticos = async (client, id, fecha) => {
         WHERE
             id_viaje = $1
     `,
-        [id]
+        [idViaje]
+    );
+};
+
+const removeViaticosDeViajesAnulados = async (client, idViaticoChofer) => {
+    await client.query(
+        `
+        DELETE FROM costo_viaje c USING viaje v
+        WHERE
+            c.id_viaje = v.id_viaje
+            AND c.id_viatico_chofer = $1
+            AND v.estado = 'ANULADO'
+    `,
+        [idViaticoChofer]
+    );
+};
+
+// Reparte centavos en SQL usando el importe histórico del viático diario.
+const asignarViaticoDiario = async (client, idChofer, fecha, diario, cantidadViajes) => {
+    await client.query(
+        `
+        INSERT INTO
+            costo_viaje (id_viaje, tipo_costo, valor, descripcion, id_viatico_chofer)
+        SELECT
+            id_viaje,
+            'VIATICO',
+            (
+                div($3::numeric * 100, $4::int) + CASE
+                    WHEN posicion <= mod($3::numeric * 100, $4::int) THEN 1
+                    ELSE 0
+                END
+            ) / 100,
+            'Asignación del viático diario',
+            $5
+        FROM
+            (
+                SELECT
+                    id_viaje,
+                    row_number() OVER (
+                        ORDER BY
+                            id_viaje
+                    ) posicion
+                FROM
+                    viaje
+                WHERE
+                    id_chofer = $1
+                    AND fecha_inicio::date = $2
+                    AND estado = 'REGISTRADO'
+            ) v
+        ON CONFLICT (id_viaje, tipo_costo) DO UPDATE
+        SET
+            valor = EXCLUDED.valor
+    `,
+        [
+            idChofer,
+            fecha,
+            diario.importe_diario_aplicado,
+            cantidadViajes,
+            diario.id_viatico_chofer
+        ]
     );
 };
 
@@ -85,6 +137,9 @@ const findByViaje = async (id, client = pool) => {
 };
 
 module.exports = {
-    findByViaje,
-    crearAutomaticos
+    createCombustible,
+    createPeaje,
+    removeViaticosDeViajesAnulados,
+    asignarViaticoDiario,
+    findByViaje
 };
