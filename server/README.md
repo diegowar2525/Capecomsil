@@ -1,285 +1,217 @@
 # API de CAPECOMSIL
 
-Comparaciones económicas y consumo entre cargas completas: [INFORMES.md](INFORMES.md).
+Sistema de gestión administrativa y operativa para una empresa ecuatoriana de transporte de combustible. El desarrollo actual se concentra en la API; el cliente React todavía muestra una pantalla de comprobación de conexión.
 
-Gastos reales y cargas de combustible: [GASTOS_ABASTECIMIENTOS.md](GASTOS_ABASTECIMIENTOS.md).
+## Arquitectura y ejecución
 
-Planes, kilometraje y avisos de mantenimiento: [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md).
+- Backend: Node.js, Express, JavaScript CommonJS y PostgreSQL mediante `pg`, sin ORM.
+- Frontend: React y Vite en `../client`.
+- Capas: rutas, controladores, servicios, modelos y validadores.
+- API bajo `/api`; `GET /api/health` comprueba la respuesta HTTP, sin verificar la conexión con PostgreSQL.
+- Cálculos monetarios con NUMERIC de PostgreSQL y decimales devueltos como texto.
+- Transacciones y bloqueos para operaciones compuestas y controles de concurrencia.
 
-Horarios, configuraciones y costos automáticos: [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
+Crear `server/.env` con `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. Los puertos predeterminados son 3000 para HTTP y 5432 para PostgreSQL.
 
-Consultas de inventario, ajustes y anulaciones: [INVENTARIO.md](INVENTARIO.md).
-Pagos a proveedores, saldos y cuentas por pagar: [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md).
+Desde `server`:
 
-## Recepciones posteriores de compras
+```sh
+npm install
+npm run dev
+# Ejecución sin nodemon:
+npm start
+```
 
-`POST /api/recepciones-compra` registra una entrega de una factura existente:
+Desde `client`, ejecutar `npm install` y `npm run dev` para iniciar Vite. La pantalla actual consulta `http://localhost:3000/api/health`.
+
+## Estado actual
+
+La tabla describe código presente en el repositorio. No implica que los módulos tengan interfaz ni que todas las pruebas se hayan ejecutado satisfactoriamente.
+
+| Área | Implementación actual |
+| --- | --- |
+| Catálogos y tarifas | CRUD de vehículos, choferes, terminales, gasolineras, proveedores, categorías, productos, combustibles transportados y tarifas |
+| Viajes y recorridos | Catálogo de trayectos; registro, consultas y anulación de viajes con tramos y entregas |
+| Costos y remuneraciones | Configuraciones por vigencia, remuneración diaria, viáticos y costos automáticos |
+| Compras | Facturas de productos y servicios, recepciones iniciales y posteriores, consultas y anulaciones |
+| Inventario | Stock, mínimos, movimientos, ajustes y reversiones |
+| Pagos a proveedores | Registro, consultas, anulación y control de saldos |
+| Mantenimientos | Registro, consultas, finalización, anulación, materiales internos y externos, planes y cumplimientos |
+| Gastos y abastecimientos | Registro, consultas y anulaciones de gastos reales y cargas de combustible |
+| Informes | Viajes, resumen económico, viáticos y consumo entre cargas completas |
+| Liquidaciones | Esquema y adaptación de consultas de entregas; sin API del módulo |
+| Facturación y cobros a clientes | Tablas existentes; sin API para facturar y cobrar después de confirmar una liquidación |
+| Usuarios y permisos | Pendientes; cierre y reapertura de remuneraciones bloqueados hasta su integración |
+| Interfaz y administración | Pendientes las pantallas operativas, dashboard, calendario y exportaciones PDF/Excel |
+
+La migración histórica completa desde Excel sigue pendiente. El seed incluye catálogos extraídos de Excel y escenarios sintéticos de desarrollo; no constituye una migración completa de operaciones reales.
+
+## Base de datos
+
+Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 38 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`. Requiere permisos para crear esos objetos.
+
+```sh
+psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql
+```
+
+Para cargar datos de desarrollo después del esquema, usar `database/seed.sql` y consultar [SEED_EXCEL.md](../database/SEED_EXCEL.md) y [SEED_INFORMES.md](../database/SEED_INFORMES.md).
+
+El esquema consolidado no actualiza bases existentes ni está diseñado para ejecutarse repetidamente sobre ellas. Para una instalación nueva no se aplican además las migraciones históricas. En bases existentes, revisar la versión y las precondiciones de cada archivo de `database/migrations` antes de aplicarlo. La presencia de archivos SQL no confirma qué versión está instalada en la base de trabajo.
+
+Los estados administrativos de los catálogos se reciben y almacenan como booleanos, con true por defecto. Los estados de procesos conservan sus valores de texto. `gasolinera.agente_retencion` es booleano, con false por defecto.
+
+## Viajes, trayectos y tarifas
+
+| Método | Ruta | Operación |
+| --- | --- | --- |
+| POST | `/api/viajes` | Registrar viaje con tramos y entregas |
+| GET | `/api/viajes` | Listar con filtros |
+| GET | `/api/viajes/:id` | Consultar cabecera, tramos, entregas y costos |
+| POST | `/api/viajes/:id/anular` | Anular con motivo y conservar historial |
+
+Cada viaje identifica vehículo, chofer, `fecha_inicio`, `fecha_fin`, tramos ordenados y entregas. Las fechas llevan hora local sin zona, por ejemplo `2026-10-16T08:00:00`. El fin debe ser posterior y estar dentro del mismo día. No se permiten horarios superpuestos para un vehículo o chofer; una operación puede comenzar exactamente al terminar la anterior.
+
+Cada entrega identifica gasolinera, terminal, combustible y galones. La tarifa se selecciona por la fecha del viaje y se conserva en `detalle_viaje.tarifa_aplicada`. El valor de transporte es galones por tarifa, redondeado a centavos por entrega. La cabecera no tiene una única tarifa. Se rechaza superar la capacidad del vehículo y se permiten cargas inferiores sin advertencia. El combustible transportado no modifica el inventario interno de repuestos.
+
+`/api/trayectos` administra el catálogo usado por los tramos. Cada tramo conserva kilómetros y peaje aplicado. El retorno no se añade automáticamente.
+
+`/api/tarifas` ofrece GET de lista y detalle, POST, PUT y DELETE. Sus vigencias son inclusivas, con fin nulo para una vigencia abierta. No se permiten superposiciones para la misma gasolinera y terminal, independientemente del estado administrativo. El precio admite cero y hasta cuatro decimales. Una tarifa utilizada no permite cambiar precio, gasolinera o terminal ni eliminarse. Sus fechas solo pueden cambiar conservando los días utilizados. Para cambiar un precio se crea una nueva vigencia.
+
+Ver [VIAJES.md](VIAJES.md) y [TRAYECTOS.md](TRAYECTOS.md).
+
+## Remuneraciones y costos automáticos
+
+`chofer.tipo_remuneracion` es obligatorio y admite DIARIO_FIJO o DIA_TRABAJADO. La API recorta espacios y normaliza mayúsculas; no hay modalidad predeterminada.
+
+- DIARIO_FIJO genera base de lunes a sábado incluso sin viajes.
+- DIA_TRABAJADO requiere al menos un viaje REGISTRADO para generar base.
+- Un domingo sin viajes no genera importe en ninguna modalidad.
+- Trabajar en domingo o feriado añade el adicional configurado una sola vez.
+
+Los importes dependen de la configuración vigente. Los feriados deben registrarse antes de generar las remuneraciones correspondientes. La modalidad y configuración aplicadas se conservan en el registro diario.
+
+`/api/configuraciones-remuneracion` y `/api/feriados` ofrecen CRUD. `POST /api/remuneraciones-chofer/generar` genera un período explícito de un chofer; los GET de lista y detalle consultan los días generados. Los POST `/:id/cerrar` y `/:id/reabrir` devuelven 403 mientras no exista la integración de usuarios y autorizaciones.
+
+El registro de viajes requiere configuraciones vigentes de remuneración, combustible, viático y peajes, incluido cero cuando un trayecto no tenga peaje. No se presupone un costo cero si falta una configuración. Las configuraciones de costos se administran en:
+
+- `/api/configuraciones-combustible`.
+- `/api/configuraciones-viatico`.
+- `/api/configuraciones-peaje-trayecto`.
+
+Los costos COMBUSTIBLE y PEAJE se estiman por recorrido y conservan los valores aplicados. CHOFER y VIATICO se distribuyen entre los viajes válidos del día, conservando el total exacto en centavos. Registrar o anular viajes redistribuye las asignaciones diarias dentro de la transacción. No se deben sumar otra vez los totales diarios y sus asignaciones como si fueran gastos diferentes.
+
+Estas estimaciones no generan pagos, gastos reales ni abastecimientos. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md). La introducción de REMUNERACIONES.md que indica usar solo `fecha` está desactualizada: el validador actual de viajes exige `fecha_inicio` y `fecha_fin` con hora.
+
+## Compras, recepciones y pagos a proveedores
+
+`/api/facturas-proveedor` permite registrar y consultar facturas. Los detalles se registran junto con la cabecera, sin CRUD independiente. Se admiten PRODUCTO, SERVICIO o ambos, con cantidad, precio, descuento e impuesto por línea. La API calcula importes e ignora los totales enviados por el cliente.
+
+PostgreSQL redondea el bruto por línea a centavos, resta el descuento y calcula el impuesto sobre ese subtotal neto. La cabecera suma los valores de los detalles; `descuento_total` es informativo y no se resta por segunda vez. El porcentaje de impuesto debe enviarse por línea; no hay una tasa comercial predeterminada.
+
+Una factura puede registrarse sin recibir productos. `recepcion_inicial` es opcional y usa `numero_detalle`, la posición de la línea en la petición comenzando en 1. Factura, detalles y recepción inicial comparten conexión y transacción.
+
+Las recepciones posteriores usan `POST /api/recepciones-compra`:
 
 ```json
 {
   "id_factura_proveedor": 1,
   "fecha_recepcion": "2026-10-05",
   "numero_comprobante": "ENTREGA-002",
-  "observacion": "Entrega parcial",
   "detalles": [
-    {
-      "id_detalle_factura_proveedor": 1,
-      "cantidad_recibida": "3.00",
-      "observacion": null
-    }
+    { "id_detalle_factura_proveedor": 1, "cantidad_recibida": "3.00" }
   ]
 }
 ```
 
-Se utilizan los IDs reales de los detalles obtenidos al consultar la factura,
-no posiciones ni IDs de producto. Comprobante y observaciones son opcionales.
-La respuesta 201 incluye la recepción y sus detalles; las entradas se generan
-automáticamente, una por detalle, en la misma transacción.
+Se usan los IDs reales de los detalles de factura. No se reciben servicios ni más unidades que las pendientes. Solo las cantidades recibidas generan entradas de stock. Una factura PAGADA puede recibir productos; una ANULADA no. Los bloqueos protegen contra excesos en recepciones concurrentes.
 
-La factura debe existir y no estar ANULADA. Su estado_pago PAGADA no impide recibir productos.
-Se rechazan servicios, detalles ajenos o repetidos, cantidades no positivas y
-cantidades superiores a lo pendiente. Lo pendiente resta únicamente recepciones
-REGISTRADAS. La comprobación usa NUMERIC y bloquea la factura y los productos
-durante la transacción para evitar excesos en entregas simultáneas.
+| Ruta | Operación |
+| --- | --- |
+| `GET /api/facturas-proveedor/:id/recepciones` | Recepciones de la factura |
+| `GET /api/facturas-proveedor/:id/pendientes-recepcion` | Cantidades pendientes |
+| `POST /api/recepciones-compra/:id/anular` | Anular con las validaciones y reversiones del servicio |
+| `GET /api/facturas-proveedor/:id/pagos` | Pagos de la factura |
+| `POST /api/facturas-proveedor/:id/anular` | Anular sin pagos ni recepciones vigentes |
 
-La recepción inicial comparte el mismo servicio transaccional y conserva el
-formato `numero_detalle` de la petición de factura. Este módulo no incluye
-anulaciones: cambiar un estado directamente en SQL no revierte inventario.
-No requiere cambios de esquema ni borrar datos. Las consultas de stock,
-ajustes y anulaciones se implementarán por separado.
+`/api/pagos-proveedor` permite registrar pagos y consultar lista o detalle; `POST /api/pagos-proveedor/:id/anular` conserva el historial del pago anulado. El servicio controla los saldos y rechaza pagos superiores a lo pendiente. No hay edición general ni eliminación de facturas de proveedor. Cambiar un estado directamente en SQL no sustituye las operaciones de anulación.
 
-## Mantenimientos
+Ver [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md).
 
-Disponible: `POST /api/mantenimientos`, `GET /api/mantenimientos` y
-`GET /api/mantenimientos/:id`. Cada entidad tiene su propio modelo; el servicio
-coordina cabecera, detalles y salidas en una sola transacción. No se incluyen
-edición, eliminación ni anulación de mantenimientos en esta primera versión.
+## Productos e inventario
+
+`/api/productos` ofrece GET de lista y detalle, POST, PUT y DELETE. Nombre, categoría y unidad son obligatorios. Los GET incluyen el nombre de categoría. La unidad se normaliza a minúsculas; el stock mínimo no puede ser negativo. La categoría debe existir y estar activa al crear o cambiar la categoría del producto. El CRUD de productos no cambia las existencias.
+
+Compras, movimientos o mantenimientos asociados impiden eliminar el producto o cambiar su unidad. Las categorías pueden marcarse con `es_llanta`; para ellas, el producto exige `condicion_llanta` NUEVA o REENCAUCHADA. Para otras categorías debe ser nula. Con historial, medida y condición quedan protegidas. Vehículos, choferes y productos admiten `imagen_url`.
+
+El stock se obtiene sumando ENTRADA y AJUSTE y restando SALIDA. Entradas y salidas usan cantidades positivas; un ajuste expresa una diferencia positiva o negativa, nunca cero ni el saldo final deseado. El servicio bloquea el producto y verifica el saldo dentro de la transacción para impedir ajustes que dejen stock negativo.
+
+| Método | Ruta | Operación |
+| --- | --- | --- |
+| GET | `/api/inventario/stock` | Stock de productos |
+| GET | `/api/inventario/stock/:id` | Stock de un producto |
+| GET | `/api/inventario/bajo-stock` | Productos con stock inferior al mínimo |
+| GET | `/api/inventario/movimientos` | Historial con filtros |
+| POST | `/api/inventario/ajustes` | Registrar diferencia con motivo |
+| POST | `/api/inventario/ajustes/:id/revertir` | Revertir un ajuste con trazabilidad |
+
+Ver [INVENTARIO.md](INVENTARIO.md) y [RECORRIDOS_Y_MATERIALES.md](RECORRIDOS_Y_MATERIALES.md).
+
+## Mantenimientos y seguimiento
+
+`/api/mantenimientos` permite registrar y consultar lista o detalle. También existen `POST /api/mantenimientos/:id/finalizar`, `/:id/anular` y `/:id/cumplimientos`. No hay edición general ni eliminación de mantenimientos.
+
+Ejemplo con IDs ilustrativos que deben existir en la base:
 
 ```json
 {
   "id_vehiculo": 1,
   "id_proveedor": null,
-  "fecha": "2026-10-05",
+  "fecha_inicio": "2026-10-05T08:00:00",
+  "fecha_fin": "2026-10-05T10:00:00",
   "tipo": "Cambio de filtros",
   "monto": "25.00",
-  "descripcion": "Mantenimiento del motor",
-  "observacion": null,
   "detalles": [
-    { "id_producto": 1, "cantidad": "2.00", "observacion": null }
+    { "origen_producto": "INVENTARIO", "id_producto": 1, "cantidad": "2.00" },
+    { "origen_producto": "EXTERNO", "descripcion_producto": "Material aportado por el taller", "cantidad": "1.00" }
   ]
 }
 ```
 
-Vehículo, fecha, tipo y monto son obligatorios. El proveedor es opcional.
-El monto es el importe registrado para el trabajo, no se calcula a partir de
-productos ni genera automáticamente gastos, facturas o pagos. Se admite cero.
-Se pueden omitir los detalles o enviar una lista vacía si no se consume inventario.
-Cada producto aparece una vez; las cantidades son positivas y admiten dos decimales.
-Se comprueban referencias y stock actual, incluyendo ajustes con signo.
-El stock se compara en PostgreSQL usando NUMERIC. Se bloquean los productos
-en orden por ID hasta terminar la transacción para impedir consumos simultáneos
-por encima de las existencias. Un fallo revierte toda la operación.
+Vehículo, inicio con hora, tipo y monto son obligatorios; el proveedor es opcional. El monto admite cero y representa el importe registrado para el mantenimiento: no se calcula desde materiales ni genera automáticamente gastos, facturas o pagos. Los detalles son opcionales. INVENTARIO es el origen predeterminado, comprueba stock y genera salidas; EXTERNO exige descripción y no acepta `id_producto`. Al anular solo se revierten las salidas que realmente se generaron.
 
-Para probar consumos después de limpiar la base: cargar catálogos con `seed.sql`
-y registrar una compra con recepción inicial para disponer de stock. El seed no
-carga existencias. El rechazo por stock insuficiente devuelve HTTP 409.
+Un mantenimiento puede durar varios días. Con `fecha_fin: null`, el vehículo queda ocupado hasta finalizarlo o anularlo. No se permiten cruces con viajes ni otros mantenimientos válidos del mismo vehículo. Cabecera, detalles y movimientos se registran en la misma transacción; el stock insuficiente devuelve 409.
 
-`factura_proveedor.detalle` (texto de cabecera) se eliminó del esquema.
-Las líneas de `detalle_factura_proveedor` permanecen.
+`GET /api/vehiculos/:id/kilometraje` calcula el kilometraje estimado a partir del control base y los tramos históricos de viajes válidos finalizados. Sin control configurado devuelve SIN_CONFIGURAR. `/api/planes-mantenimiento` ofrece CRUD de planes por vehículo y seguimiento con situaciones AL_DIA, PROXIMO, VENCIDO e INACTIVO. Los cumplimientos se vinculan a mantenimientos con las validaciones del servicio.
 
-## Facturas de proveedor: productos, servicios e impuestos
+Ver [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md) y [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
 
-Las escrituras están separadas por entidad en los modelos de factura, detalle de
-factura, recepción, detalle de recepción y movimiento de inventario. El servicio
-de facturas coordina esos modelos con el mismo `client` dentro de una transacción.
-Los detalles no tienen un CRUD independiente: se registran como parte de la compra.
+## Gastos, abastecimientos e informes
 
-Rutas disponibles: `POST /api/facturas-proveedor`, `GET /api/facturas-proveedor`
-y `GET /api/facturas-proveedor/:id`. No hay edición ni eliminación de facturas en
-este módulo inicial. La API calcula los importes; ignora totales enviados por el cliente.
+`/api/gastos` y `/api/abastecimientos-combustible` permiten registrar y consultar lista o detalle, además de anular con `POST /:id/anular`. Se admiten gastos sin vehículo. Los abastecimientos registran las cargas reales; se distinguen de las estimaciones automáticas de combustible de los viajes.
 
-Para una base nueva, usar solamente `database/schema.sql`. Para actualizar la versión
-anterior, ejecutar una sola vez `database/migrations/004_factura_proveedor_conceptos.sql`.
-Esta migración cambia `monto_total` a `total` y aborta si hay facturas existentes:
-no deduce impuestos históricos de importes que no los desglosan.
+Informes disponibles por GET:
 
-```json
-{
-  "id_proveedor": 1,
-  "numero_factura": "001-001-000000001",
-  "fecha_emision": "2026-09-28",
-  "fecha_vencimiento": "2026-10-28",
-  "detalles": [
-    {
-      "tipo_concepto": "PRODUCTO",
-      "id_producto": 1,
-      "descripcion": "Llantas",
-      "cantidad": "10.00",
-      "precio_unitario": "20.00",
-      "descuento": "10.00",
-      "porcentaje_impuesto": "12.0000"
-    },
-    {
-      "tipo_concepto": "SERVICIO",
-      "descripcion": "Reparación",
-      "cantidad": "1.00",
-      "precio_unitario": "30.00",
-      "porcentaje_impuesto": "0"
-    }
-  ],
-  "recepcion_inicial": {
-    "fecha_recepcion": "2026-09-28",
-    "detalles": [{ "numero_detalle": 1, "cantidad_recibida": "4.00" }]
-  }
-}
-```
+- `/api/informes/viajes`.
+- `/api/informes/resumen-economico`.
+- `/api/informes/viaticos`.
+- `/api/informes/consumo-combustible`.
 
-Las tasas del ejemplo son ilustrativas, no valores predeterminados. Cada línea debe
-enviar su porcentaje (0 a 100, máximo cuatro decimales); el descuento omitido es cero
-y representa un importe por línea, no un porcentaje. Cantidad y precio admiten dos
-decimales. Los valores calculados se almacenan y se devuelven como texto decimal.
-PostgreSQL NUMERIC redondea el bruto por línea a dos decimales, resta el descuento
-y redondea su impuesto a dos decimales (mitades hacia arriba para importes positivos).
-La cabecera suma esos valores almacenados; no vuelve a descontar `descuento_total`.
-El ejemplo produce subtotal 220.00, descuento_total 10.00, impuestos 22.80 y total 242.80.
+Los informes comparan estimaciones y valores reales y analizan consumo entre cargas completas según los filtros de cada consulta. No equivalen a exportaciones PDF/Excel ni a un dashboard terminado. Ver [INFORMES.md](INFORMES.md) y [GASTOS_ABASTECIMIENTOS.md](GASTOS_ABASTECIMIENTOS.md).
 
-`recepcion_inicial` es opcional. `numero_detalle` identifica la posición de la línea
-en la petición, empezando en 1. Solo admite productos y cantidades positivas que no
-superen lo facturado. La factura del ejemplo registra 10 llantas pero solo entran 4.
-Sin recepción inicial no se crean movimientos. Factura, detalles, recepción y entradas
-se guardan usando una única conexión y transacción; cualquier fallo revierte todo.
-Las recepciones posteriores usan el servicio descrito arriba. Los pagos y sus
-anulaciones están disponibles. `POST /api/facturas-proveedor/:id/anular` permite
-anular una factura sin pagos ni recepciones vigentes, conservando su historial.
-Consultar [PAGOS_PROVEEDOR.md](PAGOS_PROVEEDOR.md) para requisitos y ejemplos.
+## Liquidaciones, facturación y cobros pendientes
 
-## Inicialización de PostgreSQL
+El esquema actual contempla liquidaciones por gasolinera y período, con estados BORRADOR, ENVIADA, CONFIRMADA y ANULADA, fechas e importes. `detalle_liquidacion` relaciona liquidaciones con entregas de viajes y conserva galones, tarifa e importe históricos. Sustituye la antigua columna física `detalle_viaje.id_liquidacion`. Las consultas de entregas conservan `id_liquidacion` como campo calculado para la liquidación vigente.
 
-Ejecutar únicamente `database/schema.sql` en una base vacía. Incluye las 22 tablas,
-restricciones, funciones, triggers y la extensión `btree_gist`; no requiere migraciones
-adicionales. Se necesitan permisos para crear esos objetos. El archivo no borra datos
-ni está diseñado para ejecutarse repetidamente sobre tablas existentes.
-En psql puede ejecutarse de forma atómica con `psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql`.
+La migración `013_liquidaciones_detalles.sql` corresponde a esta transición y requiere revisar sus precondiciones sobre los datos existentes. Todavía no existen rutas, controladores ni servicios del módulo de liquidaciones. Las referencias antiguas a esa columna deben contrastarse con el modelo actualizado.
 
-Los estados administrativos de los nueve catálogos se reciben, almacenan y devuelven
-como booleanos, con true por defecto. La interfaz puede mostrarlos como Activo/Inactivo.
-Los estados de procesos (viajes, liquidaciones y facturas) conservan sus valores de texto.
+El flujo previsto continúa con la factura después de confirmar una liquidación y con los cobros parciales o completos del cliente. Las tablas `factura` y `pago` existen; una clave UNIQUE establece la relación uno a uno entre factura y liquidación. La API para emitir esas facturas, registrar cobros y controlar saldos está pendiente. Las compras y los pagos a proveedores ya tienen su propia API.
 
-## Gastos y ajustes de inventario
+Los plazos aproximados del contexto inicial no se consideran reglas definitivas. No se contempla inicialmente emisión electrónica ni integración con el SRI.
 
-El esquema permite gastos sin vehículo y ajustes
-de inventario con signo. ENTRADA y SALIDA reciben cantidades positivas;
-AJUSTE recibe la diferencia positiva o negativa, nunca cero, no el saldo final.
-El saldo se calcula sumando ENTRADA y AJUSTE y restando SALIDA.
-El futuro servicio de inventario deberá bloquear el producto y comprobar el
-saldo dentro de la misma transacción para impedir existencias negativas.
-La restricción del esquema valida el signo, no el saldo acumulado.
+## Pruebas y documentación histórica
 
-`gasolinera.agente_retencion` se recibe y almacena como booleano; la interfaz
-podrá mostrar Sí o No. Su valor predeterminado es false.
+Desde `server`, `npm test` ejecuta `node --test test/*.test.js`. La suite incluye validadores, rutas HTTP, cálculos, restricciones PostgreSQL, rollback y concurrencia. Las integraciones requieren la conexión de `.env` y permisos para crear objetos; utilizan esquemas temporales con limpieza o rollback según la prueba.
 
-## Choferes
+Desde `client`, `npm run build` compila la interfaz y `npm run lint` ejecuta Oxlint. La existencia de pruebas no garantiza que hayan pasado en un entorno sin verificar.
 
-`tipo_remuneracion` es obligatorio y admite únicamente SUELDO o POR_VIAJE.
-La API recorta espacios y convierte el texto a mayúsculas. PostgreSQL refuerza
-la regla con NOT NULL y `chk_chofer_tipo_remuneracion`. No existe un valor
-predeterminado: se debe seleccionar explícitamente el tipo de remuneración.
-
-## Productos
-
-Las reglas de productos están incluidas en `database/schema.sql`.
-
-Rutas: `GET /api/productos`, `GET /api/productos/:id`, `POST /api/productos`,
-`PUT /api/productos/:id` y `DELETE /api/productos/:id`.
-Los GET incluyen `nombre_categoria` además de `id_categoria`.
-
-Cuerpo de ejemplo para crear o reemplazar un producto:
-
-```json
-{
-  "id_categoria": 1,
-  "nombre": "Filtro de aceite",
-  "medida": null,
-  "modelo": null,
-  "marca": null,
-  "descripcion": null,
-  "unidad_medida": "unidad",
-  "stock_minimo": 2,
-  "estado": true
-}
-```
-
-Nombre, categoría y unidad son obligatorios. Los textos se recortan; los opcionales
-vacíos se almacenan como null. La unidad se normaliza a minúsculas y sigue siendo
-texto libre hasta definir un catálogo (no se unifican sinónimos). El stock mínimo
-admite hasta dos decimales, no es negativo y se omite para usar cero. Como otros
-NUMERIC de PostgreSQL, se devuelve en texto. El estado se recibe como booleano,
-usa true por defecto y se almacena y devuelve como true o false.
-
-La categoría debe existir y estar activa al crear o cambiar de categoría. Es posible
-editar o inactivar un producto que conserva una categoría posteriormente inactivada.
-Se permiten nombres repetidos. PUT reemplaza los campos editables; omitir los
-opcionales aplica sus valores predeterminados.
-
-Compras, movimientos o mantenimientos asociados impiden eliminar el producto o
-cambiar su unidad. Se permite inactivarlo y modificar el resto de sus datos.
-Estas reglas se comprueban en servicios y se respaldan con triggers y claves
-foráneas en PostgreSQL. El CRUD no modifica existencias ni crea movimientos.
-`fecha_creacion` la genera PostgreSQL y no se modifica mediante la API.
-
-Las pruebas de productos ejecutan solicitudes HTTP contra un esquema temporal
-de PostgreSQL y revierten sus datos al terminar.
-
-Configurar `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` en `.env`.
-Ejecutar `npm install` y `npm run dev` desde `server`.
-
-## Tarifas
-
-Las reglas de tarifas y la extensión `btree_gist` están incluidas en `database/schema.sql`.
-
-| Método | Ruta | Operación |
-| --- | --- | --- |
-| GET | `/api/tarifas` | Listar |
-| GET | `/api/tarifas/:id` | Consultar |
-| POST | `/api/tarifas` | Crear |
-| PUT | `/api/tarifas/:id` | Reemplazar datos |
-| DELETE | `/api/tarifas/:id` | Eliminar si no tiene viajes |
-
-Ejemplo de cuerpo para POST y PUT:
-
-```json
-{
-  "id_gasolinera": 1,
-  "id_terminal": 1,
-  "valor_por_galon": "0.0350",
-  "fecha_inicio": "2026-01-01",
-  "fecha_fin": "2026-08-31",
-  "estado": true
-}
-```
-
-Las fechas son inclusivas y usan `YYYY-MM-DD`. `fecha_fin: null` significa sin límite.
-En PUT se envían todos los campos; omitir fecha_fin la deja sin límite y omitir estado
-lo establece en true. En las solicitudes, estado acepta únicamente true o false (sin comillas),
-igual que los otros CRUD. PostgreSQL y las respuestas conservan esos booleanos.
-El estado es únicamente administrativo.
-Ningún estado permite solapamientos para la misma gasolinera y terminal.
-El precio admite cero y hasta cuatro decimales; se devuelve como texto para conservar precisión.
-
-Una tarifa utilizada no admite cambios de precio, gasolinera o terminal ni eliminación.
-Se pueden modificar sus fechas solo si siguen incluyendo todos sus viajes, y cambiar su estado.
-Para cambiar el precio, cerrar la tarifa anterior y crear otra con vigencia posterior.
-PostgreSQL aplica estas reglas también a escrituras directas y serializa la asignación de
-viajes con las modificaciones de tarifas. La fecha del viaje se compara por su día calendario
-(`viaje.fecha_inicio` es timestamp sin zona horaria).
-
-Respuestas: 400 para datos o referencias inválidos, 404 si no existe la tarifa y 409
-para solapamientos o cambios que afectan al historial.
-La futura implementación de viajes debe copiar el precio a `detalle_viaje.tarifa_aplicada`
-al registrar el detalle; este CRUD no recalcula detalles históricos.
-
-## Pruebas
-
-`npm test` ejecuta validadores, rutas HTTP y reglas reales de PostgreSQL.
-La prueba de integración usa la conexión de `.env`, crea un esquema aislado dentro de una
-transacción y revierte todos los datos y objetos al finalizar. Requiere permisos de creación.
+[PROJECT_CONTEXT.txt](PROJECT_CONTEXT.txt) conserva el alcance inicial y reglas que han cambiado. El esquema consolidado, el código y los documentos por módulo deben contrastarse al desarrollar. Ejemplos antiguos que usan `fecha` para viajes o mantenimientos deben usar `fecha_inicio` y `fecha_fin` según los validadores actuales.
