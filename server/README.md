@@ -1,5 +1,7 @@
 # API de CAPECOMSIL
 
+Comparaciones económicas y consumo entre cargas completas: [INFORMES.md](INFORMES.md).
+
 Gastos reales y cargas de combustible: [GASTOS_ABASTECIMIENTOS.md](GASTOS_ABASTECIMIENTOS.md).
 
 Planes, kilometraje y avisos de mantenimiento: [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md).
