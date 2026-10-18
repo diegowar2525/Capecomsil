@@ -46,10 +46,18 @@ todas las consultas, incluidas las lecturas.
 No todos los modelos necesitan CRUD completo. Los modelos de detalles, historial e
 informes deben exponer únicamente las operaciones que utiliza el sistema.
 
-## Separación de responsabilidades pendiente
+## Separación de responsabilidades
 
-`costo_viaje` y `viatico_chofer` todavía coordinan operaciones y generan errores HTTP;
-`remuneracion_chofer.generar` recorre el período solicitado. Esa separación hacia
-servicios queda para una refactorización posterior con sus pruebas. La función SQL
-`recalcular_remuneracion`, las restricciones y los triggers conservan sus reglas
-actuales. El cambio de formato y contratos no traslada ni modifica esas reglas.
+- `costos_viaje.service` selecciona la configuración vigente, valida su existencia
+  y coordina la creación de costos de combustible y peajes.
+- `viaticos_chofer.service` decide si debe crear el registro diario, conservar su
+  importe histórico, dejar el total en cero o distribuirlo entre los viajes válidos.
+- `remuneraciones.service` recorre las fechas del período y coordina los recálculos
+  dentro de una única transacción.
+- Los modelos ejecutan las consultas y devuelven sus resultados; no generan errores
+  HTTP ni llaman a otros modelos para coordinar estos procesos.
+
+Los servicios internos de costos y viáticos reciben el client de viajes y participan
+en su transacción y bloqueo. No abren otra conexión ni realizan COMMIT o ROLLBACK.
+Los cálculos NUMERIC, la función SQL `recalcular_remuneracion`, las restricciones y
+los triggers permanecen en PostgreSQL para conservar precisión e integridad.
