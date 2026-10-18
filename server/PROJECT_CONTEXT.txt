@@ -1,0 +1,637 @@
+# CAPECOMSIL — Contexto general del proyecto
+
+## 1. Descripción del proyecto
+
+**Capecomsil** es un sistema web de gestión administrativa y operativa para una empresa ecuatoriana dedicada al transporte de combustible desde terminales de despacho hacia diferentes gasolineras.
+
+Actualmente, la empresa administra sus operaciones mediante archivos de Microsoft Excel, donde registra viajes, producción, liquidaciones, gastos, pagos y otra información administrativa.
+
+El objetivo es desarrollar una aplicación web que centralice estos procesos, reduzca el trabajo manual, automatice los cálculos, mejore la trazabilidad de las operaciones y facilite la consulta de información.
+
+El sistema estará orientado inicialmente a una empresa pequeña, con un administrador principal y aproximadamente uno o dos empleados adicionales.
+
+**Alcance principal:** gestión de transporte, compras, inventario, gastos, liquidaciones, facturación, pagos, reportes y administración de usuarios.
+
+No se contempla inicialmente la emisión de facturación electrónica ni la integración con el SRI.
+
+---
+
+## 2. Stack tecnológico
+
+### Backend
+- Node.js
+- Express.js
+- JavaScript con CommonJS
+- PostgreSQL
+- Biblioteca `pg` para consultas SQL
+- `dotenv` para variables de entorno
+- `cors` para comunicación con el frontend
+- `nodemon` durante el desarrollo
+
+### Frontend
+- React
+- Vite
+- JavaScript
+- Consumo de API REST
+
+### Base de datos
+- PostgreSQL
+- Nombre de la base de datos: `capecomsildb`
+- Modelo relacional con claves primarias, foráneas, restricciones `CHECK`, `UNIQUE` e índices.
+
+### API
+- Prefijo general: `/api`
+- Endpoint de comprobación: `GET /api/health`
+- Arquitectura REST con rutas por recurso.
+
+---
+
+## 3. Arquitectura del backend
+
+El proyecto utiliza una arquitectura por capas.
+
+Estructura general:
+
+```text
+backend/
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   │   └── index.js
+│   ├── services/
+│   ├── utils/
+│   │   └── validators/
+│   ├── app.js
+│   └── server.js
+├── .env
+├── package.json
+└── ...
+```
+
+### Responsabilidades
+
+**Routes:** definir endpoints HTTP, aplicar middlewares y vincularlos con controladores.
+
+**Controllers:** recibir solicitudes, obtener parámetros, invocar servicios y devolver respuestas HTTP. Delegar los errores al middleware correspondiente.
+
+**Services:** implementar reglas de negocio, validaciones, coordinación de operaciones y transacciones.
+
+**Models:** ejecutar consultas SQL parametrizadas contra PostgreSQL.
+
+**Validators:** validar identificadores, datos de entrada, formatos, campos obligatorios y restricciones previas a las operaciones.
+
+**Database:** administrar la conexión o pool de PostgreSQL.
+
+### Convenciones
+
+- Mantener las responsabilidades separadas.
+- Usar consultas SQL parametrizadas.
+- Evitar duplicación de lógica.
+- Centralizar el manejo de errores.
+- Devolver códigos HTTP apropiados.
+- Utilizar transacciones para operaciones que modifican varias tablas.
+- Respetar las convenciones existentes del repositorio.
+- No incorporar ORM ni cambiar el stack sin autorización.
+- No modificar el esquema SQL sin justificarlo y revisar sus dependencias.
+
+---
+
+## 4. Modelo de datos
+
+El modelo entidad-relación incluye las siguientes tablas, organizadas por dominio.
+
+### Catálogos y configuración
+
+- `VEHICULO`: información de vehículos, placa, marca, modelo, año, capacidad en galones y estado.
+- `CHOFER`: información personal, contacto y modalidad de remuneración.
+- `GASOLINERA`: clientes que reciben combustible y pagan por el transporte.
+- `TERMINAL`: terminales desde las cuales se despacha el combustible.
+- `PROVEEDOR`: empresas o personas que suministran productos y servicios.
+- `PRODUCTO`: productos de inventario, como llantas, aceites, filtros y repuestos.
+- `CATEGORIA_PRODUCTO`: clasificación de productos.
+- `PRODUCTO_TRANSPORTADO`: tipos de combustible transportado.
+
+### Tarifas
+
+- `TARIFA`: precio de transporte por galón, asociado a una gasolinera y terminal, con período de vigencia.
+
+### Transporte
+
+- `VIAJE`: operación de transporte, vinculada con vehículo, chofer, tarifa y opcionalmente liquidación.
+- `DETALLE_VIAJE`: productos transportados, cantidad de galones, tarifa aplicada y valor del transporte.
+- `COSTO_VIAJE`: costos asociados a un viaje.
+- `GASTO`: gastos operativos, que pueden relacionarse con viajes, vehículos o proveedores según corresponda.
+
+### Liquidaciones y facturación a clientes
+
+- `LIQUIDACION`: consolidación de viajes por gasolinera y período.
+- `FACTURA`: factura emitida a partir de una liquidación.
+- `PAGO`: abonos o pagos realizados por las gasolineras.
+
+### Compras y cuentas por pagar
+
+- `FACTURA_PROVEEDOR`: cabecera de factura de compra.
+- `DETALLE_FACTURA_PROVEEDOR`: productos y servicios facturados.
+- `RECEPCION_COMPRA`: registro de una recepción de mercancía.
+- `DETALLE_RECEPCION_COMPRA`: cantidades recibidas correspondientes a los detalles facturados.
+- `PAGO_PROVEEDOR`: pagos realizados a proveedores.
+
+### Inventario y mantenimiento
+
+- `MOVIMIENTO_INVENTARIO`: entradas, salidas, ajustes y movimientos de reversión.
+- `MANTENIMIENTO`: intervenciones realizadas a los vehículos.
+- `DETALLE_MANTENIMIENTO`: productos consumidos en cada mantenimiento.
+
+El MER de referencia contiene estas 24 tablas. La autenticación y los permisos constituyen un módulo planificado, cuya estructura definitiva deberá comprobarse en el esquema SQL del repositorio.
+
+**Importante:** el esquema SQL real del repositorio tiene prioridad sobre este resumen. No asumir que todos los campos, restricciones o funcionalidades del MER ya están implementados.
+
+---
+
+## 5. Reglas de negocio principales
+
+### 5.1. Tarifas de transporte
+
+Cada tarifa depende de:
+
+- Gasolinera.
+- Terminal de despacho.
+- Precio de transporte por galón.
+- Fecha de inicio.
+- Fecha de finalización, que puede ser nula.
+
+Reglas:
+
+1. No permitir tarifas con períodos superpuestos para la misma gasolinera y terminal.
+2. Seleccionar la tarifa vigente según la fecha del viaje.
+3. Una tarifa con fecha final nula tiene vigencia abierta.
+4. No alterar retroactivamente el valor aplicado a viajes existentes.
+5. Guardar en `DETALLE_VIAJE.tarifa_aplicada` el valor histórico utilizado.
+6. Cuando cambie un precio, crear una nueva versión de la tarifa en lugar de sobrescribir el historial.
+7. Respetar las restricciones existentes sobre modificación o eliminación de tarifas utilizadas.
+
+### 5.2. Gestión de viajes
+
+Cada viaje debe registrar:
+
+- Fecha.
+- Vehículo.
+- Chofer.
+- Tarifa correspondiente a la gasolinera y terminal.
+- Productos transportados.
+- Cantidad de galones.
+- Estado operativo.
+- Costos relacionados.
+
+Un viaje puede contener varios detalles de carga.
+
+El valor de transporte se calcula usando los galones transportados y la tarifa aplicable.
+
+**Validación de capacidad:**
+
+Cada vehículo tiene una capacidad máxima en galones.
+
+Si el volumen total registrado es inferior a su capacidad, el sistema debe advertir al operador, porque puede representar un faltante o una carga parcial.
+
+Si supera la capacidad, debe impedirse o gestionarse mediante una validación específica según las reglas operativas aprobadas.
+
+No asumir que toda carga inferior a la capacidad es necesariamente incorrecta.
+
+### 5.3. Remuneración de choferes
+
+Existen dos modalidades principales:
+
+- Sueldo fijo.
+- Pago por viaje.
+
+Para los choferes remunerados por viaje, el importe puede variar según las condiciones del recorrido.
+
+La lógica de costos debe distinguir ambas modalidades para evitar duplicaciones o cálculos incorrectos.
+
+### 5.4. Costos y rentabilidad
+
+Se deben considerar conceptos como:
+
+- Combustible consumido.
+- Peajes.
+- Viáticos.
+- Remuneración del chofer.
+- Costos adicionales del viaje.
+- Mantenimiento y otros gastos cuando corresponda.
+
+La rentabilidad de cada viaje se determina a partir de sus ingresos y costos atribuibles.
+
+Evitar contar dos veces un mismo gasto si se registra en módulos diferentes.
+
+### 5.5. Liquidaciones
+
+Una liquidación agrupa viajes correspondientes a una gasolinera y un período determinado.
+
+Debe permitir:
+
+1. Seleccionar los viajes elegibles.
+2. Calcular los galones transportados.
+3. Calcular el valor del transporte.
+4. Aplicar retenciones o recargos cuando corresponda.
+5. Generar un documento imprimible.
+6. Registrar la fecha de generación.
+7. Establecer una fecha límite de confirmación.
+8. Registrar la confirmación recibida del cliente.
+9. Controlar los estados pendientes, confirmados y vencidos.
+
+El cliente ha planteado un plazo aproximado de cinco a seis días para la confirmación de liquidaciones. El plazo definitivo debe ser configurable o validado antes de codificarlo como regla fija.
+
+No debe incluirse un mismo viaje en dos liquidaciones activas.
+
+### 5.6. Facturación a clientes
+
+Después de confirmar una liquidación, se podrá emitir su factura.
+
+La relación prevista entre liquidación y factura es uno a uno.
+
+Las facturas deben conservar:
+
+- Número.
+- Fecha de emisión.
+- Fecha de vencimiento.
+- Valores económicos.
+- Retenciones.
+- Estado.
+- Observaciones.
+
+El plazo comercial de pago previsto es de aproximadamente quince días desde la confirmación, sujeto a la regla definitiva del negocio.
+
+Se deben admitir pagos parciales y completos.
+
+El saldo pendiente será el importe exigible menos los pagos válidos registrados.
+
+No permitir cobros que excedan el saldo, salvo que exista una regla explícita para anticipos o sobrepagos.
+
+### 5.7. Facturas de proveedores
+
+Las facturas de proveedores pueden contener:
+
+- Productos físicos.
+- Servicios.
+- Una combinación de ambos.
+
+Cada detalle incluye cantidad, precio unitario, descuento, porcentaje de impuesto, impuesto y total de línea.
+
+Los cálculos deben realizarse en el backend, usando aritmética decimal apropiada para valores monetarios.
+
+Reglas:
+
+1. Validar la existencia del proveedor.
+2. Validar productos cuando el concepto sea `PRODUCTO`.
+3. Para conceptos `SERVICIO`, `id_producto` debe ser nulo.
+4. No permitir cantidades negativas o iguales a cero.
+5. No permitir descuentos superiores al importe bruto del detalle.
+6. Calcular subtotales e impuestos con redondeo coherente.
+7. Validar la unicidad del número de factura por proveedor.
+8. Guardar cabecera y detalles de forma atómica.
+9. Permitir registrar una factura sin recibir inmediatamente los productos.
+
+El campo `subtotal` del detalle representa el importe después del descuento.
+
+El subtotal de la factura representa la suma de los subtotales netos de sus detalles.
+
+El descuento total se conserva como información adicional y no debe restarse por segunda vez.
+
+### 5.8. Recepciones de compras
+
+Las recepciones son independientes de las facturas, aunque pueden registrarse durante su creación.
+
+Una factura puede tener múltiples recepciones.
+
+Cada detalle de recepción debe apuntar al detalle de factura correspondiente.
+
+Reglas:
+
+1. Permitir recepciones completas.
+2. Permitir recepciones parciales.
+3. Permitir recepciones posteriores.
+4. No recibir más unidades que las facturadas.
+5. No generar recepciones de inventario para servicios.
+6. Generar entradas de inventario únicamente por cantidades efectivamente recibidas.
+7. Evitar registrar dos veces el mismo movimiento.
+8. Utilizar transacciones para garantizar consistencia.
+9. Mantener trazabilidad de las recepciones y sus anulaciones.
+
+### 5.9. Inventario
+
+El inventario se calcula a partir de los movimientos registrados.
+
+Tipos de movimiento:
+
+- `ENTRADA`
+- `SALIDA`
+- `AJUSTE`
+
+Las entradas y salidas usan cantidades positivas; los ajustes pueden ser positivos o negativos, según las restricciones SQL existentes.
+
+El stock actual se obtiene de la suma algebraica de los movimientos, considerando su tipo.
+
+Reglas:
+
+1. Las recepciones generan entradas.
+2. El consumo de productos en mantenimientos genera salidas.
+3. Los ajustes deben conservar motivo y trazabilidad.
+4. Evitar stock negativo.
+5. Impedir movimientos duplicados.
+6. Registrar reversiones cuando sea necesario corregir operaciones.
+7. No borrar arbitrariamente movimientos que ya afectaron el inventario.
+8. Mostrar alertas cuando el stock alcance el mínimo establecido.
+
+### 5.10. Mantenimientos y gastos
+
+Se deben registrar mantenimientos de vehículos, incluyendo:
+
+- Vehículo.
+- Fecha.
+- Tipo de mantenimiento.
+- Descripción.
+- Proveedor, cuando corresponda.
+- Costos.
+- Productos utilizados.
+
+Los productos consumidos deben generar salidas de inventario.
+
+Los gastos generales también deben poder registrarse sin estar asociados obligatoriamente a un viaje.
+
+---
+
+## 6. Módulos y funcionalidades planificadas
+
+### EP-01 — Configuración y catálogos
+Gestionar vehículos, choferes, terminales, gasolineras, proveedores, productos, categorías y combustibles transportados.
+
+### EP-02 — Gestión de tarifas
+Administrar precios por galón, períodos de vigencia, restricciones de superposición e historial.
+
+### EP-03 — Compras a proveedores
+Registrar facturas, calcular impuestos, controlar recepciones, anular operaciones y gestionar pagos.
+
+### EP-04 — Gestión de inventario
+Registrar movimientos, calcular stock, controlar existencias negativas, consultar historial y generar alertas.
+
+### EP-05 — Gestión de viajes
+Registrar operaciones de transporte, detalles de carga, tarifas, validaciones de capacidad, costos y rentabilidad.
+
+### EP-06 — Liquidaciones
+Agrupar viajes por gasolinera y período, generar liquidaciones, controlar confirmaciones y exportar documentos.
+
+### EP-07 — Facturación y cobros
+Emitir facturas desde liquidaciones confirmadas, registrar pagos y controlar saldos y vencimientos.
+
+### EP-08 — Mantenimientos y gastos
+Registrar mantenimientos, materiales consumidos, salidas de inventario y gastos operativos.
+
+### EP-09 — Usuarios y seguridad
+Implementar autenticación, administración de cuentas, roles y autorización de operaciones.
+
+Roles iniciales previstos:
+
+- Administrador.
+- Asistente u operador.
+
+### EP-10 — Dashboard, calendario y reportes
+Mostrar indicadores del negocio, vencimientos, alertas, reportes de producción y rentabilidad, y exportaciones a PDF o Excel.
+
+### EP-11 — Frontend, pruebas y migración
+Desarrollar interfaces React, formularios, validaciones, pruebas automatizadas e importación de información histórica desde Excel.
+
+---
+
+## 7. Reportes necesarios
+
+El sistema debe permitir consultar información por rangos de fechas y otros filtros.
+
+### Producción individual
+- Viajes por vehículo.
+- Viajes por gasolinera.
+- Galones transportados.
+- Valor facturable.
+- Costos y utilidad.
+
+### Producción general
+- Producción por gasolinera.
+- Producción por período.
+- Totales transportados.
+- Ingresos generados.
+
+### Liquidaciones
+- Liquidaciones pendientes.
+- Liquidaciones confirmadas.
+- Liquidaciones vencidas.
+- Valores por gasolinera.
+
+### Cuentas por cobrar
+- Facturas emitidas.
+- Pagos recibidos.
+- Saldos pendientes.
+- Facturas vencidas.
+
+### Cuentas por pagar
+- Facturas de proveedores.
+- Pagos efectuados.
+- Saldos pendientes.
+- Obligaciones vencidas.
+
+### Inventario
+- Stock actual.
+- Productos bajo mínimo.
+- Historial de movimientos.
+- Consumos por mantenimiento.
+
+### Rentabilidad
+- Ingresos por transporte.
+- Costos de viajes.
+- Gastos operativos.
+- Ganancias por vehículo y período.
+
+---
+
+## 8. Dashboard y calendario
+
+El dashboard debe presentar información resumida y útil para el administrador.
+
+Indicadores sugeridos:
+
+- Viajes registrados.
+- Galones transportados.
+- Ingresos del período.
+- Costos operativos.
+- Rentabilidad estimada.
+- Liquidaciones pendientes.
+- Facturas por cobrar.
+- Facturas por pagar.
+- Productos con stock bajo.
+
+El calendario deberá permitir identificar:
+
+- Fechas límite de confirmación de liquidaciones.
+- Vencimientos de facturas de clientes.
+- Vencimientos de facturas de proveedores.
+
+Las alertas deben basarse en las fechas y estados reales almacenados en PostgreSQL.
+
+---
+
+## 9. Estado del desarrollo
+
+### Funcionalidades previamente implementadas o avanzadas
+
+- Inicialización del backend Express.
+- Conexión con PostgreSQL.
+- Estructura por capas.
+- Manejo de rutas bajo `/api`.
+- CRUD de vehículos.
+- CRUD de choferes.
+- CRUD de terminales.
+- CRUD de gasolineras.
+- CRUD de proveedores.
+- CRUD de categorías.
+- CRUD de productos.
+- Gestión de tarifas y validación de períodos.
+- Registro de facturas de proveedores y detalles.
+- Cálculos de facturación desde el backend.
+- Pruebas de endpoints y validaciones.
+- Estructura inicial de React.
+
+### Funcionalidades que requieren revisión
+
+- Recepción inicial al crear una factura de proveedor.
+- Integración de recepción y movimientos de inventario.
+- Recepciones parciales y posteriores.
+- Reversiones y anulaciones.
+- Consulta y validación de stock.
+- Coherencia entre las restricciones SQL y los servicios.
+
+### Funcionalidades principalmente pendientes
+
+- Gestión completa de viajes.
+- Registro de costos.
+- Liquidaciones.
+- Facturación a clientes.
+- Pagos y cobros.
+- Mantenimientos.
+- Usuarios y permisos.
+- Dashboard y calendario.
+- Reportes y exportaciones.
+- Formularios y pantallas de React.
+- Migración de datos históricos de Excel.
+
+**Nota:** este estado es una referencia histórica. Codex debe inspeccionar el código y las pruebas actuales antes de declarar una funcionalidad como terminada o pendiente.
+
+---
+
+## 10. Requisitos de calidad
+
+El sistema debe cumplir los siguientes principios:
+
+### Integridad de datos
+- Mantener consistencia entre tablas relacionadas.
+- Usar transacciones para operaciones compuestas.
+- Respetar claves foráneas y restricciones SQL.
+- Evitar duplicaciones.
+- Preservar el historial económico y operativo.
+
+### Seguridad
+- Validar los datos recibidos.
+- Utilizar SQL parametrizado.
+- Proteger credenciales y variables de entorno.
+- Implementar autenticación y autorización.
+- No exponer información sensible en errores de producción.
+
+### Mantenibilidad
+- Seguir la arquitectura existente.
+- Mantener nombres consistentes.
+- Evitar lógica de negocio en controladores.
+- Reutilizar validadores y utilidades.
+- Documentar decisiones importantes.
+
+### Pruebas
+- Probar escenarios exitosos y fallidos.
+- Verificar cálculos monetarios.
+- Comprobar restricciones de integridad.
+- Probar transacciones y rollback.
+- Verificar que las operaciones de inventario no se dupliquen.
+- Comprobar pagos parciales y vencimientos.
+- Mantener pruebas automatizadas cuando sea posible.
+
+### Experiencia de usuario
+- Formularios claros.
+- Validaciones comprensibles.
+- Mensajes de error útiles.
+- Tablas con filtros y búsqueda.
+- Navegación organizada por módulos.
+- Confirmación de operaciones sensibles.
+
+---
+
+## 11. Metodología de trabajo
+
+El desarrollo se organiza mediante un tablero Kanban con las columnas:
+
+- `TO DO`: pendiente de iniciar.
+- `IN PROGRESS`: en implementación.
+- `IN REVIEW`: pendiente de revisión y pruebas.
+- `DONE`: implementado y validado.
+
+Cada historia de usuario debe tener criterios de aceptación verificables.
+
+Una historia no debe considerarse completada únicamente porque existe un endpoint. Debe comprobarse el alcance definido para esa historia, incluyendo integridad, validaciones, pruebas y frontend cuando corresponda.
+
+---
+
+## 12. Instrucciones para Codex
+
+Al trabajar en Capecomsil:
+
+1. **Inspecciona primero el repositorio.** Revisa el esquema SQL, modelos, servicios, controladores, rutas, validadores y pruebas existentes.
+
+2. **No asumas que una funcionalidad está pendiente.** Verifica si ya fue implementada antes de generar código.
+
+3. **Respeta la arquitectura actual.** No reestructures el proyecto innecesariamente ni cambies de tecnología sin autorización.
+
+4. **Utiliza PostgreSQL como fuente de verdad.** El MER es una referencia conceptual, pero las tablas y restricciones reales determinan el comportamiento permitido.
+
+5. **Implementa reglas de negocio en servicios.** Los controladores deben mantenerse simples y los modelos deben concentrarse en la persistencia.
+
+6. **Usa transacciones cuando corresponda.** Especialmente en facturas, recepciones, inventario, liquidaciones y pagos.
+
+7. **Evita alterar información histórica.** Los cambios de tarifas, anulaciones y reversiones deben preservar la trazabilidad.
+
+8. **No inventes reglas comerciales.** Si existe una decisión pendiente, como plazos, estados o políticas de anulación, consulta antes de implementarla.
+
+9. **No dupliques funcionalidades.** Reutiliza componentes y servicios existentes siempre que sea razonable.
+
+10. **Incluye validaciones y pruebas.** Cada funcionalidad debe contemplar escenarios correctos, incorrectos y casos límite.
+
+11. **Explica los cambios realizados.** Indica archivos modificados, endpoints, reglas implementadas, pruebas ejecutadas y aspectos pendientes.
+
+12. **Trabaja de forma incremental.** Prioriza cambios pequeños, verificables y compatibles con las funcionalidades existentes.
+
+---
+
+## 13. Objetivo final
+
+Entregar una aplicación web integral para Capecomsil que sustituya progresivamente el uso de hojas de cálculo y permita administrar las operaciones de transporte de combustible desde un único sistema.
+
+El resultado esperado es que el personal pueda:
+
+- Configurar vehículos, choferes, gasolineras, terminales y tarifas.
+- Registrar viajes y calcular automáticamente sus valores.
+- Controlar costos y rentabilidad.
+- Generar y confirmar liquidaciones.
+- Emitir facturas y registrar cobros.
+- Gestionar compras, proveedores y pagos.
+- Controlar inventario y mantenimientos.
+- Consultar vencimientos y alertas.
+- Generar reportes operativos y financieros.
+- Acceder mediante una interfaz web segura, clara y fácil de utilizar.
+
+**Principio rector del desarrollo:** preservar la integridad de la información, automatizar las operaciones repetitivas y construir una solución mantenible que responda a los procesos reales de Capecomsil.
