@@ -2,7 +2,7 @@
 
 Este módulo usa las tablas `gasto` y `abastecimiento_combustible` del esquema consolidado. No requiere nuevas tablas ni atributos para esta etapa. La base de trabajo debe tener aplicada la versión actual del esquema; no ejecute el archivo completo sobre una base con datos.
 
-Los importes reales se registran aquí. `COSTO_VIAJE` mantiene las estimaciones: registrar un gasto no las reemplaza. Las comparaciones e informes corresponden a la siguiente etapa.
+Los importes reales se registran aquí. `COSTO_VIAJE` mantiene las estimaciones: registrar un gasto no las reemplaza. Las comparaciones ya están disponibles en `/api/informes/viajes`, `/api/informes/resumen-economico`, `/api/informes/viaticos` y `/api/informes/consumo-combustible`. Consultar [INFORMES.md](INFORMES.md) para filtros y límites de interpretación de los resultados.
 
 ## Endpoints
 

@@ -42,7 +42,8 @@ La condición admite NUEVA o REENCAUCHADA (se recortan espacios y normalizan may
 {
   "id_vehiculo": 1,
   "id_proveedor": null,
-  "fecha": "2026-10-10",
+  "fecha_inicio": "2026-10-10T08:00:00",
+  "fecha_fin": "2026-10-10T10:00:00",
   "tipo": "Cambio de filtros y llanta",
   "monto": "25.00",
   "detalles": [
@@ -55,6 +56,11 @@ La condición admite NUEVA o REENCAUCHADA (se recortan espacios y normalizan may
   ]
 }
 ```
+
+El mantenimiento recibe fecha y hora local sin zona en `fecha_inicio` y `fecha_fin`;
+el antiguo campo `fecha` se rechaza. Puede durar varios días y `fecha_fin: null`
+lo mantiene abierto hasta finalizarlo o anularlo. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md)
+para disponibilidad del vehículo y finalización.
 
 Solo INVENTARIO comprueba stock y genera salidas. Si se omite origen_producto se asume INVENTARIO para conservar el contrato anterior. EXTERNO exige descripción de hasta 200 caracteres y no acepta id_producto. Se permiten varios materiales externos y un mantenimiento compuesto únicamente por externos. No se cambia automáticamente a EXTERNO cuando falta stock.
 

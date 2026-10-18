@@ -1,6 +1,9 @@
 # Remuneraciones de choferes
 
-Cada viaje recibe `fecha: "2026-10-13"`. Ya no se aceptan `fecha_inicio` ni `fecha_fin`.
+Cada viaje recibe `fecha_inicio` y `fecha_fin` con fecha y hora local sin zona, por ejemplo
+`"2026-10-13T08:00:00"` y `"2026-10-13T12:00:00"`. El fin debe ser posterior al inicio
+y estar dentro del mismo día. No se acepta el antiguo campo `fecha` en el registro de viajes.
+El día de `fecha_inicio` determina la remuneración diaria y la configuración aplicable.
 Registrar o anular un viaje recalcula el importe diario y sus asignaciones dentro de la misma transacción.
 
 ## Reglas con la configuración inicial de $35 + $35
@@ -83,4 +86,6 @@ Para instalación nueva: `schema.sql`, después `seed.sql`; no ejecutar además 
 Las operaciones de remuneración y los cambios de configuración/calendario toman el mismo candado transaccional de PostgreSQL
 antes de bloquear filas. Esto evita repartos perdidos en peticiones concurrentes, a costa de serializar estas operaciones.
 La creación de viajes sigue verificando recorrido, capacidad y tarifa por fecha. No cambia el inventario.
-Los costos automáticos de combustible, peajes y viáticos y los pagos a choferes quedan fuera de este módulo.
+Los costos automáticos de combustible, peajes y viáticos ya están integrados en el registro
+de viajes; sus reglas se describen en [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
+Los pagos a choferes siguen pendientes y no se generan al calcular la remuneración.

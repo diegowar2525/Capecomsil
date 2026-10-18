@@ -100,7 +100,7 @@ El registro de viajes requiere configuraciones vigentes de remuneración, combus
 
 Los costos COMBUSTIBLE y PEAJE se estiman por recorrido y conservan los valores aplicados. CHOFER y VIATICO se distribuyen entre los viajes válidos del día, conservando el total exacto en centavos. Registrar o anular viajes redistribuye las asignaciones diarias dentro de la transacción. No se deben sumar otra vez los totales diarios y sus asignaciones como si fueran gastos diferentes.
 
-Estas estimaciones no generan pagos, gastos reales ni abastecimientos. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md). La introducción de REMUNERACIONES.md que indica usar solo `fecha` está desactualizada: el validador actual de viajes exige `fecha_inicio` y `fecha_fin` con hora.
+Estas estimaciones no generan pagos, gastos reales ni abastecimientos. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md). El registro de viajes exige `fecha_inicio` y `fecha_fin` con hora.
 
 ## Compras, recepciones y pagos a proveedores
 

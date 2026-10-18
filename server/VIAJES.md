@@ -8,13 +8,15 @@ Están implementados el esquema, el registro transaccional, las consultas y la a
 
 ## DETALLE_VIAJE
 
-`id_detalle_viaje` (PK), `id_viaje` (FK), `id_tarifa` (FK obligatoria), `id_liquidacion` (FK opcional), `id_producto_transportado` (FK), `galones`, `tarifa_aplicada`, `valor_transporte`.
+`id_detalle_viaje` (PK), `id_viaje` (FK), `id_tarifa` (FK obligatoria), `id_producto_transportado` (FK), `galones`, `tarifa_aplicada`, `valor_transporte`.
 
-Relaciones: un viaje tiene varios detalles; una tarifa puede utilizarse en varios detalles; una liquidación agrupa detalles; cada producto transportado puede aparecer en varias entregas. Gasolinera y terminal se obtienen desde la tarifa de cada detalle. COSTO_VIAJE continúa asociado al viaje completo.
+Relaciones: un viaje tiene varios detalles; una tarifa puede utilizarse en varios detalles; una liquidación agrupa entregas mediante `detalle_liquidacion`; cada producto transportado puede aparecer en varias entregas. Gasolinera y terminal se obtienen desde la tarifa de cada detalle. COSTO_VIAJE continúa asociado al viaje completo.
 
 Las tarifas utilizadas conservan su protección histórica, incluso si el viaje está anulado. La vigencia se valida al asignar o cambiar una tarifa, mover una entrega a otro viaje y cambiar la fecha del viaje. Las claves foráneas impiden eliminar tarifas utilizadas.
 
 No se incorporan compartimientos ni planificación. Se rechaza la suma de galones superior a la capacidad del vehículo; cargas inferiores o iguales se permiten sin advertencias. Se registran viajes ya realizados y una nueva carga se considera otro viaje.
+
+La relación con liquidaciones se almacena en `detalle_liquidacion`, que conserva copias históricas de galones, tarifa e importe. `id_liquidacion` ya no es una columna física de `detalle_viaje`: las consultas de entregas lo calculan para la liquidación vigente (estado distinto de ANULADA), o devuelven null si no existe.
 
 ## Registro desde Postman
 
@@ -40,7 +42,7 @@ No se incorporan compartimientos ni planificación. Se rechaza la suma de galone
 
 Inicio y fin requieren fecha y hora local sin zona, dentro del mismo día y con fin posterior al inicio. El día de inicio determina la vigencia de las tarifas y la remuneración diaria del chofer. Los galones deben ser positivos y admitir como máximo dos decimales. Debe existir una tarifa que cubra la fecha para cada gasolinera y terminal, sin importar su estado administrativo. Se rechaza repetir la misma combinación de gasolinera, terminal y combustible; un combustible sí puede entregarse a varios destinos.
 
-La respuesta 201 incluye viaje, detalles, tramos, `kilometros_recorridos`, `total_galones` y `valor_transporte`. Las cantidades e importes son cadenas decimales. El precio se copia de la tarifa y el importe se redondea a dos decimales por entrega en PostgreSQL NUMERIC. Los totales suman los detalles. `id_liquidacion` queda en null. Estado, tarifas e importes enviados por el cliente se ignoran.
+La respuesta 201 incluye viaje, detalles, tramos, `kilometros_recorridos`, `total_galones` y `valor_transporte`. Las cantidades e importes son cadenas decimales. El precio se copia de la tarifa y el importe se redondea a dos decimales por entrega en PostgreSQL NUMERIC. Los totales suman los detalles. El registro no asocia entregas a liquidaciones. Los detalles de la respuesta POST no incluyen el campo calculado `id_liquidacion`; la consulta individual lo devuelve como null mientras no exista una asociación vigente. Estado, tarifas e importes enviados por el cliente se ignoran.
 
 Vehículo, chofer y combustibles deben existir; sus estados administrativos no impiden registrar operaciones históricas. Referencias inválidas, exceso de capacidad o datos inválidos devuelven 400; ausencia de tarifa aplicable devuelve 409. No hay cambios en el inventario interno. Toda la operación comparte una transacción y bloquea las referencias relevantes hasta terminar. Requiere el schema.sql actualizado con TRAYECTO. La migración histórica 010 por sí sola no incorpora este catálogo.
 
@@ -60,9 +62,9 @@ Ejemplo: `GET /api/viajes?id_gasolinera=2&fecha_desde=2026-10-01&fecha_hasta=202
 
 Los filtros por gasolinera y terminal seleccionan viajes que contienen una entrega coincidente con ambos. No recortan los totales del viaje; la consulta individual siempre devuelve todas sus entregas. Los nombres descriptivos son los actuales de los catálogos, mientras que tarifas e importes son los valores históricos guardados.
 
-La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación, incluso si esa liquidación tiene otro estado. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje se anula y registra uno nuevo.
+La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación vigente (BORRADOR, ENVIADA o CONFIRMADA). Las asociaciones a liquidaciones ANULADAS se conservan como historial y no bloquean por sí solas la anulación del viaje. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje se anula y registra uno nuevo.
 
-Se bloquean la cabecera y las entregas durante la transacción. El futuro módulo de liquidaciones deberá bloquear la cabecera y rechazar viajes anulados antes de asociar detalles. Estas operaciones no requieren nuevas columnas ni migraciones.
+Se bloquean la cabecera y las entregas durante la transacción. El futuro módulo de liquidaciones deberá bloquear la cabecera y rechazar viajes anulados antes de asociar detalles. La base debe incluir el modelo actual de `detalle_liquidacion`; ver la transición de esquema descrita a continuación.
 
 ## Migración del esquema
 
@@ -70,12 +72,14 @@ El esquema consolidado es `database/schema.sql`. La migración `008_viajes_entre
 
 La migración es transaccional y se aplica una sola vez a la versión anterior. Si hay viajes sin detalles o estados desconocidos, aborta para no perder relaciones ni inventar entregas. Deben revisarse esos registros antes de reintentar. No ejecutarla sobre un esquema nuevo que ya incluya estos cambios.
 
+La migración `013_liquidaciones_detalles.sql` realiza una transición posterior: crea `detalle_liquidacion`, copia las asociaciones y valores históricos y elimina la columna `detalle_viaje.id_liquidacion`. También incorpora estados y fechas de liquidación. Exige liquidaciones previas en BORRADOR sin confirmar; revisar sus precondiciones antes de aplicarla. La migración 008 por sí sola no deja la base en la versión actual. Una base nueva debe usar el esquema consolidado sin ejecutar además estas migraciones.
+
 ## Tramos
 
 El modelo tramo_viaje se utiliza dentro del servicio de viajes, sin CRUD independiente. Cada tramo recibe orden, id_trayecto y observacion opcional. El trayecto debe existir y estar activo. El servidor resuelve las ubicaciones y copia sus kilómetros; ubicaciones o kilómetros adicionales enviados en el JSON se ignoran. Se ordenan por orden y se exige secuencia desde 1 sin huecos ni duplicados.
 
 El primer tramo puede partir de una gasolinera o un terminal; su destino no tiene que ser un terminal. Un terminal de origen también cuenta como punto de carga anterior a la entrega. Cada origen siguiente coincide con el destino anterior. El recorrido debe pasar por el terminal de cada entrega antes de llegar a la gasolinera destinataria. No se exige regresar al origen. Las ubicaciones deben existir.
 
-Los kilómetros se configuran en TRAYECTO, no se calculan mediante mapas; el backend suma los tramos con NUMERIC. POST, GET individual y anulación devuelven tramos; GET individual y anulación añaden nombres de origen/destino. El listado incluye kilometros_recorridos. Estos kilómetros todavía no generan COSTO_VIAJE automáticamente.
+Los kilómetros se configuran en TRAYECTO, no se calculan mediante mapas; el backend suma los tramos con NUMERIC. POST, GET individual y anulación devuelven tramos; GET individual y anulación añaden nombres de origen/destino. El listado incluye kilometros_recorridos. Estos kilómetros se usan para generar automáticamente el costo estimado de COMBUSTIBLE, junto con el consumo y precio vigentes. Los peajes de los tramos generan el costo PEAJE; las asignaciones de CHOFER y VIATICO se calculan por día. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
 
 El catálogo tiene CRUD en /api/trayectos; ver TRAYECTOS.md. Los IDs del ejemplo presuponen trayectos configurados: gasolinera 1 → terminal 1, terminal 1 → gasolinera 1 y gasolinera 1 → gasolinera 2. Cambiar los kilómetros del catálogo solo afecta a nuevos tramos. Sus ubicaciones no pueden cambiarse si tiene historial y las FK impiden eliminarlo. Inactivarlo no oculta ni invalida viajes anteriores.
