@@ -17,9 +17,7 @@ const getFacturasProveedor = async () => {
 const getFacturaProveedorById = async (id) => {
     const factura = await facturaProveedorModel.findById(validateId(id));
     if (!factura) {
-        const error = new Error("Factura de proveedor no encontrada");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Factura de proveedor no encontrada", 404);
     }
     return factura;
 };
@@ -29,48 +27,79 @@ const createFacturaProveedor = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        const proveedor = await proveedorModel.findByIdForShare(client, datosValidados.id_proveedor);
+        const proveedor = await proveedorModel.findByIdForShare(
+            client,
+            datosValidados.id_proveedor
+        );
         if (!proveedor) {
-            const error = new Error("El proveedor indicado no existe");
-            error.status = 400;
-            throw error;
+            throw createHttpError("El proveedor indicado no existe", 400);
         }
         // Bloqueo en orden estable para evitar interbloqueos entre compras.
-        const productos = [...new Set(datosValidados.detalles.filter(d => d.id_producto !== null).map(d => d.id_producto))].sort((a, b) => a - b);
+        const productos = [
+            ...new Set(
+                datosValidados.detalles
+                    .filter((d) => {
+                        return d.id_producto !== null;
+                    })
+                    .map((d) => {
+                        return d.id_producto;
+                    })
+            )
+        ].sort((a, b) => {
+            return a - b;
+        });
         for (const id of productos) {
-            if (!await productoModel.findByIdForUpdate(client, id)) {
-                const error = new Error("El producto indicado no existe");
-                error.status = 400;
-                throw error;
+            if (!(await productoModel.findByIdForUpdate(client, id))) {
+                throw createHttpError("El producto indicado no existe", 400);
             }
         }
         const factura = await facturaProveedorModel.create(client, datosValidados);
         const detalles = [];
         for (const detalle of datosValidados.detalles) {
-            detalles.push(await detalleFacturaProveedorModel.create(client, factura.id_factura_proveedor, detalle));
+            detalles.push(
+                await detalleFacturaProveedorModel.create(
+                    client,
+                    factura.id_factura_proveedor,
+                    detalle
+                )
+            );
         }
-        const resultado = await facturaProveedorModel.updateTotales(client, factura.id_factura_proveedor);
+        const resultado = await facturaProveedorModel.updateTotales(
+            client,
+            factura.id_factura_proveedor
+        );
         let recepcion = null;
         if (datosValidados.recepcion_inicial) {
             recepcion = await createRecepcionEnTransaccion(client, {
                 id_factura_proveedor: factura.id_factura_proveedor,
                 fecha_recepcion: datosValidados.recepcion_inicial.fecha_recepcion,
-                detalles: datosValidados.recepcion_inicial.detalles.map((recibido) => ({
-                    id_detalle_factura_proveedor: detalles[recibido.numero_detalle - 1].id_detalle_factura_proveedor,
-                    cantidad_recibida: recibido.cantidad_recibida
-                }))
+                detalles: datosValidados.recepcion_inicial.detalles.map((recibido) => {
+                    return {
+                        id_detalle_factura_proveedor:
+                            detalles[recibido.numero_detalle - 1].id_detalle_factura_proveedor,
+                        cantidad_recibida: recibido.cantidad_recibida
+                    };
+                })
             });
         }
         const resumen = await facturaProveedorModel.findById(factura.id_factura_proveedor, client);
         await client.query("COMMIT");
-        return { ...resultado, total_pagado: resumen.total_pagado, saldo_pendiente: resumen.saldo_pendiente,
-            estado_pago: resumen.estado_pago, vencida: resumen.vencida, detalles, recepcion_inicial: recepcion };
+        return {
+            ...resultado,
+            total_pagado: resumen.total_pagado,
+            saldo_pendiente: resumen.saldo_pendiente,
+            estado_pago: resumen.estado_pago,
+            vencida: resumen.vencida,
+            detalles,
+            recepcion_inicial: recepcion
+        };
     } catch (error) {
         await client.query("ROLLBACK");
         if (error.code === "22003") {
-            const errorImporte = new Error("Los importes calculados exceden el límite monetario permitido");
-            errorImporte.status = 400;
-            throw errorImporte;
+            throw createHttpError(
+                "Los importes calculados exceden el límite monetario permitido",
+                400
+            );
         }
         throw error;
     } finally {
@@ -96,14 +125,25 @@ const anularFacturaProveedor = async (id, data) => {
         await client.query("BEGIN");
         // Pagos y recepciones también bloquean esta fila antes de registrarse.
         const factura = await facturaProveedorModel.findByIdForUpdate(client, id);
-        if (!factura) throw createHttpError("Factura de proveedor no encontrada", 404);
-        if (factura.estado === "ANULADA") throw createHttpError("La factura ya está anulada");
+        if (!factura) {
+            throw createHttpError("Factura de proveedor no encontrada", 404);
+        }
+        if (factura.estado === "ANULADA") {
+            throw createHttpError("La factura ya está anulada", 409);
+        }
         const dependencias = await facturaProveedorModel.getDependenciasVigentes(client, id);
         if (dependencias.tiene_pagos || dependencias.tiene_recepciones) {
             const pendientes = [];
-            if (dependencias.tiene_pagos) pendientes.push("pagos");
-            if (dependencias.tiene_recepciones) pendientes.push("recepciones");
-            throw createHttpError(`Debes anular primero los siguientes registros vigentes de la factura: ${pendientes.join(" y ")}`);
+            if (dependencias.tiene_pagos) {
+                pendientes.push("pagos");
+            }
+            if (dependencias.tiene_recepciones) {
+                pendientes.push("recepciones");
+            }
+            throw createHttpError(
+                `Debes anular primero los siguientes registros vigentes de la factura: ${pendientes.join(" y ")}`,
+                409
+            );
         }
         await facturaProveedorModel.anular(client, id, motivo);
         const resultado = await facturaProveedorModel.findById(id, client);

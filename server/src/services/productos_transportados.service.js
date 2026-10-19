@@ -1,12 +1,7 @@
+const { createHttpError } = require("../utils/errors/http.error");
 const productoTransportadoModel = require("../models/producto_transportado.model");
-
-const {
-    validateId
-} = require("../utils/validators/common.validators");
-
-const {
-    validateData
-} = require("../utils/validators/producto_transportado.validators");
+const { validateId } = require("../utils/validators/common.validators");
+const { validateData } = require("../utils/validators/producto_transportado.validators");
 
 const getProductosTransportados = async () => {
     return await productoTransportadoModel.findAll();
@@ -14,60 +9,34 @@ const getProductosTransportados = async () => {
 
 const getProductoTransportadoById = async (id) => {
     const idNumerico = validateId(id);
-
     const producto = await productoTransportadoModel.findById(idNumerico);
-
     if (!producto) {
-        const error = new Error(
-            "Producto transportado no encontrado"
-        );
-        error.status = 404;
-        throw error;
+        throw createHttpError("Producto transportado no encontrado", 404);
     }
-
     return producto;
 };
 
 const createProductoTransportado = async (data) => {
     const datosValidados = validateData(data);
-
     return await productoTransportadoModel.create(datosValidados);
 };
 
 const updateProductoTransportado = async (id, data) => {
     const idNumerico = validateId(id);
     const datosValidados = validateData(data);
-
-    const existingProducto =
-        await productoTransportadoModel.findById(idNumerico);
-
+    const existingProducto = await productoTransportadoModel.findById(idNumerico);
     if (!existingProducto) {
-        const error = new Error(
-            "Producto transportado no encontrado"
-        );
-        error.status = 404;
-        throw error;
+        throw createHttpError("Producto transportado no encontrado", 404);
     }
-
-    return await productoTransportadoModel.update(
-        idNumerico,
-        datosValidados
-    );
+    return await productoTransportadoModel.update(idNumerico, datosValidados);
 };
 
 const deleteProductoTransportado = async (id) => {
     const idNumerico = validateId(id);
-
     const producto = await productoTransportadoModel.findById(idNumerico);
-
     if (!producto) {
-        const error = new Error(
-            "Producto transportado no encontrado"
-        );
-        error.status = 404;
-        throw error;
+        throw createHttpError("Producto transportado no encontrado", 404);
     }
-
     return await productoTransportadoModel.remove(idNumerico);
 };
 

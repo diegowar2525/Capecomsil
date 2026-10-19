@@ -1,20 +1,15 @@
+const { createHttpError } = require("../utils/errors/http.error");
 const categoriaProductoModel = require("../models/categoria_producto.model");
 const { validateId } = require("../utils/validators/common.validators");
 const { validateData } = require("../utils/validators/categoria_producto.validators");
 
 const validateCategoriaActiva = async (id) => {
     const categoria = await categoriaProductoModel.findById(id);
-
     if (!categoria) {
-        const error = new Error("La categoría indicada no existe");
-        error.status = 400;
-        throw error;
+        throw createHttpError("La categoría indicada no existe", 400);
     }
-
     if (categoria.estado !== true) {
-        const error = new Error("La categoría seleccionada debe estar activa");
-        error.status = 409;
-        throw error;
+        throw createHttpError("La categoría seleccionada debe estar activa", 409);
     }
 };
 
@@ -24,50 +19,34 @@ const getCategoriasProducto = async () => {
 
 const getCategoriaProductoById = async (id) => {
     const idNumerico = validateId(id);
-
     const categoria = await categoriaProductoModel.findById(idNumerico);
-
     if (!categoria) {
-        const error = new Error("Categoría de producto no encontrada");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Categoría de producto no encontrada", 404);
     }
-
     return categoria;
 };
 
 const createCategoriaProducto = async (data) => {
     const datosValidados = validateData(data);
-
     return await categoriaProductoModel.create(datosValidados);
 };
 
 const updateCategoriaProducto = async (id, data) => {
     const idNumerico = validateId(id);
     const datosValidados = validateData(data);
-
     const existingCategoria = await categoriaProductoModel.findById(idNumerico);
-
     if (!existingCategoria) {
-        const error = new Error("Categoría de producto no encontrada");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Categoría de producto no encontrada", 404);
     }
-
     return await categoriaProductoModel.update(idNumerico, datosValidados);
 };
 
 const deleteCategoriaProducto = async (id) => {
     const idNumerico = validateId(id);
-
     const categoria = await categoriaProductoModel.findById(idNumerico);
-
     if (!categoria) {
-        const error = new Error("Categoría de producto no encontrada");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Categoría de producto no encontrada", 404);
     }
-
     return await categoriaProductoModel.remove(idNumerico);
 };
 

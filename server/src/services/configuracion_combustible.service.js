@@ -1,7 +1,9 @@
 const pool = require("../config/database");
-const model = require("../models/configuracion_combustible.model");
+const configuracionCombustibleModel = require("../models/configuracion_combustible.model");
 const { lock } = require("../utils/transaction.lock");
-const { validateConfiguracion } = require("../utils/validators/configuracion_combustible.validators");
+const {
+    validateConfiguracion
+} = require("../utils/validators/configuracion_combustible.validators");
 const { validateId } = require("../utils/validators/common.validators");
 const { createHttpError } = require("../utils/errors/http.error");
 
@@ -10,9 +12,15 @@ const mutate = async (action, id, data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const result = action === "create" ? await model.create(client, data)
-            : action === "update" ? await model.update(client, id, data) : await model.remove(client, id);
-        if (!result) throw createHttpError("Registro no encontrado", 404);
+        const result =
+            action === "create"
+                ? await configuracionCombustibleModel.create(client, data)
+                : action === "update"
+                  ? await configuracionCombustibleModel.update(client, id, data)
+                  : await configuracionCombustibleModel.remove(client, id);
+        if (!result) {
+            throw createHttpError("Registro no encontrado", 404);
+        }
         await client.query("COMMIT");
         return result;
     } catch (error) {
@@ -23,19 +31,29 @@ const mutate = async (action, id, data) => {
     }
 };
 
-const findAll = async () => model.findAll();
+const findAll = async () => {
+    return configuracionCombustibleModel.findAll();
+};
 
 const findById = async (id) => {
-    const result = await model.findById(validateId(id));
-    if (!result) throw createHttpError("Registro no encontrado", 404);
+    const result = await configuracionCombustibleModel.findById(validateId(id));
+    if (!result) {
+        throw createHttpError("Registro no encontrado", 404);
+    }
     return result;
 };
 
-const create = async (data) => mutate("create", null, validateConfiguracion(data));
+const create = async (data) => {
+    return mutate("create", null, validateConfiguracion(data));
+};
 
-const update = async (id, data) => mutate("update", validateId(id), validateConfiguracion(data));
+const update = async (id, data) => {
+    return mutate("update", validateId(id), validateConfiguracion(data));
+};
 
-const remove = async (id) => mutate("remove", validateId(id));
+const remove = async (id) => {
+    return mutate("remove", validateId(id));
+};
 
 module.exports = {
     findAll,

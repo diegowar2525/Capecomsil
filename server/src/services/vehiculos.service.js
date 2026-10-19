@@ -12,34 +12,29 @@ const getVehiculos = async () => {
 
 const getVehiculoById = async (id) => {
     const idNumerico = validateId(id);
-
     const vehiculo = await vehiculoModel.findById(idNumerico);
-
     if (!vehiculo) {
-        const error = new Error("Vehículo no encontrado");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Vehículo no encontrado", 404);
     }
-
     return vehiculo;
 };
 
 const createVehiculo = async (data) => {
     const datosValidados = validateData(data);
-
     return await vehiculoModel.create(datosValidados);
 };
 
 const updateVehiculo = async (id, data) => {
     const idNumerico = validateId(id);
     const datosValidados = validateData(data);
-
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
         await lock(client);
-        const vehiculo = await vehiculoModel.update(idNumerico,datosValidados,client);
-        if (!vehiculo) throw createHttpError("Vehículo no encontrado",404);
+        const vehiculo = await vehiculoModel.update(idNumerico, datosValidados, client);
+        if (!vehiculo) {
+            throw createHttpError("Vehículo no encontrado", 404);
+        }
         await client.query("COMMIT");
         return vehiculo;
     } catch (error) {
@@ -52,26 +47,24 @@ const updateVehiculo = async (id, data) => {
 
 const deleteVehiculo = async (id) => {
     const idNumerico = validateId(id);
-
     const vehiculo = await vehiculoModel.remove(idNumerico);
-
     if (!vehiculo) {
-        const error = new Error("Vehículo no encontrado");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Vehículo no encontrado", 404);
     }
-
     return vehiculo;
 };
 
+const getKilometraje = async (id, query) => {
+    const filtros = validateFiltros(query);
+    const resultado = await vehiculoModel.getKilometraje(validateId(id), filtros.fecha_hasta);
+    if (!resultado) {
+        throw createHttpError("Vehículo no encontrado", 404);
+    }
+    return resultado;
+};
 
 module.exports = {
-    getKilometraje: async (id, query) => {
-        const filtros = validateFiltros(query);
-        const resultado = await vehiculoModel.getKilometraje(validateId(id),filtros.fecha_hasta);
-        if (!resultado) throw createHttpError("Vehículo no encontrado",404);
-        return resultado;
-    },
+    getKilometraje,
     getVehiculos,
     getVehiculoById,
     createVehiculo,

@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-const model = require("../models/feriado.model");
+const feriadoModel = require("../models/feriado.model");
 const { lock } = require("../utils/transaction.lock");
 const { validateFeriado } = require("../utils/validators/remuneracion.validators");
 const { validateId } = require("../utils/validators/common.validators");
@@ -10,9 +10,15 @@ const mutate = async (action, id, data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const result = action === "create" ? await model.create(client, data)
-            : action === "update" ? await model.update(client, id, data) : await model.remove(client, id);
-        if (!result) throw createHttpError("Registro no encontrado", 404);
+        const result =
+            action === "create"
+                ? await feriadoModel.create(client, data)
+                : action === "update"
+                  ? await feriadoModel.update(client, id, data)
+                  : await feriadoModel.remove(client, id);
+        if (!result) {
+            throw createHttpError("Registro no encontrado", 404);
+        }
         await client.query("COMMIT");
         return result;
     } catch (error) {
@@ -23,18 +29,29 @@ const mutate = async (action, id, data) => {
     }
 };
 
-const findAll = async () => model.findAll();
+const findAll = async () => {
+    return feriadoModel.findAll();
+};
 
 const findById = async (id) => {
-    const result = await model.findById(validateId(id));
-    if (!result) throw createHttpError("Registro no encontrado", 404);
+    const result = await feriadoModel.findById(validateId(id));
+    if (!result) {
+        throw createHttpError("Registro no encontrado", 404);
+    }
     return result;
 };
-const create = async (data) => mutate("create", null, validateFeriado(data));
 
-const update = async (id, data) => mutate("update", validateId(id), validateFeriado(data));
+const create = async (data) => {
+    return mutate("create", null, validateFeriado(data));
+};
 
-const remove = async (id) => mutate("remove", validateId(id));
+const update = async (id, data) => {
+    return mutate("update", validateId(id), validateFeriado(data));
+};
+
+const remove = async (id) => {
+    return mutate("remove", validateId(id));
+};
 
 module.exports = {
     findAll,

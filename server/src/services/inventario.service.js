@@ -1,3 +1,4 @@
+const { createHttpError } = require("../utils/errors/http.error");
 const pool = require("../config/database");
 const productoModel = require("../models/producto.model");
 const movimientoInventarioModel = require("../models/movimiento_inventario.model");
@@ -11,9 +12,7 @@ const getStock = async () => {
 const getStockByProducto = async (id) => {
     const productos = await productoModel.findStock(validateId(id));
     if (!productos.length) {
-        const error = new Error("Producto no encontrado");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Producto no encontrado", 404);
     }
     return productos[0];
 };
@@ -24,10 +23,8 @@ const getBajoStock = async () => {
 
 const getMovimientos = async (query) => {
     const filtros = validateFiltros(query);
-    if (filtros.id_producto !== null && !await productoModel.findById(filtros.id_producto)) {
-        const error = new Error("Producto no encontrado");
-        error.status = 404;
-        throw error;
+    if (filtros.id_producto !== null && !(await productoModel.findById(filtros.id_producto))) {
+        throw createHttpError("Producto no encontrado", 404);
     }
     return await movimientoInventarioModel.findAll(filtros);
 };
@@ -37,20 +34,23 @@ const createAjuste = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        if (!await productoModel.findByIdForUpdate(client, datosValidados.id_producto)) {
-            const error = new Error("Producto no encontrado");
-            error.status = 404;
-            throw error;
+        if (!(await productoModel.findByIdForUpdate(client, datosValidados.id_producto))) {
+            throw createHttpError("Producto no encontrado", 404);
         }
         const movimiento = await movimientoInventarioModel.createAjuste(client, datosValidados);
         if (!movimiento) {
-            const error = new Error("El ajuste dejaría el inventario con stock negativo");
-            error.status = 409;
-            throw error;
+            throw createHttpError("El ajuste dejaría el inventario con stock negativo", 409);
         }
-        const disponibilidad = await movimientoInventarioModel.getDisponibilidad(client, datosValidados.id_producto, "0");
+        const disponibilidad = await movimientoInventarioModel.getDisponibilidad(
+            client,
+            datosValidados.id_producto,
+            "0"
+        );
         await client.query("COMMIT");
-        return { ...movimiento, stock_actual: disponibilidad.stock };
+        return {
+            ...movimiento,
+            stock_actual: disponibilidad.stock
+        };
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;

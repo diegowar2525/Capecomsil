@@ -11,9 +11,10 @@ const crearAutomaticos = async (client, idViaje, fecha) => {
             409
         );
     }
-
     await costoModel.createCombustible(client, idViaje, config);
     await costoModel.createPeaje(client, idViaje);
 };
 
-module.exports = { crearAutomaticos };
+module.exports = {
+    crearAutomaticos
+};

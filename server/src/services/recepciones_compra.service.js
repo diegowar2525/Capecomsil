@@ -1,3 +1,4 @@
+const { createHttpError } = require("../utils/errors/http.error");
 const pool = require("../config/database");
 const facturaProveedorModel = require("../models/factura_proveedor.model");
 const detalleFacturaProveedorModel = require("../models/detalle_factura_proveedor.model");
@@ -11,50 +12,60 @@ const { validateData } = require("../utils/validators/recepcion_compra.validator
 // Se comparte entre la recepción inicial de una factura y las entregas posteriores.
 const createRecepcionEnTransaccion = async (client, data) => {
     const datosValidados = validateData(data);
-    const factura = await facturaProveedorModel.findByIdForUpdate(client, datosValidados.id_factura_proveedor);
+    const factura = await facturaProveedorModel.findByIdForUpdate(
+        client,
+        datosValidados.id_factura_proveedor
+    );
     if (!factura) {
-        const error = new Error("Factura de proveedor no encontrada");
-        error.status = 404;
-        throw error;
+        throw createHttpError("Factura de proveedor no encontrada", 404);
     }
     if (factura.estado === "ANULADA") {
-        const error = new Error("No se pueden registrar recepciones de una factura anulada");
-        error.status = 409;
-        throw error;
+        throw createHttpError("No se pueden registrar recepciones de una factura anulada", 409);
     }
-
     const lineas = [];
     for (const recibido of datosValidados.detalles) {
-        const detalle = await detalleFacturaProveedorModel.findByIdForShare(client, recibido.id_detalle_factura_proveedor);
+        const detalle = await detalleFacturaProveedorModel.findByIdForShare(
+            client,
+            recibido.id_detalle_factura_proveedor
+        );
         if (!detalle || detalle.id_factura_proveedor !== datosValidados.id_factura_proveedor) {
-            const error = new Error("El detalle indicado no pertenece a la factura");
-            error.status = 400;
-            throw error;
+            throw createHttpError("El detalle indicado no pertenece a la factura", 400);
         }
         if (detalle.tipo_concepto !== "PRODUCTO") {
-            const error = new Error("Solo los productos pueden recibirse en inventario");
-            error.status = 400;
-            throw error;
+            throw createHttpError("Solo los productos pueden recibirse en inventario", 400);
         }
-        lineas.push({ recibido, detalle });
+        lineas.push({
+            recibido,
+            detalle
+        });
     }
-
-    const productos = [...new Set(lineas.map(linea => linea.detalle.id_producto))].sort((a, b) => a - b);
+    const productos = [
+        ...new Set(
+            lineas.map((linea) => {
+                return linea.detalle.id_producto;
+            })
+        )
+    ].sort((a, b) => {
+        return a - b;
+    });
     for (const id of productos) {
         await productoModel.findByIdForUpdate(client, id);
     }
-
     const recepcion = await recepcionCompraModel.create(client, datosValidados);
     const detalles = [];
     for (const { recibido, detalle } of lineas) {
         const entrada = await detalleRecepcionCompraModel.create(
-            client, recepcion.id_recepcion_compra, detalle,
-            recibido.cantidad_recibida, recibido.observacion
+            client,
+            recepcion.id_recepcion_compra,
+            detalle,
+            recibido.cantidad_recibida,
+            recibido.observacion
         );
         if (!entrada) {
-            const error = new Error("La cantidad recibida supera la cantidad pendiente de la factura");
-            error.status = 400;
-            throw error;
+            throw createHttpError(
+                "La cantidad recibida supera la cantidad pendiente de la factura",
+                400
+            );
         }
         await movimientoInventarioModel.createEntrada(client, {
             id_producto: detalle.id_producto,
@@ -64,8 +75,10 @@ const createRecepcionEnTransaccion = async (client, data) => {
         });
         detalles.push(entrada);
     }
-
-    return { ...recepcion, detalles };
+    return {
+        ...recepcion,
+        detalles
+    };
 };
 
 const createRecepcionCompra = async (data) => {
