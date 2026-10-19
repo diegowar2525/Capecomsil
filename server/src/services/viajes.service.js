@@ -125,10 +125,9 @@ const createViaje = async (data) => {
         for (const tramo of recorrido) {
             tramos.push(await tramoModel.create(client, viaje.id_viaje, tramo));
         }
-        const detalles = [];
         for (const detalle of datosValidados.detalles) {
             const tarifa = tarifas.get(`${detalle.id_gasolinera}:${detalle.id_terminal}`);
-            detalles.push(await detalleModel.create(client, viaje.id_viaje, detalle, tarifa));
+            await detalleModel.create(client, viaje.id_viaje, detalle, tarifa);
         }
         await remuneracionModel.recalcular(
             client,
@@ -147,6 +146,8 @@ const createViaje = async (data) => {
         );
         const totales = await viajeModel.getTotales(client, viaje.id_viaje);
         const costos = await costoModel.findByViaje(viaje.id_viaje, client);
+        // Misma representación del GET, incluyendo la liquidación vigente calculada.
+        const detalles = await detalleModel.findByViaje(viaje.id_viaje, client);
         await client.query("COMMIT");
         return {
             ...viaje,
