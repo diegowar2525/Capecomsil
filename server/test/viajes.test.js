@@ -85,6 +85,9 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal(first.body.valor_transporte, "3.70");
         assert.equal(first.body.detalles[0].tarifa_aplicada, "0.0350");
         assert.ok(first.body.detalles.every(d => d.id_liquidacion === null));
+        const consulta = await fetch(`http://127.0.0.1:${server.address().port}/api/viajes/${first.body.id_viaje}`);
+        assert.equal(consulta.status, 200);
+        assert.deepEqual((await consulta.json()).detalles, first.body.detalles);
         assert.equal((await post({ ...body, detalles: [{ ...body.detalles[0], galones: "100.01" }] })).status, 400);
         const partial = await post({ ...body, fecha_inicio: "2026-10-08T09:00:00", fecha_fin: "2026-10-08T10:00:00", detalles: [{ ...body.detalles[0], galones: "10" }, { ...body.detalles[0], id_producto_transportado: 2, galones: "10" }] });
         assert.equal(partial.status, 201);
