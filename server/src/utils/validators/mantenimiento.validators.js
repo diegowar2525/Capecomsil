@@ -1,54 +1,71 @@
 const { createHttpError } = require("../errors/http.error");
 const { validatePlanesCumplidos } = require("./plan_mantenimiento.validators");
-const { validateId, validateDateTime, validateDecimal, validateOptionalText } = require("./common.validators");
+const {
+    validateId,
+    validateDateTime,
+    validateDecimal,
+    validateOptionalText
+} = require("./common.validators");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-        const error = new Error("Los datos del mantenimiento son obligatorios");
-        error.status = 400;
-        throw error;
+        throw createHttpError("Los datos del mantenimiento son obligatorios", 400);
     }
-
     const id_vehiculo = validateId(data.id_vehiculo);
     const id_proveedor = data.id_proveedor == null ? null : validateId(data.id_proveedor);
-    if (data.fecha !== undefined) throw createHttpError("Use fecha_inicio y fecha_fin con fecha y hora", 400);
+    if (data.fecha !== undefined) {
+        throw createHttpError("Use fecha_inicio y fecha_fin con fecha y hora", 400);
+    }
     const fecha_inicio = validateDateTime(data.fecha_inicio);
     const fecha_fin = data.fecha_fin == null ? null : validateDateTime(data.fecha_fin);
-    if (data.fecha_inicio.length <= 10 || (fecha_fin && data.fecha_fin.length <= 10)) throw createHttpError("Indique la hora del mantenimiento", 400);
-    if (fecha_fin && fecha_fin <= fecha_inicio) throw createHttpError("El fin debe ser posterior al inicio", 400);
-
+    if (data.fecha_inicio.length <= 10 || (fecha_fin && data.fecha_fin.length <= 10)) {
+        throw createHttpError("Indique la hora del mantenimiento", 400);
+    }
+    if (fecha_fin && fecha_fin <= fecha_inicio) {
+        throw createHttpError("El fin debe ser posterior al inicio", 400);
+    }
     if (typeof data.tipo !== "string" || !data.tipo.trim() || data.tipo.trim().length > 100) {
-        const error = new Error("El tipo de mantenimiento es obligatorio y admite máximo 100 caracteres");
-        error.status = 400;
-        throw error;
+        throw createHttpError(
+            "El tipo de mantenimiento es obligatorio y admite máximo 100 caracteres",
+            400
+        );
     }
-
     if (data.detalles !== undefined && !Array.isArray(data.detalles)) {
-        const error = new Error("Los detalles deben ser una lista");
-        error.status = 400;
-        throw error;
+        throw createHttpError("Los detalles deben ser una lista", 400);
     }
-
     const productos = new Set();
     const detalles = (data.detalles ?? []).map((detalle) => {
         if (!detalle || typeof detalle !== "object" || Array.isArray(detalle)) {
-            const error = new Error("Cada detalle debe ser un objeto válido");
-            error.status = 400;
-            throw error;
+            throw createHttpError("Cada detalle debe ser un objeto válido", 400);
         }
-        const origen_producto = detalle.origen_producto === undefined ? "INVENTARIO" : detalle.origen_producto;
-        if (!["INVENTARIO", "EXTERNO"].includes(origen_producto)) throw createHttpError("Origen de producto inválido", 400);
-        if (origen_producto === "EXTERNO" && detalle.id_producto != null) throw createHttpError("Un material externo no debe indicar id_producto", 400);
-        const id_producto = origen_producto === "INVENTARIO" ? validateId(detalle.id_producto) : null;
-        const descripcion_producto = validateOptionalText(detalle.descripcion_producto, "descripcion_producto", 200);
-        if (origen_producto === "EXTERNO" && !descripcion_producto) throw createHttpError("Describa el material externo", 400);
+        const origen_producto =
+            detalle.origen_producto === undefined ? "INVENTARIO" : detalle.origen_producto;
+        if (!["INVENTARIO", "EXTERNO"].includes(origen_producto)) {
+            throw createHttpError("Origen de producto inválido", 400);
+        }
+        if (origen_producto === "EXTERNO" && detalle.id_producto != null) {
+            throw createHttpError("Un material externo no debe indicar id_producto", 400);
+        }
+        const id_producto =
+            origen_producto === "INVENTARIO" ? validateId(detalle.id_producto) : null;
+        const descripcion_producto = validateOptionalText(
+            detalle.descripcion_producto,
+            "descripcion_producto",
+            200
+        );
+        if (origen_producto === "EXTERNO" && !descripcion_producto) {
+            throw createHttpError("Describa el material externo", 400);
+        }
         const cantidad = validateDecimal(detalle.cantidad, "cantidad", 10, 2);
         if (/^0+(\.0+)?$/.test(cantidad) || (id_producto !== null && productos.has(id_producto))) {
-            const error = new Error("Las cantidades deben ser positivas y los productos no pueden repetirse");
-            error.status = 400;
-            throw error;
+            throw createHttpError(
+                "Las cantidades deben ser positivas y los productos no pueden repetirse",
+                400
+            );
         }
-        if (id_producto !== null) productos.add(id_producto);
+        if (id_producto !== null) {
+            productos.add(id_producto);
+        }
         return {
             id_producto,
             origen_producto,
@@ -57,9 +74,10 @@ const validateData = (data) => {
             observacion: validateOptionalText(detalle.observacion, "observacion del detalle")
         };
     });
-
     const planes_cumplidos = validatePlanesCumplidos(data.planes_cumplidos);
-    if (planes_cumplidos.length && !fecha_fin) throw createHttpError("Indique los planes cumplidos al finalizar el mantenimiento",400);
+    if (planes_cumplidos.length && !fecha_fin) {
+        throw createHttpError("Indique los planes cumplidos al finalizar el mantenimiento", 400);
+    }
     return {
         planes_cumplidos,
         id_vehiculo,
@@ -74,12 +92,14 @@ const validateData = (data) => {
     };
 };
 
+const validateFinalizacion = (data) => {
+    if (!data || typeof data.fecha_fin !== "string" || data.fecha_fin.length <= 10) {
+        throw createHttpError("Indique fecha_fin con fecha y hora", 400);
+    }
+    return validateDateTime(data.fecha_fin);
+};
+
 module.exports = {
-    validateFinalizacion: (data) => {
-        if (!data || typeof data.fecha_fin !== "string" || data.fecha_fin.length <= 10) {
-            throw createHttpError("Indique fecha_fin con fecha y hora", 400);
-        }
-        return validateDateTime(data.fecha_fin);
-    },
+    validateFinalizacion,
     validateData
 };

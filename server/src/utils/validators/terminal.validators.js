@@ -1,31 +1,21 @@
+const { createHttpError } = require("../errors/http.error");
+
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-        const error = new Error("Los datos del terminal son obligatorios");
-        error.status = 400;
-        throw error;
+        throw createHttpError("Los datos del terminal son obligatorios", 400);
     }
-
     const { nombre, ubicacion, estado } = data;
-
     if (
         typeof nombre !== "string" ||
         !nombre.trim() ||
         typeof ubicacion !== "string" ||
         !ubicacion.trim()
     ) {
-        const error = new Error(
-            "El nombre y la ubicación son obligatorios"
-        );
-        error.status = 400;
-        throw error;
+        throw createHttpError("El nombre y la ubicación son obligatorios", 400);
     }
-
     if (estado !== undefined && typeof estado !== "boolean") {
-        const error = new Error("El estado debe ser true o false");
-        error.status = 400;
-        throw error;
+        throw createHttpError("El estado debe ser true o false", 400);
     }
-
     return {
         nombre: nombre.trim(),
         ubicacion: ubicacion.trim(),

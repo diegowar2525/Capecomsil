@@ -1,19 +1,11 @@
+const { createHttpError } = require("../errors/http.error");
 const { validateImagenUrl } = require("./common.validators");
+
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-        const error = new Error("Los datos del chofer son obligatorios");
-        error.status = 400;
-        throw error;
+        throw createHttpError("Los datos del chofer son obligatorios", 400);
     }
-
-    const {
-        nombre,
-        cedula,
-        telefono,
-        tipo_remuneracion,
-        estado,
-    } = data;
-
+    const { nombre, cedula, telefono, tipo_remuneracion, estado } = data;
     if (
         typeof nombre !== "string" ||
         !nombre.trim() ||
@@ -22,45 +14,28 @@ const validateData = (data) => {
         typeof tipo_remuneracion !== "string" ||
         !tipo_remuneracion.trim()
     ) {
-        const error = new Error(
-            "Nombre, cédula y tipo de remuneración son obligatorios."
-        );
-        error.status = 400;
-        throw error;
+        throw createHttpError("Nombre, cédula y tipo de remuneración son obligatorios.", 400);
     }
-
     const tipoRemuneracionValidado = tipo_remuneracion.trim().toUpperCase();
-
     if (!["DIARIO_FIJO", "DIA_TRABAJADO"].includes(tipoRemuneracionValidado)) {
-        const error = new Error("El tipo de remuneración debe ser DIARIO_FIJO o DIA_TRABAJADO.");
-        error.status = 400;
-        throw error;
+        throw createHttpError("El tipo de remuneración debe ser DIARIO_FIJO o DIA_TRABAJADO.", 400);
     }
-
-    if (
-        telefono !== undefined &&
-        telefono !== null &&
-        typeof telefono !== "string"
-    ) {
-        const error = new Error("El teléfono debe ser texto.");
-        error.status = 400;
-        throw error;
+    if (telefono !== undefined && telefono !== null && typeof telefono !== "string") {
+        throw createHttpError("El teléfono debe ser texto.", 400);
     }
-
     if (estado !== undefined && typeof estado !== "boolean") {
-        const error = new Error("El estado debe ser true o false.");
-        error.status = 400;
-        throw error;
+        throw createHttpError("El estado debe ser true o false.", 400);
     }
-
     return {
         imagen_url: validateImagenUrl(data.imagen_url),
         nombre: nombre.trim(),
         cedula: cedula.trim(),
         telefono: telefono?.trim() || null,
         tipo_remuneracion: tipoRemuneracionValidado,
-        estado: estado ?? true,
+        estado: estado ?? true
     };
 };
 
-module.exports = { validateData };
+module.exports = {
+    validateData
+};
