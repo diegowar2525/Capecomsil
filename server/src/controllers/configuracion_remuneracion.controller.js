@@ -1,9 +1,9 @@
-const service = require("../services/configuracion_remuneracion.service");
+const configuracionRemuneracionService = require("../services/configuracion_remuneracion.service");
 
 const findAll = async (req, res, next) => {
     try {
-        const result = await service.findAll();
-        res.status(200).json(result);
+        const resultado = await configuracionRemuneracionService.findAll();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -11,8 +11,8 @@ const findAll = async (req, res, next) => {
 
 const findById = async (req, res, next) => {
     try {
-        const result = await service.findById(req.params.id);
-        res.status(200).json(result);
+        const resultado = await configuracionRemuneracionService.findById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -20,8 +20,8 @@ const findById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
     try {
-        const result = await service.create(req.body);
-        res.status(201).json(result);
+        const resultado = await configuracionRemuneracionService.create(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -29,8 +29,8 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
     try {
-        const result = await service.update(req.params.id, req.body);
-        res.status(200).json(result);
+        const resultado = await configuracionRemuneracionService.update(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -38,17 +38,17 @@ const update = async (req, res, next) => {
 
 const remove = async (req, res, next) => {
     try {
-        const result = await service.remove(req.params.id);
-        res.status(200).json(result);
+        const resultado = await configuracionRemuneracionService.remove(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { 
-    findAll, 
-    findById, 
-    create, 
-    update, 
-    remove 
+module.exports = {
+    findAll,
+    findById,
+    create,
+    update,
+    remove
 };

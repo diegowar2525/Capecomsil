@@ -2,10 +2,8 @@ const trayectosService = require("../services/trayectos.service");
 
 const getTrayectos = async (req, res, next) => {
     try {
-        const trayectos =
-            await trayectosService.getTrayectos();
-
-        res.json(trayectos);
+        const resultado = await trayectosService.getTrayectos();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -13,12 +11,8 @@ const getTrayectos = async (req, res, next) => {
 
 const getTrayectoById = async (req, res, next) => {
     try {
-        const trayecto =
-            await trayectosService.getTrayectoById(
-                req.params.id
-            );
-
-        res.json(trayecto);
+        const resultado = await trayectosService.getTrayectoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,12 +20,8 @@ const getTrayectoById = async (req, res, next) => {
 
 const createTrayecto = async (req, res, next) => {
     try {
-        const trayecto =
-            await trayectosService.createTrayecto(
-                req.body
-            );
-
-        res.status(201).json(trayecto);
+        const resultado = await trayectosService.createTrayecto(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -39,13 +29,8 @@ const createTrayecto = async (req, res, next) => {
 
 const updateTrayecto = async (req, res, next) => {
     try {
-        const trayecto =
-            await trayectosService.updateTrayecto(
-                req.params.id,
-                req.body
-            );
-
-        res.json(trayecto);
+        const resultado = await trayectosService.updateTrayecto(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -53,14 +38,10 @@ const updateTrayecto = async (req, res, next) => {
 
 const deleteTrayecto = async (req, res, next) => {
     try {
-        const trayecto =
-            await trayectosService.deleteTrayecto(
-                req.params.id
-            );
-
-        res.json({
+        const resultado = await trayectosService.deleteTrayecto(req.params.id);
+        return res.status(200).json({
             message: "Trayecto eliminado correctamente",
-            trayecto
+            trayecto: resultado
         });
     } catch (error) {
         next(error);

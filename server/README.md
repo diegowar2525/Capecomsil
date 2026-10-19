@@ -7,6 +7,7 @@ Sistema de gestión administrativa y operativa para una empresa ecuatoriana de t
 - Backend: Node.js, Express, JavaScript CommonJS y PostgreSQL mediante `pg`, sin ORM.
 - Frontend: React y Vite en `../client`.
 - Capas: rutas, controladores, servicios, modelos y validadores.
+- Convenciones de controladores y respuestas HTTP: [controllers/README.md](src/controllers/README.md).
 - Convenciones de modelos, resultados y conexiones: [models/README.md](src/models/README.md).
 - Convenciones de servicios, errores y transacciones: [services/README.md](src/services/README.md).
 - Convenciones de validación y normalización: [validators/README.md](src/utils/validators/README.md).

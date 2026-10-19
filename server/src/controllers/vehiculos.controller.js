@@ -1,10 +1,9 @@
-const vehiculoService = require("../services/vehiculos.service");
+const vehiculosService = require("../services/vehiculos.service");
 
 const getVehiculos = async (req, res, next) => {
     try {
-        const vehiculos = await vehiculoService.getVehiculos();
-
-        res.json(vehiculos);
+        const resultado = await vehiculosService.getVehiculos();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -12,11 +11,8 @@ const getVehiculos = async (req, res, next) => {
 
 const getVehiculoById = async (req, res, next) => {
     try {
-        const vehiculo = await vehiculoService.getVehiculoById(
-            req.params.id
-        );
-
-        res.json(vehiculo);
+        const resultado = await vehiculosService.getVehiculoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -24,11 +20,8 @@ const getVehiculoById = async (req, res, next) => {
 
 const createVehiculo = async (req, res, next) => {
     try {
-        const vehiculo = await vehiculoService.createVehiculo(
-            req.body
-        );
-
-        res.status(201).json(vehiculo);
+        const resultado = await vehiculosService.createVehiculo(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -36,12 +29,8 @@ const createVehiculo = async (req, res, next) => {
 
 const updateVehiculo = async (req, res, next) => {
     try {
-        const vehiculo = await vehiculoService.updateVehiculo(
-            req.params.id,
-            req.body
-        );
-
-        res.json(vehiculo);
+        const resultado = await vehiculosService.updateVehiculo(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -49,27 +38,27 @@ const updateVehiculo = async (req, res, next) => {
 
 const deleteVehiculo = async (req, res, next) => {
     try {
-        const vehiculo = await vehiculoService.deleteVehiculo(
-            req.params.id
-        );
-
-        res.json({
+        const resultado = await vehiculosService.deleteVehiculo(req.params.id);
+        return res.status(200).json({
             message: "Vehículo eliminado correctamente",
-            vehiculo
+            vehiculo: resultado
         });
     } catch (error) {
         next(error);
     }
 };
 
+const getKilometraje = async (req, res, next) => {
+    try {
+        const resultado = await vehiculosService.getKilometraje(req.params.id, req.query);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
-    getKilometraje: async (req, res, next) => {
-        try {
-            res.json(await require("../services/vehiculos.service").getKilometraje(req.params.id,req.query));
-        } catch (error) {
-            next(error);
-        }
-    },
+    getKilometraje,
     getVehiculos,
     getVehiculoById,
     createVehiculo,

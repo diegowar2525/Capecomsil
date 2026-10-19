@@ -2,10 +2,8 @@ const categoriasProductoService = require("../services/categorias_producto.servi
 
 const getCategoriasProducto = async (req, res, next) => {
     try {
-        const categorias =
-            await categoriasProductoService.getCategoriasProducto();
-
-        res.json(categorias);
+        const resultado = await categoriasProductoService.getCategoriasProducto();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -13,12 +11,8 @@ const getCategoriasProducto = async (req, res, next) => {
 
 const getCategoriaProductoById = async (req, res, next) => {
     try {
-        const categoria =
-            await categoriasProductoService.getCategoriaProductoById(
-                req.params.id
-            );
-
-        res.json(categoria);
+        const resultado = await categoriasProductoService.getCategoriaProductoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,12 +20,8 @@ const getCategoriaProductoById = async (req, res, next) => {
 
 const createCategoriaProducto = async (req, res, next) => {
     try {
-        const categoria =
-            await categoriasProductoService.createCategoriaProducto(
-                req.body
-            );
-
-        res.status(201).json(categoria);
+        const resultado = await categoriasProductoService.createCategoriaProducto(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -39,13 +29,11 @@ const createCategoriaProducto = async (req, res, next) => {
 
 const updateCategoriaProducto = async (req, res, next) => {
     try {
-        const categoria =
-            await categoriasProductoService.updateCategoriaProducto(
-                req.params.id,
-                req.body
-            );
-
-        res.json(categoria);
+        const resultado = await categoriasProductoService.updateCategoriaProducto(
+            req.params.id,
+            req.body
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -53,14 +41,10 @@ const updateCategoriaProducto = async (req, res, next) => {
 
 const deleteCategoriaProducto = async (req, res, next) => {
     try {
-        const categoria =
-            await categoriasProductoService.deleteCategoriaProducto(
-                req.params.id
-            );
-
-        res.json({
+        const resultado = await categoriasProductoService.deleteCategoriaProducto(req.params.id);
+        return res.status(200).json({
             message: "Categoría de producto eliminada correctamente",
-            categoria
+            categoria: resultado
         });
     } catch (error) {
         next(error);

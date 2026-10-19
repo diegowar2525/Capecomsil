@@ -1,14 +1,9 @@
-const productosTransportadosService = require(
-    "../services/productos_transportados.service"
-);
+const productosTransportadosService = require("../services/productos_transportados.service");
 
 const getProductosTransportados = async (req, res, next) => {
     try {
-        const productos =
-            await productosTransportadosService
-                .getProductosTransportados();
-
-        res.json(productos);
+        const resultado = await productosTransportadosService.getProductosTransportados();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -16,11 +11,10 @@ const getProductosTransportados = async (req, res, next) => {
 
 const getProductoTransportadoById = async (req, res, next) => {
     try {
-        const producto =
-            await productosTransportadosService
-                .getProductoTransportadoById(req.params.id);
-
-        res.json(producto);
+        const resultado = await productosTransportadosService.getProductoTransportadoById(
+            req.params.id
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -28,11 +22,8 @@ const getProductoTransportadoById = async (req, res, next) => {
 
 const createProductoTransportado = async (req, res, next) => {
     try {
-        const producto =
-            await productosTransportadosService
-                .createProductoTransportado(req.body);
-
-        res.status(201).json(producto);
+        const resultado = await productosTransportadosService.createProductoTransportado(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -40,14 +31,11 @@ const createProductoTransportado = async (req, res, next) => {
 
 const updateProductoTransportado = async (req, res, next) => {
     try {
-        const producto =
-            await productosTransportadosService
-                .updateProductoTransportado(
-                    req.params.id,
-                    req.body
-                );
-
-        res.json(producto);
+        const resultado = await productosTransportadosService.updateProductoTransportado(
+            req.params.id,
+            req.body
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -55,13 +43,12 @@ const updateProductoTransportado = async (req, res, next) => {
 
 const deleteProductoTransportado = async (req, res, next) => {
     try {
-        const producto =
-            await productosTransportadosService
-                .deleteProductoTransportado(req.params.id);
-
-        res.json({
+        const resultado = await productosTransportadosService.deleteProductoTransportado(
+            req.params.id
+        );
+        return res.status(200).json({
             message: "Producto transportado eliminado correctamente",
-            producto
+            producto: resultado
         });
     } catch (error) {
         next(error);

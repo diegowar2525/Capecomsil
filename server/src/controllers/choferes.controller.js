@@ -1,10 +1,9 @@
-const ChoferService = require("../services/choferes.service");
+const choferesService = require("../services/choferes.service");
 
 const getChoferes = async (req, res, next) => {
     try {
-        const choferes = await ChoferService.getChoferes();
-
-        res.json(choferes);
+        const resultado = await choferesService.getChoferes();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -12,10 +11,8 @@ const getChoferes = async (req, res, next) => {
 
 const getChoferById = async (req, res, next) => {
     try {
-        const chofer = await ChoferService.getChoferById(
-            req.params.id
-        );
-        res.json(chofer);
+        const resultado = await choferesService.getChoferById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -23,11 +20,8 @@ const getChoferById = async (req, res, next) => {
 
 const createChofer = async (req, res, next) => {
     try {
-        const chofer = await ChoferService.createChofer(
-            req.body
-        );
-
-        res.status(201).json(chofer);
+        const resultado = await choferesService.createChofer(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -35,12 +29,8 @@ const createChofer = async (req, res, next) => {
 
 const updateChofer = async (req, res, next) => {
     try {
-        const chofer = await ChoferService.updateChofer(
-            req.params.id,
-            req.body
-        );
-
-        res.json(chofer);
+        const resultado = await choferesService.updateChofer(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -48,11 +38,8 @@ const updateChofer = async (req, res, next) => {
 
 const deleteChofer = async (req, res, next) => {
     try {
-        const chofer = await ChoferService.deleteChofer(
-            req.params.id
-        );
-
-        return res.json(chofer);
+        const resultado = await choferesService.deleteChofer(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -63,5 +50,5 @@ module.exports = {
     getChoferById,
     createChofer,
     updateChofer,
-    deleteChofer,
+    deleteChofer
 };

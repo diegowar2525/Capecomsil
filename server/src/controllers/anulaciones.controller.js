@@ -1,8 +1,9 @@
-const service = require("../services/anulaciones.service");
+const anulacionesService = require("../services/anulaciones.service");
 
 const anularRecepcion = async (req, res, next) => {
     try {
-        res.json(await service.anularRecepcion(req.params.id, req.body));
+        const resultado = await anulacionesService.anularRecepcion(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -10,7 +11,8 @@ const anularRecepcion = async (req, res, next) => {
 
 const anularMantenimiento = async (req, res, next) => {
     try {
-        res.json(await service.anularMantenimiento(req.params.id, req.body));
+        const resultado = await anulacionesService.anularMantenimiento(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -18,10 +20,15 @@ const anularMantenimiento = async (req, res, next) => {
 
 const revertirAjuste = async (req, res, next) => {
     try {
-        res.json(await service.revertirAjuste(req.params.id, req.body));
+        const resultado = await anulacionesService.revertirAjuste(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { anularRecepcion, anularMantenimiento, revertirAjuste };
+module.exports = {
+    anularRecepcion,
+    anularMantenimiento,
+    revertirAjuste
+};

@@ -2,7 +2,8 @@ const viajesService = require("../services/viajes.service");
 
 const createViaje = async (req, res, next) => {
     try {
-        res.status(201).json(await viajesService.createViaje(req.body));
+        const resultado = await viajesService.createViaje(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -10,7 +11,8 @@ const createViaje = async (req, res, next) => {
 
 const getViajes = async (req, res, next) => {
     try {
-        res.json(await viajesService.getViajes(req.query));
+        const resultado = await viajesService.getViajes(req.query);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -18,7 +20,8 @@ const getViajes = async (req, res, next) => {
 
 const getViajeById = async (req, res, next) => {
     try {
-        res.json(await viajesService.getViajeById(req.params.id));
+        const resultado = await viajesService.getViajeById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,15 +29,16 @@ const getViajeById = async (req, res, next) => {
 
 const anularViaje = async (req, res, next) => {
     try {
-        res.json(await viajesService.anularViaje(req.params.id, req.body));
+        const resultado = await viajesService.anularViaje(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { 
-    getViajes, 
-    getViajeById, 
-    anularViaje, 
-    createViaje 
+module.exports = {
+    getViajes,
+    getViajeById,
+    anularViaje,
+    createViaje
 };

@@ -2,9 +2,8 @@ const proveedoresService = require("../services/proveedores.service");
 
 const getProveedores = async (req, res, next) => {
     try {
-        const proveedores = await proveedoresService.getProveedores();
-
-        res.json(proveedores);
+        const resultado = await proveedoresService.getProveedores();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -12,11 +11,8 @@ const getProveedores = async (req, res, next) => {
 
 const getProveedorById = async (req, res, next) => {
     try {
-        const proveedor = await proveedoresService.getProveedorById(
-            req.params.id
-        );
-
-        res.json(proveedor);
+        const resultado = await proveedoresService.getProveedorById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -24,11 +20,8 @@ const getProveedorById = async (req, res, next) => {
 
 const createProveedor = async (req, res, next) => {
     try {
-        const proveedor = await proveedoresService.createProveedor(
-            req.body
-        );
-
-        res.status(201).json(proveedor);
+        const resultado = await proveedoresService.createProveedor(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -36,12 +29,8 @@ const createProveedor = async (req, res, next) => {
 
 const updateProveedor = async (req, res, next) => {
     try {
-        const proveedor = await proveedoresService.updateProveedor(
-            req.params.id,
-            req.body
-        );
-
-        res.json(proveedor);
+        const resultado = await proveedoresService.updateProveedor(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -49,13 +38,10 @@ const updateProveedor = async (req, res, next) => {
 
 const deleteProveedor = async (req, res, next) => {
     try {
-        const proveedor = await proveedoresService.deleteProveedor(
-            req.params.id
-        );
-
-        res.json({
+        const resultado = await proveedoresService.deleteProveedor(req.params.id);
+        return res.status(200).json({
             message: "Proveedor eliminado correctamente",
-            proveedor
+            proveedor: resultado
         });
     } catch (error) {
         next(error);

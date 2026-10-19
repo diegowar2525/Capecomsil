@@ -1,9 +1,9 @@
-const TerminalService = require("../services/terminales.service");
+const terminalesService = require("../services/terminales.service");
 
 const getTerminales = async (req, res, next) => {
     try {
-        const terminales = await TerminalService.getTerminales();
-        res.json(terminales);
+        const resultado = await terminalesService.getTerminales();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -11,11 +11,8 @@ const getTerminales = async (req, res, next) => {
 
 const getTerminalById = async (req, res, next) => {
     try {
-        const terminal = await TerminalService.getTerminalById(
-            req.params.id
-        );
-
-        res.json(terminal);
+        const resultado = await terminalesService.getTerminalById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -23,8 +20,8 @@ const getTerminalById = async (req, res, next) => {
 
 const createTerminal = async (req, res, next) => {
     try {
-        const terminal = await TerminalService.createTerminal(req.body);
-        res.status(201).json(terminal);
+        const resultado = await terminalesService.createTerminal(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -32,12 +29,8 @@ const createTerminal = async (req, res, next) => {
 
 const updateTerminal = async (req, res, next) => {
     try {
-        const terminal = await TerminalService.updateTerminal(
-            req.params.id,
-            req.body
-        );
-
-        res.json(terminal);
+        const resultado = await terminalesService.updateTerminal(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -45,11 +38,8 @@ const updateTerminal = async (req, res, next) => {
 
 const deleteTerminal = async (req, res, next) => {
     try {
-        const terminal = await TerminalService.deleteTerminal(
-            req.params.id
-        );
-
-        res.json(terminal);
+        const resultado = await terminalesService.deleteTerminal(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }

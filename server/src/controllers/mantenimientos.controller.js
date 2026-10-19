@@ -2,8 +2,8 @@ const mantenimientosService = require("../services/mantenimientos.service");
 
 const getMantenimientos = async (req, res, next) => {
     try {
-        const mantenimientos = await mantenimientosService.getMantenimientos();
-        res.json(mantenimientos);
+        const resultado = await mantenimientosService.getMantenimientos();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -11,8 +11,8 @@ const getMantenimientos = async (req, res, next) => {
 
 const getMantenimientoById = async (req, res, next) => {
     try {
-        const mantenimiento = await mantenimientosService.getMantenimientoById(req.params.id);
-        res.json(mantenimiento);
+        const resultado = await mantenimientosService.getMantenimientoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -20,28 +20,40 @@ const getMantenimientoById = async (req, res, next) => {
 
 const createMantenimiento = async (req, res, next) => {
     try {
-        const mantenimiento = await mantenimientosService.createMantenimiento(req.body);
-        res.status(201).json(mantenimiento);
+        const resultado = await mantenimientosService.createMantenimiento(req.body);
+        return res.status(201).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const registrarCumplimientos = async (req, res, next) => {
+    try {
+        const resultado = await mantenimientosService.registrarCumplimientos(
+            req.params.id,
+            req.body
+        );
+        return res.status(201).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const finalizarMantenimiento = async (req, res, next) => {
+    try {
+        const resultado = await mantenimientosService.finalizarMantenimiento(
+            req.params.id,
+            req.body
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
 module.exports = {
-    registrarCumplimientos: async (req, res, next) => {
-        try {
-            res.status(201).json(await mantenimientosService.registrarCumplimientos(req.params.id,req.body));
-        } catch (error) {
-            next(error);
-        }
-    },
-    finalizarMantenimiento: async (req, res, next) => {
-        try {
-            res.json(await mantenimientosService.finalizarMantenimiento(req.params.id, req.body));
-        } catch (error) {
-            next(error);
-        }
-    },
+    registrarCumplimientos,
+    finalizarMantenimiento,
     getMantenimientos,
     getMantenimientoById,
     createMantenimiento

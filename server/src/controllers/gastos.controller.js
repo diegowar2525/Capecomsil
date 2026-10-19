@@ -1,8 +1,9 @@
-const service = require("../services/gastos.service");
+const gastosService = require("../services/gastos.service");
 
 const getGastos = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getGastos(req.query));
+        const resultado = await gastosService.getGastos(req.query);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -10,7 +11,8 @@ const getGastos = async (req, res, next) => {
 
 const getGastoById = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getGastoById(req.params.id));
+        const resultado = await gastosService.getGastoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -18,7 +20,8 @@ const getGastoById = async (req, res, next) => {
 
 const createGasto = async (req, res, next) => {
     try {
-        res.status(201).json(await service.createGasto(req.body));
+        const resultado = await gastosService.createGasto(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,10 +29,16 @@ const createGasto = async (req, res, next) => {
 
 const anularGasto = async (req, res, next) => {
     try {
-        res.status(200).json(await service.anularGasto(req.params.id, req.body));
+        const resultado = await gastosService.anularGasto(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { getGastos, getGastoById, createGasto, anularGasto };
+module.exports = {
+    getGastos,
+    getGastoById,
+    createGasto,
+    anularGasto
+};

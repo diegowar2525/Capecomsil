@@ -1,8 +1,9 @@
-const service = require("../services/pagos_proveedor.service");
+const pagosProveedorService = require("../services/pagos_proveedor.service");
 
 const getPagos = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getPagos(req.query));
+        const resultado = await pagosProveedorService.getPagos(req.query);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -10,7 +11,8 @@ const getPagos = async (req, res, next) => {
 
 const getPagoById = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getPagoById(req.params.id));
+        const resultado = await pagosProveedorService.getPagoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -18,7 +20,8 @@ const getPagoById = async (req, res, next) => {
 
 const getPagosByFactura = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getPagosByFactura(req.params.id, req.query));
+        const resultado = await pagosProveedorService.getPagosByFactura(req.params.id, req.query);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,7 +29,8 @@ const getPagosByFactura = async (req, res, next) => {
 
 const getCuentasPorPagar = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getCuentasPorPagar(req.params.id));
+        const resultado = await pagosProveedorService.getCuentasPorPagar(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -34,7 +38,8 @@ const getCuentasPorPagar = async (req, res, next) => {
 
 const createPago = async (req, res, next) => {
     try {
-        res.status(201).json(await service.createPago(req.body));
+        const resultado = await pagosProveedorService.createPago(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -42,10 +47,18 @@ const createPago = async (req, res, next) => {
 
 const anularPago = async (req, res, next) => {
     try {
-        res.status(200).json(await service.anularPago(req.params.id, req.body));
+        const resultado = await pagosProveedorService.anularPago(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { getPagos, getPagoById, getPagosByFactura, getCuentasPorPagar, createPago, anularPago };
+module.exports = {
+    getPagos,
+    getPagoById,
+    getPagosByFactura,
+    getCuentasPorPagar,
+    createPago,
+    anularPago
+};

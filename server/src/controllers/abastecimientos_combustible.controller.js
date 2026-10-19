@@ -1,8 +1,9 @@
-const service = require("../services/abastecimientos_combustible.service");
+const abastecimientosCombustibleService = require("../services/abastecimientos_combustible.service");
 
 const getAbastecimientos = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getAbastecimientos(req.query));
+        const resultado = await abastecimientosCombustibleService.getAbastecimientos(req.query);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -10,7 +11,10 @@ const getAbastecimientos = async (req, res, next) => {
 
 const getAbastecimientoById = async (req, res, next) => {
     try {
-        res.status(200).json(await service.getAbastecimientoById(req.params.id));
+        const resultado = await abastecimientosCombustibleService.getAbastecimientoById(
+            req.params.id
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -18,7 +22,8 @@ const getAbastecimientoById = async (req, res, next) => {
 
 const createAbastecimiento = async (req, res, next) => {
     try {
-        res.status(201).json(await service.createAbastecimiento(req.body));
+        const resultado = await abastecimientosCombustibleService.createAbastecimiento(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -26,10 +31,19 @@ const createAbastecimiento = async (req, res, next) => {
 
 const anularAbastecimiento = async (req, res, next) => {
     try {
-        res.status(200).json(await service.anularAbastecimiento(req.params.id, req.body));
+        const resultado = await abastecimientosCombustibleService.anularAbastecimiento(
+            req.params.id,
+            req.body
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { getAbastecimientos, getAbastecimientoById, createAbastecimiento, anularAbastecimiento };
+module.exports = {
+    getAbastecimientos,
+    getAbastecimientoById,
+    createAbastecimiento,
+    anularAbastecimiento
+};

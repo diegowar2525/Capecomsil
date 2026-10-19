@@ -2,8 +2,8 @@ const facturasProveedorService = require("../services/facturas_proveedor.service
 
 const getFacturasProveedor = async (req, res, next) => {
     try {
-        const facturas = await facturasProveedorService.getFacturasProveedor();
-        res.json(facturas);
+        const resultado = await facturasProveedorService.getFacturasProveedor();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -11,8 +11,8 @@ const getFacturasProveedor = async (req, res, next) => {
 
 const getFacturaProveedorById = async (req, res, next) => {
     try {
-        const factura = await facturasProveedorService.getFacturaProveedorById(req.params.id);
-        res.json(factura);
+        const resultado = await facturasProveedorService.getFacturaProveedorById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -20,8 +20,8 @@ const getFacturaProveedorById = async (req, res, next) => {
 
 const createFacturaProveedor = async (req, res, next) => {
     try {
-        const factura = await facturasProveedorService.createFacturaProveedor(req.body);
-        res.status(201).json(factura);
+        const resultado = await facturasProveedorService.createFacturaProveedor(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -29,7 +29,8 @@ const createFacturaProveedor = async (req, res, next) => {
 
 const getRecepciones = async (req, res, next) => {
     try {
-        res.json(await facturasProveedorService.getRecepciones(req.params.id));
+        const resultado = await facturasProveedorService.getRecepciones(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -37,7 +38,8 @@ const getRecepciones = async (req, res, next) => {
 
 const getPendientesRecepcion = async (req, res, next) => {
     try {
-        res.json(await facturasProveedorService.getPendientesRecepcion(req.params.id));
+        const resultado = await facturasProveedorService.getPendientesRecepcion(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -45,17 +47,21 @@ const getPendientesRecepcion = async (req, res, next) => {
 
 const anularFacturaProveedor = async (req, res, next) => {
     try {
-        res.json(await facturasProveedorService.anularFacturaProveedor(req.params.id, req.body));
+        const resultado = await facturasProveedorService.anularFacturaProveedor(
+            req.params.id,
+            req.body
+        );
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
 };
 
-module.exports = { 
+module.exports = {
     anularFacturaProveedor,
     getRecepciones,
     getPendientesRecepcion,
-    getFacturasProveedor, 
-    getFacturaProveedorById, 
-    createFacturaProveedor 
+    getFacturasProveedor,
+    getFacturaProveedorById,
+    createFacturaProveedor
 };

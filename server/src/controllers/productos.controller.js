@@ -2,9 +2,8 @@ const productosService = require("../services/productos.service");
 
 const getProductos = async (req, res, next) => {
     try {
-        const productos = await productosService.getProductos();
-
-        res.json(productos);
+        const resultado = await productosService.getProductos();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -12,11 +11,8 @@ const getProductos = async (req, res, next) => {
 
 const getProductoById = async (req, res, next) => {
     try {
-        const producto = await productosService.getProductoById(
-            req.params.id
-        );
-
-        res.json(producto);
+        const resultado = await productosService.getProductoById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -24,11 +20,8 @@ const getProductoById = async (req, res, next) => {
 
 const createProducto = async (req, res, next) => {
     try {
-        const producto = await productosService.createProducto(
-            req.body
-        );
-
-        res.status(201).json(producto);
+        const resultado = await productosService.createProducto(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -36,12 +29,8 @@ const createProducto = async (req, res, next) => {
 
 const updateProducto = async (req, res, next) => {
     try {
-        const producto = await productosService.updateProducto(
-            req.params.id,
-            req.body
-        );
-
-        res.json(producto);
+        const resultado = await productosService.updateProducto(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -49,13 +38,10 @@ const updateProducto = async (req, res, next) => {
 
 const deleteProducto = async (req, res, next) => {
     try {
-        const producto = await productosService.deleteProducto(
-            req.params.id
-        );
-
-        res.json({
+        const resultado = await productosService.deleteProducto(req.params.id);
+        return res.status(200).json({
             message: "Producto eliminado correctamente",
-            producto
+            producto: resultado
         });
     } catch (error) {
         next(error);

@@ -2,9 +2,8 @@ const tarifasService = require("../services/tarifas.service");
 
 const getTarifas = async (req, res, next) => {
     try {
-        const tarifas = await tarifasService.getTarifas();
-
-        res.json(tarifas);
+        const resultado = await tarifasService.getTarifas();
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -12,11 +11,8 @@ const getTarifas = async (req, res, next) => {
 
 const getTarifaById = async (req, res, next) => {
     try {
-        const tarifa = await tarifasService.getTarifaById(
-            req.params.id
-        );
-
-        res.json(tarifa);
+        const resultado = await tarifasService.getTarifaById(req.params.id);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -24,11 +20,8 @@ const getTarifaById = async (req, res, next) => {
 
 const createTarifa = async (req, res, next) => {
     try {
-        const tarifa = await tarifasService.createTarifa(
-            req.body
-        );
-
-        res.status(201).json(tarifa);
+        const resultado = await tarifasService.createTarifa(req.body);
+        return res.status(201).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -36,12 +29,8 @@ const createTarifa = async (req, res, next) => {
 
 const updateTarifa = async (req, res, next) => {
     try {
-        const tarifa = await tarifasService.updateTarifa(
-            req.params.id,
-            req.body
-        );
-
-        res.json(tarifa);
+        const resultado = await tarifasService.updateTarifa(req.params.id, req.body);
+        return res.status(200).json(resultado);
     } catch (error) {
         next(error);
     }
@@ -49,13 +38,10 @@ const updateTarifa = async (req, res, next) => {
 
 const deleteTarifa = async (req, res, next) => {
     try {
-        const tarifa = await tarifasService.deleteTarifa(
-            req.params.id
-        );
-
-        res.json({
+        const resultado = await tarifasService.deleteTarifa(req.params.id);
+        return res.status(200).json({
             message: "Tarifa eliminada correctamente",
-            tarifa
+            tarifa: resultado
         });
     } catch (error) {
         next(error);
