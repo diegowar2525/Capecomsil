@@ -1,7 +1,13 @@
 const { translateDatabaseError } = require("../utils/errors");
 
 const errorHandler = (error, req, res, next) => {
-    console.error(error);
+    // Los errores del parser JSON pueden contener el cuerpo con credenciales.
+    // No registrar el objeto completo, mensajes con fragmentos de entrada ni SQL.
+    console.error("Error de petición", {
+        name: error.name,
+        code: error.code,
+        status: error.status || 500
+    });
 
     if (res.headersSent) {
         return next(error);
