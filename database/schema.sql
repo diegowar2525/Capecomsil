@@ -1610,7 +1610,7 @@ CREATE TABLE usuario (
     CONSTRAINT usuario_fechas CHECK (fecha_actualizacion >= fecha_creacion)
 );
 CREATE INDEX idx_usuario_rol ON usuario(id_rol);
-COMMENT ON COLUMN usuario.password_hash IS 'Hash de contraseña; nunca contraseña en texto plano. Algoritmo a implementar con autenticación.';
+COMMENT ON COLUMN usuario.password_hash IS 'Hash scrypt con parámetros y sal; nunca contraseña en texto plano.';
 
 CREATE TABLE sesion (
     id_sesion INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -1696,3 +1696,11 @@ INSERT INTO rol_permiso (id_rol, id_permiso)
 SELECT r.id_rol, p.id_permiso
 FROM rol r CROSS JOIN permiso p
 WHERE r.codigo = 'JEFE' OR NOT p.exclusivo_jefe;
+
+-- Control persistente de intentos de autenticación.
+CREATE TABLE autenticacion_intento (
+    clave_hash BYTEA PRIMARY KEY CHECK (octet_length(clave_hash) = 32),
+    intentos INTEGER NOT NULL CHECK (intentos > 0),
+    fecha_limite TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX idx_autenticacion_intento_limite ON autenticacion_intento(fecha_limite);
