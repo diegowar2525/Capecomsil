@@ -45,14 +45,14 @@ La tabla describe código presente en el repositorio. No implica que los módulo
 | Informes | Viajes, resumen económico, viáticos y consumo entre cargas completas |
 | Liquidaciones | Esquema y adaptación de consultas de entregas; sin API del módulo |
 | Facturación y cobros a clientes | Tablas existentes; sin API para facturar y cobrar después de confirmar una liquidación |
-| Usuarios y permisos | Pendientes; cierre y reapertura de remuneraciones bloqueados hasta su integración |
+| Usuarios y permisos | Tablas, roles JEFE/OPERADOR, permisos iniciales y capas de consulta preparados; autenticación y autorización HTTP pendientes. Ver [USUARIOS_PERMISOS.md](USUARIOS_PERMISOS.md) |
 | Interfaz y administración | Pendientes las pantallas operativas, dashboard, calendario y exportaciones PDF/Excel |
 
 La migración histórica completa desde Excel sigue pendiente. El seed incluye catálogos extraídos de Excel y escenarios sintéticos de desarrollo; no constituye una migración completa de operaciones reales.
 
 ## Base de datos
 
-Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 38 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`. Requiere permisos para crear esos objetos.
+Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 43 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
 
 ```sh
 psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql
