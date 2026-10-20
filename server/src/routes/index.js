@@ -21,6 +21,8 @@ const productosTransportadosRoutes = require(
 
 const router = express.Router();
 
+router.use("/auth", require("./auth.routes"));
+
 router.get("/health", (req, res) => {
     res.json({
         message: "La API funciona correctamente"
