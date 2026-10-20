@@ -1,0 +1,5 @@
+.viajes-summary-strip {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}

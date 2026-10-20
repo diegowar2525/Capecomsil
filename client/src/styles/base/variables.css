@@ -1,0 +1,36 @@
+:root {
+  /* Paleta de colores limpia (Grises ejecutivos + Acento) */
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-sidebar: #0f172a;
+  --bg-sidebar-hover: #1e293b;
+  
+  --text-primary: #2a0f0f;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --accent-primary: #6d28d9;
+  --accent-hover: #5b21b6;
+  --accent-light: #ede9fe;
+
+  --border-color: #e2e8f0;
+  
+  /* Estados para Badges */
+  --status-success-bg: #dcfce7;
+  --status-success-text: #15803d;
+  --status-warning-bg: #fef9c3;
+  --status-warning-text: #a16207;
+  --status-danger-bg: #fee2e2;
+  --status-danger-text: #b91c1c;
+  --status-info-bg: #e0f2fe;
+  --status-info-text: #0369a1;
+
+  /* Espaciados y bordes */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --sidebar-width: 260px;
+}
