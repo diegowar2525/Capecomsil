@@ -1,9 +1,10 @@
 # Usuarios y permisos: etapa 1
 
-Se implementó la estructura de datos y las capas de consulta. No se implementaron
-todavía login, cookies, generación de hashes, emisión de sesiones, administración
-de cuentas ni autorización HTTP. Las rutas operativas actuales siguen sin autenticación.
-Los nuevos controladores no están montados en el router y no exponen usuarios por HTTP.
+Se implementó la estructura de datos y las capas de consulta. La etapa 2 agrega
+login, cookies, hashes y sesiones: ver [AUTENTICACION.md](AUTENTICACION.md).
+La administración de cuentas y la autorización por permisos siguen pendientes.
+Las rutas operativas actuales siguen sin autenticación. Los controladores de
+usuarios, roles y permisos aún no están montados en el router.
 
 ## Tablas
 
@@ -17,17 +18,17 @@ Los nuevos controladores no están montados en el router y no exponen usuarios p
 
 El nombre de acceso se almacena en minúsculas, con 3 a 50 caracteres ASCII:
 letras, números, punto, guion y guion bajo; comienza por letra o número.
-La normalización de entradas de creación y login se implementará con esas operaciones.
+Login y creación local del primer jefe normalizan el nombre de acceso.
 Las contraseñas nunca deben escribirse en texto plano en `password_hash`; la
 restricción de la columna comprueba presencia, no verifica un algoritmo criptográfico.
 `token_hash` reserva un resumen de 32 bytes, no la cookie ni el token original.
 Los tiempos de usuarios y sesiones son TIMESTAMPTZ, independientes de los horarios
 locales de viajes. La futura edición actualizará `fecha_actualizacion` explícitamente.
 
-No se crean cuentas, contraseñas de ejemplo ni sesiones. La instalación del primer
-jefe, protección del último jefe activo, revocación al desactivar usuarios y auditoría
-se implementarán en las etapas de autenticación y administración. No usar SQL manual
-como interfaz habitual de gestión de cuentas.
+El esquema no crea cuentas, contraseñas de ejemplo ni sesiones. El primer jefe se
+instala con `npm run crear-jefe`. La protección del último jefe activo, revocación
+al desactivar usuarios y auditoría se implementarán con la administración de cuentas.
+No usar SQL manual como interfaz habitual de gestión de cuentas.
 
 ## Asignaciones iniciales
 
@@ -66,15 +67,16 @@ middleware de autorización que deberá comprobar usuario activo, sesión y perm
 - Validador de filtros de usuarios: activo, rol y paginación; IDs mediante el validador común.
 - Controladores homónimos: resultado explícito, estado 200 y `next(error)`.
 
-Las consultas de usuario no seleccionan `password_hash`; la de sesiones no selecciona
-`token_hash`. No hay métodos de escritura ni endpoints administrativos hasta incorporar
-autenticación, permisos y sus reglas de negocio. No se necesita un controlador de
-sesiones en esta etapa: su modelo solo prepara la consulta interna de metadatos.
+Las consultas públicas de usuario no seleccionan `password_hash`; las de metadatos
+de sesiones no seleccionan `token_hash`. La etapa 2 agrega métodos internos para
+credenciales y sesiones, sin exponer esos secretos por HTTP. Los endpoints
+administrativos siguen pendientes de autorización y sus reglas de negocio.
 
 ## Instalación
 
-Para una base nueva, usar `database/schema.sql`: contiene 43 tablas y los catálogos
-iniciales. No aplicar después la migración 014 ni duplicar estos datos en el seed.
+Para una base nueva, usar `database/schema.sql`: contiene 44 tablas y los catálogos
+iniciales, incluida la tabla de intentos de la etapa 2. No aplicar después las
+migraciones 014/015 ni duplicar estos datos en el seed.
 
 Para una base existente actualizada hasta la migración 013, revisar y ejecutar
 `database/migrations/014_usuarios_roles_permisos.sql`. Es transaccional y conserva
