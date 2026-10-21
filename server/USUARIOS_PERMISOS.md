@@ -4,7 +4,8 @@ Se implementó la estructura de datos y las capas de consulta. La etapa 2 agrega
 login, cookies, hashes y sesiones: ver [AUTENTICACION.md](AUTENTICACION.md).
 La etapa 3 protege las rutas operativas con sesión y permisos y monta las consultas
 de usuarios, roles y permisos, exclusivas del jefe. Ver [AUTORIZACION.md](AUTORIZACION.md).
-La creación y modificación de cuentas por HTTP siguen pendientes para la etapa 4.
+La etapa 4 incorpora la administración de cuentas, protección del último jefe e
+historial: ver [ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md).
 
 ## Tablas
 
@@ -26,8 +27,8 @@ Los tiempos de usuarios y sesiones son TIMESTAMPTZ, independientes de los horari
 locales de viajes. La futura edición actualizará `fecha_actualizacion` explícitamente.
 
 El esquema no crea cuentas, contraseñas de ejemplo ni sesiones. El primer jefe se
-instala con `npm run crear-jefe`. La protección del último jefe activo y la auditoría
-se implementarán con la administración de cuentas. La migración 016 ya revoca
+instala con `npm run crear-jefe`. La administración protege al último jefe activo
+y registra sus cambios en `usuario_historial` (migración 017). La migración 016 revoca
 sesiones al desactivar usuarios o cambiar sus credenciales.
 No usar SQL manual como interfaz habitual de gestión de cuentas.
 
@@ -71,13 +72,13 @@ middleware de autorización, que comprueba usuario activo, sesión y permiso en 
 Las consultas públicas de usuario no seleccionan `password_hash`; las de metadatos
 de sesiones no seleccionan `token_hash`. La etapa 2 agrega métodos internos para
 credenciales y sesiones, sin exponer esos secretos por HTTP. Los endpoints
-administrativos de consulta están protegidos; las mutaciones y sus reglas siguen pendientes.
+administrativos de consulta y mutación están protegidos por sus permisos específicos.
 
 ## Instalación
 
-Para una base nueva, usar `database/schema.sql`: contiene 44 tablas y los catálogos
+Para una base nueva, usar `database/schema.sql`: contiene 45 tablas y los catálogos
 iniciales, incluida la tabla de intentos de la etapa 2. No aplicar después las
-migraciones 014/015/016 ni duplicar estos datos en el seed.
+migraciones 014/015/016/017 ni duplicar estos datos en el seed.
 
 Para una base existente actualizada hasta la migración 013, revisar y ejecutar
 `database/migrations/014_usuarios_roles_permisos.sql`. Es transaccional y conserva

@@ -1,16 +1,18 @@
 # Autenticación: etapa 2
 
 La API dispone de login por nombre de usuario, sesión actual, logout y cambio de
-contraseña. No hay registro público ni administración HTTP de cuentas. Las rutas
+contraseña. No hay registro público. La administración HTTP de cuentas está descrita
+en [ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md). Las rutas
 operativas exigen sesión y permisos desde el paso 3: ver [AUTORIZACION.md](AUTORIZACION.md).
 Esta etapa por sí sola no hace que la aplicación completa esté lista para producción.
 
 ## Instalación
 
-1. Base nueva: ejecutar `database/schema.sql` (44 tablas). Base existente con etapa 1:
+1. Base nueva: ejecutar `database/schema.sql` (45 tablas). Base existente con etapa 1:
    aplicar `database/migrations/015_autenticacion_intentos.sql`; si falta la etapa 1,
    aplicar antes la 014. Después aplicar la 016 para revocar sesiones al desactivar
-   cuentas o cambiar credenciales. No aplicar estas migraciones sobre el esquema nuevo completo.
+   cuentas o cambiar credenciales y la 017 para el historial administrativo.
+   No aplicar estas migraciones sobre el esquema nuevo completo.
 2. Configurar `.env` siguiendo `.env.example`. `AUTH_ORIGINS` contiene orígenes
    exactos sin barra final. En producción es obligatorio configurar orígenes HTTPS
    y `NODE_ENV=production`. `AUTH_SESSION_HOURS` vale 12 por defecto (1 a 168).

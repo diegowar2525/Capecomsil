@@ -45,7 +45,7 @@ La tabla describe código presente en el repositorio. No implica que los módulo
 | Informes | Viajes, resumen económico, viáticos y consumo entre cargas completas |
 | Liquidaciones | Esquema y adaptación de consultas de entregas; sin API del módulo |
 | Facturación y cobros a clientes | Tablas existentes; sin API para facturar y cobrar después de confirmar una liquidación |
-| Usuarios y permisos | Login, sesiones, logout, cambio de contraseña y creación local del primer jefe; rutas operativas protegidas por permisos y consultas administrativas exclusivas del jefe. Gestión de cuentas por HTTP pendiente. Ver [AUTENTICACION.md](AUTENTICACION.md) y [AUTORIZACION.md](AUTORIZACION.md) |
+| Usuarios y permisos | Login, sesiones, logout, cambio de contraseña y creación local del primer jefe; rutas protegidas por permisos. Administración de cuentas exclusiva del jefe, contraseñas temporales, protección del último jefe e historial. Ver [ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md) |
 | Interfaz y administración | Pendientes las pantallas operativas, dashboard, calendario y exportaciones PDF/Excel |
 
 La migración histórica completa desde Excel sigue pendiente. El seed incluye catálogos extraídos de Excel y escenarios sintéticos de desarrollo; no constituye una migración completa de operaciones reales.
@@ -54,11 +54,11 @@ Todas las rutas operativas y sus ejemplos requieren cookie de sesión. En navega
 `credentials: "include"`; en POST/PUT/PATCH/DELETE enviar `Content-Type: application/json`
 y `X-CSRF-Protection: 1`, incluso al eliminar sin cuerpo. Ver [AUTORIZACION.md](AUTORIZACION.md).
 La migración 016 incorpora la revocación de sesiones al desactivar cuentas o cambiar
-credenciales. No se aplica automáticamente a bases existentes.
+credenciales; la 017 añade el historial administrativo. No se aplican automáticamente a bases existentes.
 
 ## Base de datos
 
-Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 44 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
+Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 45 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
 
 ```sh
 psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql

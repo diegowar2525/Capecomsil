@@ -56,7 +56,8 @@ Las consultas administrativas disponibles son:
 | `/api/permisos`, `/api/permisos/:id`, `/api/roles/:id/permisos` | `permisos.consultar` |
 
 No se devuelven hashes de contraseñas ni tokens. Crear, editar, desactivar y
-restablecer cuentas por HTTP corresponde a la etapa 4.
+restablecer cuentas por HTTP está implementado en la etapa 4:
+[ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md).
 
 Los endpoints antiguos de cerrar/reabrir remuneraciones exigen `cierres.cerrar`
 y `cierres.reabrir`, pero el servicio sigue rechazándolos incluso para el jefe.
