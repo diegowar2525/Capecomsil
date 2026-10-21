@@ -1,3 +1,4 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
 const { anularMantenimiento } = require("../controllers/anulaciones.controller");
 const {
@@ -7,12 +8,12 @@ const {
 } = require("../controllers/mantenimientos.controller");
 
 const router = express.Router();
-router.post("/:id/cumplimientos", require("../controllers/mantenimientos.controller").registrarCumplimientos);
-router.post("/:id/finalizar", require("../controllers/mantenimientos.controller").finalizarMantenimiento);
-router.post("/:id/anular", anularMantenimiento);
+router.post("/:id/cumplimientos", exigirPermiso("mantenimientos.registrar_cumplimientos"), require("../controllers/mantenimientos.controller").registrarCumplimientos);
+router.post("/:id/finalizar", exigirPermiso("mantenimientos.finalizar"), require("../controllers/mantenimientos.controller").finalizarMantenimiento);
+router.post("/:id/anular", exigirPermiso("mantenimientos.anular"), anularMantenimiento);
 
-router.get("/", getMantenimientos);
-router.get("/:id", getMantenimientoById);
-router.post("/", createMantenimiento);
+router.get("/", exigirPermiso("mantenimientos.consultar"), getMantenimientos);
+router.get("/:id", exigirPermiso("mantenimientos.consultar"), getMantenimientoById);
+router.post("/", exigirPermiso("mantenimientos.crear"), createMantenimiento);
 
 module.exports = router;

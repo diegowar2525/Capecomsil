@@ -1,3 +1,4 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
 
 const {
@@ -9,12 +10,12 @@ const {
 } = require("../controllers/vehiculos.controller");
 
 const router = express.Router();
-router.get("/:id/kilometraje", require("../controllers/vehiculos.controller").getKilometraje);
+router.get("/:id/kilometraje", exigirPermiso("catalogos.consultar"), require("../controllers/vehiculos.controller").getKilometraje);
 
-router.get("/", getVehiculos);
-router.get("/:id", getVehiculoById);
-router.post("/", createVehiculo);
-router.put("/:id", updateVehiculo);
-router.delete("/:id", deleteVehiculo);
+router.get("/", exigirPermiso("catalogos.consultar"), getVehiculos);
+router.get("/:id", exigirPermiso("catalogos.consultar"), getVehiculoById);
+router.post("/", exigirPermiso("catalogos.crear"), createVehiculo);
+router.put("/:id", exigirPermiso("catalogos.editar"), updateVehiculo);
+router.delete("/:id", exigirPermiso("catalogos.eliminar"), deleteVehiculo);
 
 module.exports = router;

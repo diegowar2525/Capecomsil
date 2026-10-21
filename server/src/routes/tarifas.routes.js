@@ -1,3 +1,4 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
 
 const {
@@ -10,10 +11,10 @@ const {
 
 const router = express.Router();
 
-router.get("/", getTarifas);
-router.get("/:id", getTarifaById);
-router.post("/", createTarifa);
-router.put("/:id", updateTarifa);
-router.delete("/:id", deleteTarifa);
+router.get("/", exigirPermiso("tarifas.consultar"), getTarifas);
+router.get("/:id", exigirPermiso("tarifas.consultar"), getTarifaById);
+router.post("/", exigirPermiso("tarifas.crear"), createTarifa);
+router.put("/:id", exigirPermiso("tarifas.editar"), updateTarifa);
+router.delete("/:id", exigirPermiso("tarifas.eliminar"), deleteTarifa);
 
 module.exports = router;

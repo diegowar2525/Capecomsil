@@ -1,8 +1,9 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const router = require("express").Router();
 const controller = require("../controllers/configuracion_remuneracion.controller");
-router.get("/", controller.findAll);
-router.post("/", controller.create);
-router.put("/:id", controller.update);
-router.delete("/:id", controller.remove);
-router.get("/:id", controller.findById);
+router.get("/", exigirPermiso("configuraciones.consultar"), controller.findAll);
+router.post("/", exigirPermiso("configuraciones.crear"), controller.create);
+router.put("/:id", exigirPermiso("configuraciones.editar"), controller.update);
+router.delete("/:id", exigirPermiso("configuraciones.eliminar"), controller.remove);
+router.get("/:id", exigirPermiso("configuraciones.consultar"), controller.findById);
 module.exports = router;

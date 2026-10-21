@@ -1,3 +1,4 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
 
 const {
@@ -10,10 +11,10 @@ const {
 
 const router = express.Router();
 
-router.get("/", getProductos);
-router.get("/:id", getProductoById);
-router.post("/", createProducto);
-router.put("/:id", updateProducto);
-router.delete("/:id", deleteProducto);
+router.get("/", exigirPermiso("catalogos.consultar"), getProductos);
+router.get("/:id", exigirPermiso("catalogos.consultar"), getProductoById);
+router.post("/", exigirPermiso("catalogos.crear"), createProducto);
+router.put("/:id", exigirPermiso("catalogos.editar"), updateProducto);
+router.delete("/:id", exigirPermiso("catalogos.eliminar"), deleteProducto);
 
 module.exports = router;

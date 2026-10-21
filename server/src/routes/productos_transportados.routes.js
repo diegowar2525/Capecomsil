@@ -1,3 +1,4 @@
+const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
 const router = express.Router();
 
@@ -5,29 +6,19 @@ const productosTransportadosController = require(
     "../controllers/productos_transportados.controller"
 );
 
-router.get(
-    "/",
-    productosTransportadosController.getProductosTransportados
+router.get("/", exigirPermiso("catalogos.consultar"), productosTransportadosController.getProductosTransportados
 );
 
-router.get(
-    "/:id",
-    productosTransportadosController.getProductoTransportadoById
+router.get("/:id", exigirPermiso("catalogos.consultar"), productosTransportadosController.getProductoTransportadoById
 );
 
-router.post(
-    "/",
-    productosTransportadosController.createProductoTransportado
+router.post("/", exigirPermiso("catalogos.crear"), productosTransportadosController.createProductoTransportado
 );
 
-router.put(
-    "/:id",
-    productosTransportadosController.updateProductoTransportado
+router.put("/:id", exigirPermiso("catalogos.editar"), productosTransportadosController.updateProductoTransportado
 );
 
-router.delete(
-    "/:id",
-    productosTransportadosController.deleteProductoTransportado
+router.delete("/:id", exigirPermiso("catalogos.eliminar"), productosTransportadosController.deleteProductoTransportado
 );
 
 module.exports = router;
