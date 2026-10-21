@@ -31,7 +31,69 @@ const findById = async (id, client = pool) => {
     return result.rows[0] ?? null;
 };
 
+const lockAdministracion = async (client) => {
+    const result = await client.query(`SELECT pg_advisory_xact_lock(72631, 2)`);
+    return result.rows;
+};
+
+const findByIdForUpdate = async (client, id) => {
+    const result = await client.query(
+        `SELECT ${camposPublicos} FROM usuario u JOIN rol r USING (id_rol)
+         WHERE u.id_usuario = $1 FOR UPDATE OF u`, [id]
+    );
+    return result.rows[0] ?? null;
+};
+
+const countJefesActivos = async (client) => {
+    const result = await client.query(
+        `SELECT count(*)::integer AS total FROM usuario u JOIN rol r USING (id_rol)
+         WHERE u.activo AND r.codigo = 'JEFE'`
+    );
+    return result.rows[0].total;
+};
+
+const create = async (client, data) => {
+    const result = await client.query(
+        `INSERT INTO usuario(nombre_usuario, nombre, id_rol, password_hash)
+         VALUES ($1, $2, $3, $4) RETURNING id_usuario`,
+        [data.nombre_usuario, data.nombre, data.id_rol, data.password_hash]
+    );
+    return result.rows[0] ?? null;
+};
+
+const update = async (client, id, data) => {
+    const result = await client.query(
+        `UPDATE usuario SET nombre_usuario=$2, nombre=$3, id_rol=$4,
+         fecha_actualizacion=clock_timestamp() WHERE id_usuario=$1 RETURNING id_usuario`,
+        [id, data.nombre_usuario, data.nombre, data.id_rol]
+    );
+    return result.rows[0] ?? null;
+};
+
+const updateEstado = async (client, id, activo) => {
+    const result = await client.query(
+        `UPDATE usuario SET activo=$2, fecha_actualizacion=clock_timestamp()
+         WHERE id_usuario=$1 RETURNING id_usuario`, [id, activo]
+    );
+    return result.rows[0] ?? null;
+};
+
+const resetPassword = async (client, id, passwordHash) => {
+    const result = await client.query(
+        `UPDATE usuario SET password_hash=$2, requiere_cambio_password=true,
+         fecha_actualizacion=clock_timestamp() WHERE id_usuario=$1 RETURNING id_usuario`, [id, passwordHash]
+    );
+    return result.rows[0] ?? null;
+};
+
 module.exports = {
+    lockAdministracion,
+    findByIdForUpdate,
+    countJefesActivos,
+    create,
+    update,
+    updateEstado,
+    resetPassword,
     findAll,
     findById
 };
