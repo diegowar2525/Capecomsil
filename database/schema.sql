@@ -1717,3 +1717,16 @@ END;
 $$;
 CREATE TRIGGER usuario_revocar_sesiones AFTER UPDATE OF activo, password_hash ON usuario
     FOR EACH ROW EXECUTE FUNCTION revocar_sesiones_usuario();
+
+-- Historial administrativo de usuarios, sin credenciales.
+CREATE TABLE usuario_historial (
+    id_historial BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_usuario INTEGER NOT NULL REFERENCES usuario(id_usuario),
+    id_actor INTEGER NOT NULL REFERENCES usuario(id_usuario),
+    accion TEXT NOT NULL CHECK (accion IN ('CREAR', 'EDITAR', 'ESTADO', 'RESTABLECER_PASSWORD')),
+    motivo VARCHAR(500),
+    anterior JSONB,
+    posterior JSONB NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX idx_usuario_historial_usuario ON usuario_historial(id_usuario, id_historial DESC);
