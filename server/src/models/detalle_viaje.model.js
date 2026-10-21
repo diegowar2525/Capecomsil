@@ -68,7 +68,32 @@ const create = async (client, id, detalle, tarifa) => {
     return result.rows[0] ?? null;
 };
 
+const update = async (client, id, detalle, tarifa) => {
+    const result = await client.query(
+        `UPDATE detalle_viaje SET id_tarifa=$2, id_producto_transportado=$3,
+         galones=$4, tarifa_aplicada=$5, valor_transporte=round($4::numeric*$5::numeric,2)
+         WHERE id_detalle_viaje=$1 RETURNING *`,
+        [id, tarifa.id_tarifa, detalle.id_producto_transportado, detalle.galones, tarifa.valor_por_galon]
+    );
+    return result.rows[0] ?? null;
+};
+
+const remove = async (client, id) => {
+    const result = await client.query(`DELETE FROM detalle_viaje WHERE id_detalle_viaje=$1 RETURNING id_detalle_viaje`, [id]);
+    return result.rows[0] ?? null;
+};
+
+const hasHistorialLiquidacion = async (client, id) => {
+    const result = await client.query(
+        `SELECT EXISTS(SELECT 1 FROM detalle_liquidacion WHERE id_detalle_viaje=$1) AS existe`, [id]
+    );
+    return result.rows[0].existe;
+};
+
 module.exports = {
+    update,
+    remove,
+    hasHistorialLiquidacion,
     findByViaje,
     findByViajeForUpdate,
     create

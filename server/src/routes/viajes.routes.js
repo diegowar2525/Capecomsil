@@ -1,9 +1,11 @@
 const { exigirPermiso } = require("../middlewares/auth.middleware");
 const express = require("express");
-const { createViaje, getViajes, getViajeById, anularViaje } = require("../controllers/viajes.controller");
+const { createViaje, getViajes, getViajeById, anularViaje, updateViaje, getHistorialViaje } = require("../controllers/viajes.controller");
 const router = express.Router();
 router.get("/", exigirPermiso("viajes.consultar"), getViajes);
 router.get("/:id", exigirPermiso("viajes.consultar"), getViajeById);
 router.post("/:id/anular", exigirPermiso("viajes.anular"), anularViaje);
 router.post("/", exigirPermiso("viajes.crear"), createViaje);
+router.put("/:id", exigirPermiso("viajes.editar"), updateViaje);
+router.get("/:id/historial", exigirPermiso("viajes.consultar"), getHistorialViaje);
 module.exports = router;

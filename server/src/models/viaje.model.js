@@ -166,7 +166,23 @@ const countRegistradosByChoferFecha = async (client, idChofer, fecha) => {
     return result.rows[0].n;
 };
 
+const update = async (client, id, data) => {
+    const result = await client.query(
+        `UPDATE viaje SET id_vehiculo=$2, id_chofer=$3, fecha_inicio=$4, fecha_fin=$5,
+         version=version+1 WHERE id_viaje=$1 RETURNING id_viaje`,
+        [id, data.id_vehiculo, data.id_chofer, data.fecha_inicio, data.fecha_fin]
+    );
+    return result.rows[0] ?? null;
+};
+
+const hasGastos = async (client, id) => {
+    const result = await client.query(`SELECT EXISTS(SELECT 1 FROM gasto WHERE id_viaje=$1) AS existe`, [id]);
+    return result.rows[0].existe;
+};
+
 module.exports = {
+    update,
+    hasGastos,
     countRegistradosByChoferFecha,
     findAll,
     findById,

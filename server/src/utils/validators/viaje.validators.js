@@ -6,6 +6,34 @@ const {
 } = require("./common.validators");
 const { validateTramos } = require("./tramo_viaje.validators");
 const { createHttpError } = require("../errors/http.error");
+const { validateMotivo } = require("./anulacion.validators");
+
+const validateEdicion = (data) => {
+    const resultado = validateData(data);
+    const permitidos = ["fecha_inicio", "fecha_fin", "id_vehiculo", "id_chofer", "detalles", "tramos", "version", "motivo"];
+    if (Object.keys(data).some((campo) => !permitidos.includes(campo))) {
+        throw createHttpError("Campo de edición de viaje no admitido", 400);
+    }
+    const asignarIds = (originales, normalizados, campo, campos) => {
+        const ids = new Set();
+        originales.forEach((original, index) => {
+            if (Object.keys(original).some((key) => !campos.includes(key))) {
+                throw createHttpError("Campo de entrega o tramo no admitido", 400);
+            }
+            const id = original[campo] === undefined ? null : validateId(original[campo]);
+            if (id !== null && ids.has(id)) {
+                throw createHttpError("No repita IDs de entregas o tramos", 400);
+            }
+            ids.add(id);
+            normalizados[index][campo] = id;
+        });
+    };
+    asignarIds(data.detalles, resultado.detalles, "id_detalle_viaje",
+        ["id_detalle_viaje", "id_gasolinera", "id_terminal", "id_producto_transportado", "galones"]);
+    asignarIds([...data.tramos].sort((a, b) => a.orden - b.orden), resultado.tramos, "id_tramo_viaje",
+        ["id_tramo_viaje", "id_trayecto", "orden", "observacion"]);
+    return { ...resultado, version: validateId(data.version), motivo: validateMotivo(data) };
+};
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -101,6 +129,7 @@ const validateFiltros = (query) => {
 };
 
 module.exports = {
+    validateEdicion,
     validateData,
     validateFiltros
 };
