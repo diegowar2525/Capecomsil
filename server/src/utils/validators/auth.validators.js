@@ -49,6 +49,8 @@ const validatePrimerJefe = (data) => {
 };
 
 module.exports = {
+    validateNombreUsuario,
+    validatePassword,
     validateLogin,
     validateCambioPassword,
     validatePrimerJefe
