@@ -61,8 +61,9 @@ restablecer cuentas por HTTP está implementado en la etapa 4:
 
 Los endpoints antiguos de cerrar/reabrir remuneraciones exigen `cierres.cerrar`
 y `cierres.reabrir`, pero el servicio sigue rechazándolos incluso para el jefe.
-El cierre del día operativo, la edición de viajes y la importación histórica aún
-no están implementados; disponer de sus permisos no los habilita.
+La edición de viajes usa `viajes.editar` y su historial `viajes.consultar`:
+ver [VIAJES.md](VIAJES.md). El cierre del día operativo y la importación histórica
+aún no están implementados; disponer de sus permisos no los habilita.
 
 ## Instalación y verificación
 

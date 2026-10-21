@@ -62,7 +62,7 @@ o rol inexistente, 409 nombre duplicado o protección del último jefe.
 
 ## Base de datos
 
-Base nueva: `database/schema.sql` (45 tablas). Base actualizada hasta la 016:
+Base nueva: `database/schema.sql` (46 tablas). Base actualizada hasta la 016:
 aplicar `database/migrations/017_administracion_usuarios.sql`. No aplicar migraciones
 sobre el esquema nuevo completo. No se ejecutan automáticamente al arrancar.
 

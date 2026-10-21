@@ -1,6 +1,10 @@
 # Viajes: modelo de datos aprobado
 
-Están implementados el esquema, el registro transaccional, las consultas y la anulación de viajes.
+Están implementados el esquema, el registro transaccional, las consultas, la edición y la anulación de viajes.
+
+Todas las operaciones requieren sesión y su permiso. Las escrituras requieren
+`Content-Type: application/json` y `X-CSRF-Protection: 1`; en navegador usar
+`credentials: "include"`. Ver [AUTORIZACION.md](AUTORIZACION.md).
 
 ## VIAJE
 
@@ -62,7 +66,77 @@ Ejemplo: `GET /api/viajes?id_gasolinera=2&fecha_desde=2026-10-01&fecha_hasta=202
 
 Los filtros por gasolinera y terminal seleccionan viajes que contienen una entrega coincidente con ambos. No recortan los totales del viaje; la consulta individual siempre devuelve todas sus entregas. Los nombres descriptivos son los actuales de los catálogos, mientras que tarifas e importes son los valores históricos guardados.
 
-La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación vigente (BORRADOR, ENVIADA o CONFIRMADA). Las asociaciones a liquidaciones ANULADAS se conservan como historial y no bloquean por sí solas la anulación del viaje. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje se anula y registra uno nuevo.
+La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación vigente (BORRADOR, ENVIADA o CONFIRMADA). Las asociaciones a liquidaciones ANULADAS se conservan como historial y no bloquean por sí solas la anulación del viaje. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje válido se utiliza la edición siguiente.
+
+## Edición completa y auditoría (etapa 5)
+
+`PUT /api/viajes/:id` exige `viajes.editar`, asignado inicialmente a JEFE y OPERADOR.
+Recibe todos los campos de creación, además de `version` (obtenida del GET) y
+`motivo` obligatorio, de máximo 150 caracteres. Los campos adicionales se rechazan:
+no enviar el GET completo, estado, importes, tarifas ni identidad del autor.
+
+```json
+{
+  "version": 1,
+  "motivo": "Corrección de galones y horario",
+  "fecha_inicio": "2026-10-08T08:00:00",
+  "fecha_fin": "2026-10-08T12:00:00",
+  "id_vehiculo": 1,
+  "id_chofer": 1,
+  "detalles": [
+    { "id_detalle_viaje": 10, "id_gasolinera": 1, "id_terminal": 1, "id_producto_transportado": 1, "galones": "4000.00" }
+  ],
+  "tramos": [
+    { "id_tramo_viaje": 20, "orden": 1, "id_trayecto": 1, "observacion": null }
+  ]
+}
+```
+
+Los IDs son ilustrativos. El trayecto debe visitar el terminal y la gasolinera de
+la entrega, como en la creación.
+
+- Entregas y tramos existentes: enviar sus IDs para actualizarlos conservando la
+  identidad. Deben pertenecer al viaje y no pueden repetirse.
+- Filas nuevas: omitir el ID, sin enviarlo como null. Las filas existentes ausentes
+  del arreglo se eliminan, salvo entregas con historial de liquidación.
+- Un viaje ANULADO o con alguna entrega en liquidación BORRADOR, ENVIADA o CONFIRMADA
+  no se puede editar. Una liquidación ANULADA permite corregir la entrega conservando
+  su ID, pero impide eliminarla. Su detalle de liquidación conserva sus copias históricas.
+- Los kilómetros de un tramo conservado se mantienen si no cambia el trayecto.
+  Un tramo nuevo o cuyo trayecto cambia toma los kilómetros actuales del catálogo.
+  Un trayecto inactivo solo puede conservarse en el tramo que ya lo utilizaba.
+- Tarifas y configuraciones corresponden a la fecha final del viaje. La tarifa y
+  el importe se calculan en el servidor; cambiar de fecha puede cambiar sus valores.
+- Cambiar vehículo se bloquea si existen gastos vinculados, incluso anulados.
+  La edición no cambia los gastos ni los abastecimientos ni sus fechas.
+
+Se validan capacidad, referencias, continuidad del recorrido, horario, cruces con
+viajes y mantenimientos, vigencias y liquidaciones dentro de la misma transacción.
+Fecha y tarifas pueden cambiar juntas: su coherencia se verifica al final, antes
+de confirmar. La comprobación de tarifas sigue siendo inmediata para otros usos
+SQL, salvo que se difieran expresamente esos constraints.
+
+Se regeneran los costos automáticos del viaje (sus IDs pueden cambiar) y se
+recalculan remuneraciones y viáticos de los choferes/días anterior y nuevo.
+Los demás viajes de esos días reciben la distribución corregida en centavos.
+Las remuneraciones y viáticos diarios existentes conservan sus configuraciones
+históricas; los nuevos requieren configuración vigente.
+
+La respuesta 200 tiene la misma representación que el GET individual y una versión
+incrementada. Una versión desactualizada devuelve 409: consultar nuevamente y revisar
+los cambios antes de reenviar. No reintentar automáticamente con la nueva versión.
+
+`GET /api/viajes/:id/historial` exige `viajes.consultar` y devuelve las ediciones más
+recientes primero, con actor de la sesión, motivo, fecha, versiones y copias antes/después
+del viaje, entregas, tramos y costos. No hay rutas para modificar o borrar el historial.
+Cubre ediciones realizadas por esta API, no reconstruye autoría de registros antiguos.
+Si falla el historial o una validación, se revierte toda la edición y sus recálculos.
+
+Base nueva: `database/schema.sql` (46 tablas). Base actualizada hasta la 017:
+aplicar `database/migrations/018_edicion_viajes.sql`. La migración asigna versión 1
+a viajes existentes sin inventar eventos anteriores. No se ejecuta automáticamente.
+El cierre de días todavía corresponde al punto 6; esta edición aún no bloquea por
+el vencimiento de las 18:00.
 
 Se bloquean la cabecera y las entregas durante la transacción. El futuro módulo de liquidaciones deberá bloquear la cabecera y rechazar viajes anulados antes de asociar detalles. La base debe incluir el modelo actual de `detalle_liquidacion`; ver la transición de esquema descrita a continuación.
 

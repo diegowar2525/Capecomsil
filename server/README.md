@@ -35,7 +35,7 @@ La tabla describe código presente en el repositorio. No implica que los módulo
 | Área | Implementación actual |
 | --- | --- |
 | Catálogos y tarifas | CRUD de vehículos, choferes, terminales, gasolineras, proveedores, categorías, productos, combustibles transportados y tarifas |
-| Viajes y recorridos | Catálogo de trayectos; registro, consultas y anulación de viajes con tramos y entregas |
+| Viajes y recorridos | Catálogo de trayectos; registro, consultas, edición transaccional con versiones e historial, y anulación de viajes con tramos y entregas |
 | Costos y remuneraciones | Configuraciones por vigencia, remuneración diaria, viáticos y costos automáticos |
 | Compras | Facturas de productos y servicios, recepciones iniciales y posteriores, consultas y anulaciones |
 | Inventario | Stock, mínimos, movimientos, ajustes y reversiones |
@@ -58,7 +58,7 @@ credenciales; la 017 añade el historial administrativo. No se aplican automáti
 
 ## Base de datos
 
-Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 45 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
+Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 46 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
 
 ```sh
 psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql
@@ -78,6 +78,8 @@ Los estados administrativos de los catálogos se reciben y almacenan como boolea
 | GET | `/api/viajes` | Listar con filtros |
 | GET | `/api/viajes/:id` | Consultar cabecera, tramos, entregas y costos |
 | POST | `/api/viajes/:id/anular` | Anular con motivo y conservar historial |
+| PUT | `/api/viajes/:id` | Editar cabecera, entregas y tramos con versión y motivo; recalcular costos |
+| GET | `/api/viajes/:id/historial` | Consultar autor y cambios de las ediciones |
 
 Cada viaje identifica vehículo, chofer, `fecha_inicio`, `fecha_fin`, tramos ordenados y entregas. Las fechas llevan hora local sin zona, por ejemplo `2026-10-16T08:00:00`. El fin debe ser posterior y estar dentro del mismo día. No se permiten horarios superpuestos para un vehículo o chofer; una operación puede comenzar exactamente al terminar la anterior.
 
@@ -88,6 +90,11 @@ Cada entrega identifica gasolinera, terminal, combustible y galones. La tarifa s
 `/api/tarifas` ofrece GET de lista y detalle, POST, PUT y DELETE. Sus vigencias son inclusivas, con fin nulo para una vigencia abierta. No se permiten superposiciones para la misma gasolinera y terminal, independientemente del estado administrativo. El precio admite cero y hasta cuatro decimales. Una tarifa utilizada no permite cambiar precio, gasolinera o terminal ni eliminarse. Sus fechas solo pueden cambiar conservando los días utilizados. Para cambiar un precio se crea una nueva vigencia.
 
 Ver [VIAJES.md](VIAJES.md) y [TRAYECTOS.md](TRAYECTOS.md).
+
+La edición requiere la migración 018 en bases actualizadas hasta la 017. Conserva los
+IDs de entregas y tramos enviados y rechaza versiones desactualizadas, viajes anulados
+y liquidaciones vigentes. El cierre de días aún está pendiente. El orden de trabajo
+está registrado en [PLAN_IMPLEMENTACION.md](PLAN_IMPLEMENTACION.md).
 
 ## Remuneraciones y costos automáticos
 
