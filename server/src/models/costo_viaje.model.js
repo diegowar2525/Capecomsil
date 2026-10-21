@@ -136,7 +136,13 @@ const findByViaje = async (id, client = pool) => {
     return result.rows;
 };
 
+const removeByViaje = async (client, id) => {
+    const result = await client.query(`DELETE FROM costo_viaje WHERE id_viaje=$1 RETURNING id_costo`, [id]);
+    return result.rows;
+};
+
 module.exports = {
+    removeByViaje,
     createCombustible,
     createPeaje,
     removeViaticosDeViajesAnulados,

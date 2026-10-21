@@ -62,7 +62,24 @@ const findByViaje = async (id, client = pool) => {
     return result.rows;
 };
 
+const update = async (client, id, data) => {
+    const result = await client.query(
+        `UPDATE tramo_viaje SET orden=$2, id_trayecto=$3, observacion=$4,
+         id_configuracion_peaje_trayecto=$5, peaje_aplicado=$6
+         WHERE id_tramo_viaje=$1 RETURNING *`,
+        [id, data.orden, data.id_trayecto, data.observacion, data.id_configuracion_peaje_trayecto, data.peaje_aplicado]
+    );
+    return result.rows[0] ?? null;
+};
+
+const remove = async (client, id) => {
+    const result = await client.query(`DELETE FROM tramo_viaje WHERE id_tramo_viaje=$1 RETURNING id_tramo_viaje`, [id]);
+    return result.rows[0] ?? null;
+};
+
 module.exports = {
+    update,
+    remove,
     create,
     findByViaje
 };
