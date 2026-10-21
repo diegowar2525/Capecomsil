@@ -1,4 +1,5 @@
 const express = require("express");
+const { autenticar, protegerOperacion } = require("../middlewares/auth.middleware");
 const trayectosRoutes = require("./trayectos.routes");
 const viajesRoutes = require("./viajes.routes");
 const pagosProveedorRoutes = require("./pagos_proveedor.routes");
@@ -29,6 +30,11 @@ router.get("/health", (req, res) => {
     });
 });
 
+router.use(autenticar, protegerOperacion);
+
+router.use("/usuarios", require("./usuarios.routes"));
+router.use("/roles", require("./roles.routes"));
+router.use("/permisos", require("./permisos.routes"));
 router.use("/vehiculos", vehiculosRoutes);
 router.use("/viajes", viajesRoutes);
 router.use("/trayectos", trayectosRoutes);
