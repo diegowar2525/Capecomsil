@@ -45,10 +45,16 @@ La tabla describe código presente en el repositorio. No implica que los módulo
 | Informes | Viajes, resumen económico, viáticos y consumo entre cargas completas |
 | Liquidaciones | Esquema y adaptación de consultas de entregas; sin API del módulo |
 | Facturación y cobros a clientes | Tablas existentes; sin API para facturar y cobrar después de confirmar una liquidación |
-| Usuarios y permisos | Roles y permisos preparados; login, sesiones, logout, cambio de contraseña y creación local del primer jefe implementados. Protección de rutas operativas por permisos pendiente. Ver [AUTENTICACION.md](AUTENTICACION.md) y [USUARIOS_PERMISOS.md](USUARIOS_PERMISOS.md) |
+| Usuarios y permisos | Login, sesiones, logout, cambio de contraseña y creación local del primer jefe; rutas operativas protegidas por permisos y consultas administrativas exclusivas del jefe. Gestión de cuentas por HTTP pendiente. Ver [AUTENTICACION.md](AUTENTICACION.md) y [AUTORIZACION.md](AUTORIZACION.md) |
 | Interfaz y administración | Pendientes las pantallas operativas, dashboard, calendario y exportaciones PDF/Excel |
 
 La migración histórica completa desde Excel sigue pendiente. El seed incluye catálogos extraídos de Excel y escenarios sintéticos de desarrollo; no constituye una migración completa de operaciones reales.
+
+Todas las rutas operativas y sus ejemplos requieren cookie de sesión. En navegador usar
+`credentials: "include"`; en POST/PUT/PATCH/DELETE enviar `Content-Type: application/json`
+y `X-CSRF-Protection: 1`, incluso al eliminar sin cuerpo. Ver [AUTORIZACION.md](AUTORIZACION.md).
+La migración 016 incorpora la revocación de sesiones al desactivar cuentas o cambiar
+credenciales. No se aplica automáticamente a bases existentes.
 
 ## Base de datos
 
@@ -94,7 +100,7 @@ Ver [VIAJES.md](VIAJES.md) y [TRAYECTOS.md](TRAYECTOS.md).
 
 Los importes dependen de la configuración vigente. Los feriados deben registrarse antes de generar las remuneraciones correspondientes. La modalidad y configuración aplicadas se conservan en el registro diario.
 
-`/api/configuraciones-remuneracion` y `/api/feriados` ofrecen CRUD. `POST /api/remuneraciones-chofer/generar` genera un período explícito de un chofer; los GET de lista y detalle consultan los días generados. Los POST `/:id/cerrar` y `/:id/reabrir` devuelven 403 mientras no exista la integración de usuarios y autorizaciones.
+`/api/configuraciones-remuneracion` y `/api/feriados` ofrecen CRUD. `POST /api/remuneraciones-chofer/generar` genera un período explícito de un chofer; los GET de lista y detalle consultan los días generados. Los POST `/:id/cerrar` y `/:id/reabrir` siguen bloqueados con 403, incluso para el jefe; queda pendiente implementar el cierre del día operativo.
 
 El registro de viajes requiere configuraciones vigentes de remuneración, combustible, viático y peajes, incluido cero cuando un trayecto no tenga peaje. No se presupone un costo cero si falta una configuración. Las configuraciones de costos se administran en:
 

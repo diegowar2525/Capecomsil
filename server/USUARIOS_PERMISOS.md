@@ -2,9 +2,9 @@
 
 Se implementó la estructura de datos y las capas de consulta. La etapa 2 agrega
 login, cookies, hashes y sesiones: ver [AUTENTICACION.md](AUTENTICACION.md).
-La administración de cuentas y la autorización por permisos siguen pendientes.
-Las rutas operativas actuales siguen sin autenticación. Los controladores de
-usuarios, roles y permisos aún no están montados en el router.
+La etapa 3 protege las rutas operativas con sesión y permisos y monta las consultas
+de usuarios, roles y permisos, exclusivas del jefe. Ver [AUTORIZACION.md](AUTORIZACION.md).
+La creación y modificación de cuentas por HTTP siguen pendientes para la etapa 4.
 
 ## Tablas
 
@@ -26,8 +26,9 @@ Los tiempos de usuarios y sesiones son TIMESTAMPTZ, independientes de los horari
 locales de viajes. La futura edición actualizará `fecha_actualizacion` explícitamente.
 
 El esquema no crea cuentas, contraseñas de ejemplo ni sesiones. El primer jefe se
-instala con `npm run crear-jefe`. La protección del último jefe activo, revocación
-al desactivar usuarios y auditoría se implementarán con la administración de cuentas.
+instala con `npm run crear-jefe`. La protección del último jefe activo y la auditoría
+se implementarán con la administración de cuentas. La migración 016 ya revoca
+sesiones al desactivar usuarios o cambiar sus credenciales.
 No usar SQL manual como interfaz habitual de gestión de cuentas.
 
 ## Asignaciones iniciales
@@ -57,7 +58,7 @@ automáticamente a roles existentes.
 
 `rol_permiso.findByRol` excluye permisos exclusivos del jefe para OPERADOR incluso
 si se introduce una asignación incorrecta directamente en SQL. No sustituye al
-middleware de autorización que deberá comprobar usuario activo, sesión y permiso.
+middleware de autorización, que comprueba usuario activo, sesión y permiso en cada petición.
 
 ## Capas
 
@@ -70,13 +71,13 @@ middleware de autorización que deberá comprobar usuario activo, sesión y perm
 Las consultas públicas de usuario no seleccionan `password_hash`; las de metadatos
 de sesiones no seleccionan `token_hash`. La etapa 2 agrega métodos internos para
 credenciales y sesiones, sin exponer esos secretos por HTTP. Los endpoints
-administrativos siguen pendientes de autorización y sus reglas de negocio.
+administrativos de consulta están protegidos; las mutaciones y sus reglas siguen pendientes.
 
 ## Instalación
 
 Para una base nueva, usar `database/schema.sql`: contiene 44 tablas y los catálogos
 iniciales, incluida la tabla de intentos de la etapa 2. No aplicar después las
-migraciones 014/015 ni duplicar estos datos en el seed.
+migraciones 014/015/016 ni duplicar estos datos en el seed.
 
 Para una base existente actualizada hasta la migración 013, revisar y ejecutar
 `database/migrations/014_usuarios_roles_permisos.sql`. Es transaccional y conserva

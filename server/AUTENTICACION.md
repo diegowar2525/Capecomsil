@@ -2,14 +2,15 @@
 
 La API dispone de login por nombre de usuario, sesión actual, logout y cambio de
 contraseña. No hay registro público ni administración HTTP de cuentas. Las rutas
-operativas todavía no exigen sesión ni permisos: su protección corresponde al paso 3.
+operativas exigen sesión y permisos desde el paso 3: ver [AUTORIZACION.md](AUTORIZACION.md).
 Esta etapa por sí sola no hace que la aplicación completa esté lista para producción.
 
 ## Instalación
 
 1. Base nueva: ejecutar `database/schema.sql` (44 tablas). Base existente con etapa 1:
    aplicar `database/migrations/015_autenticacion_intentos.sql`; si falta la etapa 1,
-   aplicar antes la 014. No aplicar estas migraciones sobre el esquema nuevo completo.
+   aplicar antes la 014. Después aplicar la 016 para revocar sesiones al desactivar
+   cuentas o cambiar credenciales. No aplicar estas migraciones sobre el esquema nuevo completo.
 2. Configurar `.env` siguiendo `.env.example`. `AUTH_ORIGINS` contiene orígenes
    exactos sin barra final. En producción es obligatorio configurar orígenes HTTPS
    y `NODE_ENV=production`. `AUTH_SESSION_HOURS` vale 12 por defecto (1 a 168).
@@ -78,9 +79,9 @@ sin mezclarlos. En producción utilizar HTTPS y un despliegue del mismo sitio.
 - Cambio de contraseña exige la actual, actualiza el hash y revoca todas las sesiones
   en una transacción. Se debe iniciar sesión nuevamente. El primer jefe no requiere
   cambio inicial porque él elige su contraseña; el flag de otras cuentas se devuelve
-  para integrarlo con las restricciones del paso 3.
-- Cuentas desactivadas no autentican. La futura operación administrativa de desactivación
-  deberá revocar también sus sesiones para que no revivan si se reactiva la cuenta.
+  y bloquea las operaciones hasta completar el cambio.
+- Cuentas desactivadas no autentican. El trigger de la migración 016 revoca sus
+  sesiones definitivamente al desactivarlas o cambiar el hash de contraseña.
 
 ## Límites y operación
 
