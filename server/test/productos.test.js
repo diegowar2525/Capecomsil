@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -44,11 +45,12 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
         await client.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
         await client.query("INSERT INTO categoria_producto(nombre,estado) VALUES ('Repuestos',true), ('Inactiva',false)");
         pool.query = client.query.bind(client);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const base = `http://127.0.0.1:${server.address().port}/api/productos`;
         const request = async (method, suffix = "", payload = data) => {
-            const response = await fetch(base + suffix, {
+            const response = await authenticatedFetch(base + suffix, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 ...(["GET", "DELETE"].includes(method) ? {} : { body: JSON.stringify(payload) })
@@ -100,7 +102,7 @@ test("PRODUCTO: API y protección real en PostgreSQL, con rollback", async () =>
         assert.equal((await request("DELETE", `/${id}`)).status, 200);
         const categoriaUrl = base.replace("/productos", "/categorias-producto");
         const categoriaRequest = async (method, suffix, payload) => {
-            const response = await fetch(categoriaUrl + suffix, {
+            const response = await authenticatedFetch(categoriaUrl + suffix, {
                 method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             });
             return { status: response.status, body: await response.json() };

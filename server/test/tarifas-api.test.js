@@ -4,14 +4,20 @@ const model = require('../src/models/tarifa.model');
 const pool = require('../src/config/database');
 const app = require('../src/app');
 
-test('API: rutas, validación y traducción de errores', async () => {
+test('API: rutas, validación y traducción de errores', async (t) => {
+    // Prueba de traducción de errores con modelos simulados. La autorización real
+    // se verifica en permisos-api.test.js contra PostgreSQL.
+    t.mock.method(require('../src/services/auth.service'), 'autenticar', async () => ({
+        usuario: { id_usuario: 1, requiere_cambio_password: false },
+        permisos: ['tarifas.consultar', 'tarifas.crear', 'tarifas.editar', 'tarifas.eliminar']
+    }));
     const server = app.listen(0, '127.0.0.1');
     await new Promise(resolve => server.once('listening', resolve));
     const base = `http://127.0.0.1:${server.address().port}/api/tarifas`;
     const original = { ...model };
     const body = { id_gasolinera: 1, id_terminal: 1, valor_por_galon: '0.035', fecha_inicio: '2026-01-01' };
     const request = (method, suffix = '', value = body) => fetch(base + suffix, {
-        method, headers: { 'Content-Type': 'application/json' },
+        method, headers: { 'Content-Type': 'application/json', 'X-CSRF-Protection': '1' },
         ...(method === 'GET' || method === 'DELETE' ? {} : { body: JSON.stringify(value) })
     });
     try {

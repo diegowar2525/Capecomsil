@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -46,6 +47,7 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const url = `http://127.0.0.1:${server.address().port}/api/mantenimientos`;
@@ -53,17 +55,17 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         const post = async data => {
             const fecha = '2026-10-' + String(dia++).padStart(2,'0');
             data = { ...data, fecha_inicio: fecha+'T08:00:00', fecha_fin: fecha+'T09:00:00' };
-            const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+            const response = await authenticatedFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
             return { status: response.status, body: await response.json() };
         };
         const created = await post(body);
         assert.equal(created.status, 201);
         assert.equal(created.body.detalles.length, 1);
-        const fetched = await (await fetch(url + "/" + created.body.id_mantenimiento)).json();
+        const fetched = await (await authenticatedFetch(url + "/" + created.body.id_mantenimiento)).json();
         assert.equal(fetched.detalles[0].nombre_producto, "Filtro");
-        assert.equal((await fetch(url)).status, 200);
-        assert.equal((await fetch(url + "/9999")).status, 404);
-        assert.equal((await fetch(url + "/abc")).status, 400);
+        assert.equal((await authenticatedFetch(url)).status, 200);
+        assert.equal((await authenticatedFetch(url + "/9999")).status, 404);
+        assert.equal((await authenticatedFetch(url + "/abc")).status, 400);
         const movement = (await isolated.query("SELECT * FROM movimiento_inventario WHERE tipo_movimiento='SALIDA'")).rows[0];
         assert.equal(movement.id_detalle_mantenimiento, created.body.detalles[0].id_detalle_mantenimiento);
         assert.equal(movement.cantidad, "2.00");
@@ -92,18 +94,18 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         const mixto = await post({ ...body, detalles: [{ id_producto: 1, cantidad: "1" }, externo, { ...externo, descripcion_producto: "Aceite externo" }] });
         assert.equal(mixto.status, 201);
         const mixtoId = mixto.body.id_mantenimiento;
-        const consulta = await (await fetch(url + "/" + mixtoId)).json();
+        const consulta = await (await authenticatedFetch(url + "/" + mixtoId)).json();
         assert.equal(consulta.detalles.length, 3);
         assert.equal(consulta.detalles[1].descripcion_producto, externo.descripcion_producto);
         assert.equal(consulta.detalles[1].id_producto, null);
-        const cancel = await fetch(url + "/" + mixtoId + "/anular", {
+        const cancel = await authenticatedFetch(url + "/" + mixtoId + "/anular", {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba mixta" })
         });
         assert.equal(cancel.status, 200);
         assert.equal((await cancel.json()).reversiones.length, 1);
         const soloExterno = await post({ ...body, detalles: [externo] });
         assert.equal(soloExterno.status, 201);
-        const cancelExterno = await fetch(url + "/" + soloExterno.body.id_mantenimiento + "/anular", {
+        const cancelExterno = await authenticatedFetch(url + "/" + soloExterno.body.id_mantenimiento + "/anular", {
             method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba externa" })
         });
         assert.equal(cancelExterno.status, 200);

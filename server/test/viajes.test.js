@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -63,10 +64,11 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const post = async data => {
-            const r = await fetch(`http://127.0.0.1:${server.address().port}/api/viajes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+            const r = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api/viajes`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
             return { status: r.status, body: await r.json() };
         };
         await isolated.query("UPDATE configuracion_peaje_trayecto SET fecha_inicio='2027-01-01'");
@@ -85,7 +87,7 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         assert.equal(first.body.valor_transporte, "3.70");
         assert.equal(first.body.detalles[0].tarifa_aplicada, "0.0350");
         assert.ok(first.body.detalles.every(d => d.id_liquidacion === null));
-        const consulta = await fetch(`http://127.0.0.1:${server.address().port}/api/viajes/${first.body.id_viaje}`);
+        const consulta = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api/viajes/${first.body.id_viaje}`);
         assert.equal(consulta.status, 200);
         assert.deepEqual((await consulta.json()).detalles, first.body.detalles);
         assert.equal((await post({ ...body, detalles: [{ ...body.detalles[0], galones: "100.01" }] })).status, 400);
@@ -116,7 +118,7 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
         await assert.rejects(isolated.query("UPDATE tarifa SET valor_por_galon=1 WHERE id_tarifa=1"), { code: "23514" });
         assert.equal((await isolated.query("SELECT COUNT(*)::int n FROM movimiento_inventario")).rows[0].n, 0);
         const request = async (route, payload) => {
-            const r = await fetch(`http://127.0.0.1:${server.address().port}/api/viajes${route}`, payload
+            const r = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api/viajes${route}`, payload
                 ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) } : {});
             return { status: r.status, body: await r.json() };
         };

@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -47,11 +48,12 @@ test("Factura: HTTP, importes exactos, recepción parcial y rollback integral", 
                 return client.query(sql, values);
             }
         });
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const url = `http://127.0.0.1:${server.address().port}/api/facturas-proveedor`;
         const post = async body => {
-            const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+            const response = await authenticatedFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
             return { status: response.status, body: await response.json() };
         };
         const first = await post(data);
@@ -82,10 +84,10 @@ test("Factura: HTTP, importes exactos, recepción parcial y rollback integral", 
         assert.equal(rounding.body.subtotal, "0.01");
         assert.equal(rounding.body.impuestos, "0.01");
         assert.equal(rounding.body.total, "0.02");
-        const fetched = await (await fetch(url + "/" + first.body.id_factura_proveedor)).json();
+        const fetched = await (await authenticatedFetch(url + "/" + first.body.id_factura_proveedor)).json();
         assert.equal(fetched.detalles[0].precio_unitario, "20.00");
-        assert.equal((await fetch(url + "/999999")).status, 404);
-        assert.equal((await fetch(url)).status, 200);
+        assert.equal((await authenticatedFetch(url + "/999999")).status, 404);
+        assert.equal((await authenticatedFetch(url)).status, 200);
     } finally {
         model.createEntrada = originalEntrada;
         pool.connect = originalConnect;

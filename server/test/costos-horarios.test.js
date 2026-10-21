@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -27,10 +28,11 @@ test("Costos y horarios: CRUD, histórico, transacciones, concurrencia y anulaci
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const req = async (route, method = "GET", body) => {
-            const response = await fetch(`http://127.0.0.1:${server.address().port}/api${route}`, {
+            const response = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api${route}`, {
                 method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body)
             });
             return { status: response.status, body: await response.json() };

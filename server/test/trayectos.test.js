@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -27,11 +28,12 @@ test("Trayectos: CRUD HTTP e historial", async () => {
         await client.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
         await client.query("INSERT INTO gasolinera(nombre) VALUES ('Mechita'),('Otra'); INSERT INTO terminal(nombre) VALUES ('Troncal')");
         pool.query = client.query.bind(client);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0, "127.0.0.1");
         await new Promise(resolve => server.once("listening", resolve));
         const request = async (method, suffix = "", payload = data) => {
             await client.query("SAVEPOINT peticion");
-            const r = await fetch(`http://127.0.0.1:${server.address().port}/api/trayectos${suffix}`, {
+            const r = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api/trayectos${suffix}`, {
                 method, headers: { "Content-Type": "application/json" },
                 ...(["GET", "DELETE"].includes(method) ? {} : { body: JSON.stringify(payload) })
             });

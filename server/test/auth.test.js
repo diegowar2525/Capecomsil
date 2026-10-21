@@ -28,6 +28,8 @@ test("Autenticación HTTP: instalación, cookies, CSRF, sesiones y cambio atómi
         await admin.query(sql.slice(0, sql.indexOf("-- Control persistente de intentos de autenticación.")));
         const migration = fs.readFileSync(path.join(__dirname, "../../database/migrations/015_autenticacion_intentos.sql"), "utf8");
         await admin.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const revocacion = fs.readFileSync(path.join(__dirname, "../../database/migrations/016_revocacion_sesiones_usuario.sql"), "utf8");
+        await admin.query(revocacion.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated);
         pool.query = isolated.query.bind(isolated);
@@ -79,13 +81,15 @@ test("Autenticación HTTP: instalación, cookies, CSRF, sesiones y cambio atómi
         assert.equal(me.body.usuario.password_hash, undefined);
 
         const rotated = await login(cookie1);
-        const cookie2 = cookieOf(rotated);
+        let cookie2 = cookieOf(rotated);
         assert.notEqual(cookie1, cookie2);
         assert.equal((await request("/me", { cookie: cookie1 })).status, 401);
         await isolated.query("UPDATE usuario SET activo=false");
         assert.equal((await request("/me", { cookie: cookie2 })).status, 401);
         assert.equal((await login()).status, 401);
         await isolated.query("UPDATE usuario SET activo=true, id_rol=(SELECT id_rol FROM rol WHERE codigo='OPERADOR')");
+        assert.equal((await request("/me", { cookie: cookie2 })).status, 401);
+        cookie2 = cookieOf(await login());
         const operator = await request("/me", { cookie: cookie2 });
         assert.equal(operator.body.usuario.rol, "OPERADOR");
         assert.ok(!operator.body.permisos.includes("cierres.reabrir"));

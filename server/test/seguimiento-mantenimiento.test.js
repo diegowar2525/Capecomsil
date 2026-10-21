@@ -1,3 +1,4 @@
+const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
@@ -29,10 +30,11 @@ test("Seguimiento: kilómetros, planes independientes, historial, cortes y concu
             INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) VALUES (1,0,'2026-01-01');`);
         await admin.query("COMMIT");
         pool.connect = isolated.connect.bind(isolated); pool.query = isolated.query.bind(isolated);
+        const authenticatedFetch = await createAuthenticatedFetch(pool);
         server = require("../src/app").listen(0,"127.0.0.1");
         await new Promise(resolve => server.once("listening",resolve));
         const req = async (route,method="GET",body) => {
-            const r = await fetch(`http://127.0.0.1:${server.address().port}/api${route}`,{
+            const r = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api${route}`,{
                 method,headers:{"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)
             });
             return {status:r.status,body:await r.json()};
