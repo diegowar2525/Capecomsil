@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { Pool } = require("pg");
 
-test("Remuneración diaria: calendario, centavos, concurrencia, historial y operaciones bloqueadas", async () => {
+test("Remuneración diaria: calendario, centavos, concurrencia e importes históricos sin cierre propio", async () => {
     const pool = require("../src/config/database");
     const connect = pool.connect;
     const query = pool.query;
@@ -59,7 +59,11 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
         assert.equal(diario.total,"70.00");
         assert.equal(diario.costo_asignado,"70.00");
         assert.equal(diario.costo_sin_asignar,"0.00");
-        assert.deepEqual((await request(`/remuneraciones-chofer/${diario.id_remuneracion_chofer}`)).body.historial,[]);
+        const consultado = (await request(`/remuneraciones-chofer/${diario.id_remuneracion_chofer}`)).body;
+        for (const campo of ["historial", "estado", "fecha_cierre"]) {
+            assert.equal(Object.hasOwn(consultado, campo), false);
+            assert.equal(Object.hasOwn(diario, campo), false);
+        }
         assert.equal((await anular(simultaneos[0].body.id_viaje)).status,200);
         assert.deepEqual((await isolated.query("SELECT valor FROM costo_viaje WHERE tipo_costo='CHOFER' ORDER BY id_viaje")).rows.map(r=>r.valor), ["35.00","35.00"]);
         await anular(simultaneos[1].body.id_viaje);
@@ -73,9 +77,12 @@ test("Remuneración diaria: calendario, centavos, concurrencia, historial y oper
         assert.equal((await generar(2,"2026-10-13")).body[0].total,"35.00");
         assert.equal((await viaje(1,"2026-10-11")).status,201);
         assert.equal((await generar(1,"2026-10-11")).body[0].total,"70.00");
-        assert.equal((await request(`/remuneraciones-chofer/${diario.id_remuneracion_chofer}/cerrar`, "POST", { usuario: "admin" })).status,403);
-        assert.equal((await request(`/remuneraciones-chofer/${diario.id_remuneracion_chofer}/reabrir`, "POST", {})).status,403);
-        await assert.rejects(isolated.query("UPDATE remuneracion_chofer SET estado='CERRADO',fecha_cierre=now()"), { constraint:"remuneracion_cierre_bloqueado" });
+        for (const accion of ["cerrar", "reabrir"]) {
+            const respuesta = await authenticatedFetch(`http://127.0.0.1:${server.address().port}/api/remuneraciones-chofer/${diario.id_remuneracion_chofer}/${accion}`, {
+                method: "POST", body: JSON.stringify({ motivo: "Ruta retirada" })
+            });
+            assert.equal(respuesta.status, 404);
+        }
         assert.equal((await request("/feriados", "POST", { fecha: "2026-10-13", descripcion: "Retroactivo" })).status,409);
         assert.equal((await request("/feriados/1", "DELETE")).status,409);
         const config={importe_diario:"35",adicional_dia_especial:"35",fecha_inicio:"2026-01-01",fecha_fin:"2026-12-31"};
