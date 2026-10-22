@@ -43,7 +43,7 @@ La tabla describe código presente en el repositorio. No implica que los módulo
 | Mantenimientos | Registro, consultas, finalización, anulación, materiales internos y externos, planes y cumplimientos |
 | Gastos y abastecimientos | Registro, consultas y anulaciones de gastos reales y cargas de combustible |
 | Informes | Viajes, resumen económico, viáticos y consumo entre cargas completas |
-| Liquidaciones | Esquema y adaptación de consultas de entregas; sin API del módulo |
+| Liquidaciones | Consulta de entregas disponibles y liquidaciones; creación y edición de borradores exclusivas del jefe. Transiciones de estado pendientes. Ver [LIQUIDACIONES.md](LIQUIDACIONES.md) |
 | Facturación y cobros a clientes | Tablas existentes; sin API para facturar y cobrar después de confirmar una liquidación |
 | Usuarios y permisos | Login, sesiones, logout, cambio de contraseña y creación local del primer jefe; rutas protegidas por permisos. Administración de cuentas exclusiva del jefe, contraseñas temporales, protección del último jefe e historial. Ver [ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md) |
 | Interfaz y administración | Pendientes las pantallas operativas, dashboard, calendario y exportaciones PDF/Excel |
@@ -215,11 +215,13 @@ Informes disponibles por GET:
 
 Los informes comparan estimaciones y valores reales y analizan consumo entre cargas completas según los filtros de cada consulta. No equivalen a exportaciones PDF/Excel ni a un dashboard terminado. Ver [INFORMES.md](INFORMES.md) y [GASTOS_ABASTECIMIENTOS.md](GASTOS_ABASTECIMIENTOS.md).
 
-## Liquidaciones, facturación y cobros pendientes
+## Liquidaciones, facturación y cobros
 
 El esquema actual contempla liquidaciones por gasolinera y período, con estados BORRADOR, ENVIADA, CONFIRMADA y ANULADA, fechas e importes. `detalle_liquidacion` relaciona liquidaciones con entregas de viajes y conserva galones, tarifa e importe históricos. Sustituye la antigua columna física `detalle_viaje.id_liquidacion`. Las consultas de entregas conservan `id_liquidacion` como campo calculado para la liquidación vigente.
 
-La migración `013_liquidaciones_detalles.sql` corresponde a esta transición y requiere revisar sus precondiciones sobre los datos existentes. Todavía no existen rutas, controladores ni servicios del módulo de liquidaciones. Las referencias antiguas a esa columna deben contrastarse con el modelo actualizado.
+La migración `013_liquidaciones_detalles.sql` corresponde a esta transición y requiere revisar sus precondiciones sobre los datos existentes. La API ya permite consultar entregas disponibles, listar liquidaciones y crear o editar borradores, exclusivamente al jefe. Conserva valores históricos, reserva las entregas y controla ediciones simultáneas mediante una versión. Retención y recargo permanecen en cero. Enviar, confirmar, anular y generar reemplazos siguen pendientes. Ver [LIQUIDACIONES.md](LIQUIDACIONES.md).
+
+La migración `020_liquidaciones_borradores.sql` agrega la versión y los permisos de este módulo; está preparada en el repositorio y debe aplicarse en orden a las bases existentes. El servidor no ejecuta migraciones automáticamente. Una base nueva usa el esquema consolidado.
 
 El flujo previsto continúa con la factura después de confirmar una liquidación y con los cobros parciales o completos del cliente. Las tablas `factura` y `pago` existen; una clave UNIQUE establece la relación uno a uno entre factura y liquidación. La API para emitir esas facturas, registrar cobros y controlar saldos está pendiente. Las compras y los pagos a proveedores ya tienen su propia API.
 

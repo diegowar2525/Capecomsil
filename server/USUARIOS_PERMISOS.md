@@ -43,7 +43,8 @@ El jefe recibe todos los permisos definidos. El operador recibe:
 - Consulta de tarifas, configuraciones y estado de los cierres.
 
 Son exclusivos del jefe: modificaciones de tarifas/configuraciones, gestión de
-usuarios y roles/permisos, cierre y reapertura de días, e importación histórica.
+usuarios y roles/permisos, todas las operaciones de liquidaciones (incluidas las
+consultas), cierre y reapertura de días, e importación histórica.
 `configuraciones` incluye remuneración, combustible, viáticos, peajes y feriados.
 `catalogos` agrupa vehículos, choferes, gasolineras, terminales, proveedores,
 productos, categorías, combustibles transportados y trayectos.

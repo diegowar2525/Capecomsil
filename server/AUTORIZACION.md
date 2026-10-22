@@ -36,6 +36,7 @@ autenticadas llevan `Cache-Control: no-store`.
 | Gastos y abastecimientos | `gastos` / `abastecimientos` |
 | Pagos a proveedores | `pagos_proveedor` |
 | Informes y remuneraciones | `informes` / `remuneraciones` |
+| Liquidaciones (solo JEFE, incluidas consultas) | `liquidaciones` |
 
 Las consultas usan `.consultar`; los CRUD existentes usan `.crear`, `.editar` y
 `.eliminar`. Las acciones declaran su permiso específico: `.anular`, `.revertir`,
@@ -47,6 +48,9 @@ de recepciones y pendientes de recepción bajo facturas requieren `recepciones.c
 
 OPERADOR mantiene sus operaciones habituales y consulta tarifas/configuraciones.
 Solo JEFE tiene asignados sus permisos de modificación y los administrativos.
+El módulo de liquidaciones también es exclusivo del jefe: `liquidaciones.consultar`,
+`liquidaciones.crear` y `liquidaciones.editar`, agregados por la migración 020.
+OPERADOR no puede consultar ni modificar liquidaciones.
 Las consultas administrativas disponibles son:
 
 | Rutas GET | Permiso |

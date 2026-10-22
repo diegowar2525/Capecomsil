@@ -1,5 +1,8 @@
 # Plan acordado: usuarios, edición y cierres
 
+Los pasos 6 y 7 quedan pospuestos por decisión del usuario. Se conservan sus reglas
+como pendientes; no se implementarán en esta etapa.
+
 1. Usuarios, roles, permisos y sesiones: implementado (migración 014).
 2. Autenticación: implementada, con login por nombre de usuario, cookie HttpOnly,
    cambio de contraseña, vencimiento y control de intentos (015).
@@ -25,3 +28,18 @@ No se cambia por ahora el rango libre de fechas previsto para las liquidaciones.
 
 Las migraciones preparadas en el repositorio no confirman la versión instalada en
 la base de trabajo; deben revisarse y aplicarse en orden cuando corresponda.
+
+## Liquidaciones: etapa actual
+
+1. Contrato y permisos: implementados. Consultar, crear y editar son exclusivos
+   del jefe. Migración 020: permisos y versión del borrador.
+2. Entregas disponibles: implementado por gasolinera y rango libre de fechas,
+   excluyendo viajes anulados y entregas en otra liquidación no anulada.
+3. Borradores: creación y edición transaccionales, selección de entregas,
+   copias históricas, totales y protección frente a operaciones simultáneas.
+   Retención y recargo quedan en cero por decisión del usuario.
+
+Quedan pendientes enviar, confirmar, anular, generar un reemplazo explícito y
+la auditoría del módulo. Anular no creará automáticamente otro borrador.
+No hay eliminación física; editar un borrador permite retirar todas sus entregas.
+Contrato y ejemplos en [LIQUIDACIONES.md](LIQUIDACIONES.md).
