@@ -27,18 +27,8 @@ const generar = async (req, res, next) => {
     }
 };
 
-const operacionBloqueada = async (req, res, next) => {
-    try {
-        const resultado = await remuneracionesService.operacionBloqueada();
-        return res.status(403).json(resultado);
-    } catch (error) {
-        next(error);
-    }
-};
-
 module.exports = {
     findAll,
     findById,
-    generar,
-    operacionBloqueada
+    generar
 };

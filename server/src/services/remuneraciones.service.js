@@ -1,7 +1,6 @@
 const { lock } = require("../utils/transaction.lock");
 const pool = require("../config/database");
 const remuneracionChoferModel = require("../models/remuneracion_chofer.model");
-const historialModel = require("../models/historial_remuneracion_chofer.model");
 const { validatePeriodo } = require("../utils/validators/remuneracion.validators");
 const { validateId } = require("../utils/validators/common.validators");
 const { createHttpError } = require("../utils/errors/http.error");
@@ -36,22 +35,11 @@ const findById = async (id) => {
     if (!result) {
         throw createHttpError("Remuneración no encontrada", 404);
     }
-    return {
-        ...result,
-        historial: await historialModel.findByRemuneracion(result.id_remuneracion_chofer)
-    };
-};
-
-const operacionBloqueada = () => {
-    throw createHttpError(
-        "El cierre y la reapertura están bloqueados hasta implementar usuarios y permisos",
-        403
-    );
+    return result;
 };
 
 module.exports = {
     generar,
     findAll,
-    findById,
-    operacionBloqueada
+    findById
 };
