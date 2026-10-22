@@ -1,4 +1,10 @@
-# React + Vite
+# Capecomsil — Frontend
+
+La estructura y las convenciones del proyecto están documentadas en
+[ESTRUCTURA.md](ESTRUCTURA.md). Las pantallas actuales son una base visual;
+la integración con sesiones, permisos y APIs está pendiente.
+
+## Plantilla original
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
