@@ -419,23 +419,11 @@ CREATE TABLE remuneracion_chofer (
     importe_base NUMERIC(12,2) NOT NULL CHECK (importe_base >= 0),
     importe_adicional NUMERIC(12,2) NOT NULL CHECK (importe_adicional >= 0),
     total NUMERIC(12,2) NOT NULL CHECK (total = importe_base + importe_adicional),
-    estado VARCHAR(10) NOT NULL DEFAULT 'ABIERTO' CHECK (estado IN ('ABIERTO','CERRADO')),
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    fecha_cierre TIMESTAMP,
     observacion TEXT,
-    UNIQUE (id_chofer,fecha),
-    CHECK ((estado='ABIERTO' AND fecha_cierre IS NULL) OR (estado='CERRADO' AND fecha_cierre IS NOT NULL))
+    UNIQUE (id_chofer,fecha)
 );
 
--- Reservado para la integración de usuarios. La API no escribe en este historial todavía.
-CREATE TABLE historial_remuneracion_chofer (
-    id_historial_remuneracion_chofer INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_remuneracion_chofer INTEGER NOT NULL REFERENCES remuneracion_chofer(id_remuneracion_chofer),
-    accion VARCHAR(10) NOT NULL CHECK (accion IN ('CIERRE','REAPERTURA')),
-    fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    motivo TEXT NOT NULL CHECK (btrim(motivo) <> ''),
-    responsable TEXT NOT NULL CHECK (btrim(responsable) <> '')
-);
 
 CREATE TABLE costo_viaje (
     id_costo INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -1494,18 +1482,6 @@ $$;
 CREATE TRIGGER feriado_historial BEFORE INSERT OR UPDATE OR DELETE ON feriado
     FOR EACH ROW EXECUTE FUNCTION proteger_feriado();
 
-CREATE FUNCTION proteger_cierre_remuneracion() RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    IF NEW.estado <> 'ABIERTO' OR (TG_OP='UPDATE' AND OLD.estado='CERRADO') THEN
-        RAISE EXCEPTION 'El cierre y la reapertura están bloqueados hasta implementar usuarios y permisos'
-            USING ERRCODE='23514', CONSTRAINT='remuneracion_cierre_bloqueado';
-    END IF;
-    RETURN NEW;
-END;
-$$;
-CREATE TRIGGER remuneracion_cierre_bloqueado BEFORE INSERT OR UPDATE ON remuneracion_chofer
-    FOR EACH ROW EXECUTE FUNCTION proteger_cierre_remuneracion();
-
 CREATE FUNCTION recalcular_remuneracion(p_chofer INTEGER, p_fecha DATE) RETURNS INTEGER LANGUAGE plpgsql AS $$
 DECLARE r remuneracion_chofer%ROWTYPE;
         c configuracion_remuneracion%ROWTYPE;
@@ -1523,9 +1499,6 @@ BEGIN
     END IF;
     SELECT * INTO r FROM remuneracion_chofer WHERE id_chofer=p_chofer AND fecha=p_fecha FOR UPDATE;
     IF FOUND THEN
-        IF r.estado='CERRADO' THEN
-            RAISE EXCEPTION 'La remuneración del día está cerrada' USING ERRCODE='23514', CONSTRAINT='remuneracion_cerrada';
-        END IF;
         SELECT * INTO c FROM configuracion_remuneracion WHERE id_configuracion_remuneracion=r.id_configuracion_remuneracion FOR SHARE;
         modalidad := r.tipo_remuneracion_aplicado;
         feriado_id := r.id_feriado;
