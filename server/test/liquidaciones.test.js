@@ -13,6 +13,14 @@ const periodo = { id_gasolinera: 1, periodo_inicio: "2026-10-08", periodo_fin: "
 
 test("Liquidaciones: validadores de período, selección, versión y campos no editables", () => {
     assert.equal(validators.validateCreacion(periodo).id_detalles_viaje, null);
+    assert.deepEqual(validators.validateTransicion({ version: "2" }), { version: 2 });
+    assert.equal(validators.validateAnulacion({ version: 1, motivo: " Corrección " }).motivo, "Corrección");
+    for (const data of [{}, { version: 0 }, { version: 1, estado: "ENVIADA" }, { version: 1, fecha_envio: "2026-10-21" }]) {
+        assert.throws(() => validators.validateTransicion(data), { status: 400 });
+    }
+    for (const motivo of [null, " ", 123, "x".repeat(151)]) {
+        assert.throws(() => validators.validateAnulacion({ version: 1, motivo }), { status: 400 });
+    }
     assert.deepEqual(validators.validateEdicion({ ...periodo, version: 1, id_detalles_viaje: [] }).id_detalles_viaje, []);
     for (const data of [null, [], {}, { ...periodo, periodo_fin: "2026-02-30" }, { ...periodo, periodo_fin: "2026-10-07" },
         { ...periodo, id_detalles_viaje: [] }, { ...periodo, id_detalles_viaje: [1, "1"] }, { ...periodo, id_detalles_viaje: [true] },
@@ -55,6 +63,8 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         const migration = fs.readFileSync(path.join(__dirname, "../../database/migrations/020_liquidaciones_borradores.sql"), "utf8");
         await admin.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         assert.equal((await admin.query("SELECT version FROM liquidacion")).rows[0].version, 1);
+        const accionesMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/021_liquidaciones_acciones.sql"), "utf8");
+        await admin.query(accionesMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -70,7 +80,9 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         const preview = (params = periodo) => request("/liquidaciones/entregas-disponibles?" + new URLSearchParams(params));
         const create = (data = periodo) => request("/liquidaciones", "POST", data);
         for (const [route, method, data] of [["/liquidaciones", "GET"], ["/liquidaciones/1", "GET"],
-            ["/liquidaciones/entregas-disponibles", "GET"], ["/liquidaciones", "POST", periodo], ["/liquidaciones/1", "PUT", {}]]) {
+            ["/liquidaciones/entregas-disponibles", "GET"], ["/liquidaciones", "POST", periodo], ["/liquidaciones/1", "PUT", {}],
+            ["/liquidaciones/1/enviar", "POST", { version: 1 }], ["/liquidaciones/1/confirmar", "POST", { version: 1 }],
+            ["/liquidaciones/1/anular", "POST", { version: 1, motivo: "Prueba" }], ["/liquidaciones/1", "DELETE", { version: 1 }]]) {
             assert.equal((await request(route, method, data, operador)).status, 403);
             assert.equal((await request(route, method, data, fetch)).status, 401);
         }
@@ -144,6 +156,7 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         actual = (await update([])).body;
         assert.equal(actual.total_galones, "0.00");
         assert.equal(actual.detalles.length, 0);
+        assert.equal((await request(route + "/enviar", "POST", { version: actual.version })).status, 409);
         const count = async () => (await isolated.query("SELECT count(*)::int n FROM liquidacion")).rows[0].n;
         const antes = await count();
         const falloDetalle = t.mock.method(detalleModel, "create", async () => { throw new Error("Fallo simulado en detalle"); });
@@ -170,14 +183,54 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         actual = await get();
         assert.equal((await request("/liquidaciones?estado=BORRADOR&id_gasolinera=2&periodo_desde=2026-10-09&periodo_hasta=2026-10-09&limit=1&offset=0")).body[0].id_liquidacion, id);
         assert.equal((await request("/liquidaciones?periodo_desde=2027-01-01")).body.length, 0);
-        // Se prueban estados por SQL; todavía no se exponen acciones HTTP de transición.
-        await isolated.query("UPDATE liquidacion SET estado='ENVIADA',fecha_envio=CURRENT_TIMESTAMP WHERE id_liquidacion=$1", [id]);
+        const action = (nombre, data = { version: actual.version }) => request(route + "/" + nombre, "POST", data);
+        assert.equal((await action("confirmar")).status, 409);
+        assert.equal((await action("enviar", { version: actual.version - 1 })).status, 409);
+        const antesEnvio = actual;
+        // Totales corruptos no se corrigen silenciosamente al enviar.
+        await isolated.query("UPDATE liquidacion SET total_liquidacion=999 WHERE id_liquidacion=$1", [id]);
+        assert.equal((await action("enviar")).status, 409);
+        await isolated.query("UPDATE liquidacion SET total_liquidacion=valor_transporte WHERE id_liquidacion=$1", [id]);
+        const envios = await Promise.all([action("enviar"), action("enviar")]);
+        assert.deepEqual(envios.map((r) => r.status).sort(), [200, 409]);
+        actual = await get();
+        assert.equal(actual.estado, "ENVIADA");
+        assert.equal(actual.version, antesEnvio.version + 1);
+        assert.ok(actual.fecha_envio);
+        assert.deepEqual(actual.detalles, antesEnvio.detalles);
+        assert.equal(actual.total_liquidacion, antesEnvio.total_liquidacion);
+        assert.equal((await request(route, "DELETE", { version: actual.version })).status, 409);
+        assert.equal((await action("enviar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         assert.equal((await preview({ ...periodo, id_gasolinera: 2, id_liquidacion: id })).status, 409);
-        await isolated.query("UPDATE liquidacion SET estado='CONFIRMADA',fecha_confirmacion=CURRENT_TIMESTAMP WHERE id_liquidacion=$1", [id]);
+        // Si falla la lectura de respuesta, la transición completa se revierte.
+        const falloConsulta = t.mock.method(liquidacionModel, "findById", async () => { throw new Error("Fallo tras transición"); });
+        assert.equal((await action("confirmar")).status, 500);
+        falloConsulta.mock.restore();
+        assert.deepEqual(await get(), actual);
+        const confirmada = await action("confirmar");
+        assert.equal(confirmada.status, 200, JSON.stringify(confirmada.body));
+        actual = confirmada.body;
+        assert.equal(actual.estado, "CONFIRMADA");
+        assert.ok(new Date(actual.fecha_confirmacion) >= new Date(actual.fecha_envio));
+        assert.equal((await action("confirmar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         const copia = (await request(route)).body.detalles;
-        await isolated.query("UPDATE liquidacion SET estado='ANULADA',fecha_anulacion=CURRENT_TIMESTAMP,motivo_anulacion='Prueba' WHERE id_liquidacion=$1", [id]);
+        await isolated.query("INSERT INTO factura(id_liquidacion,numero_factura,subtotal,valor_neto) VALUES ($1,'LIQ-TEST',1.60,1.60)", [id]);
+        assert.equal((await action("anular", { version: actual.version, motivo: "Prueba" })).status, 409);
+        assert.deepEqual(await get(), actual);
+        await isolated.query("DELETE FROM factura WHERE id_liquidacion=$1", [id]);
+        assert.equal((await action("anular", { version: actual.version, motivo: " " })).status, 400);
+        const antesAnular = await count();
+        const anulada = await action("anular", { version: actual.version, motivo: " Corrección " });
+        assert.equal(anulada.status, 200, JSON.stringify(anulada.body));
+        actual = anulada.body;
+        assert.equal(actual.estado, "ANULADA");
+        assert.equal(actual.motivo_anulacion, "Corrección");
+        assert.ok(actual.fecha_anulacion);
+        assert.equal(await count(), antesAnular);
+        assert.equal((await action("anular", { version: actual.version, motivo: "Otra vez" })).status, 409);
+        assert.equal((await request(route, "DELETE", { version: actual.version })).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         assert.equal((await preview({ ...periodo, id_gasolinera: 2 })).body.cantidad, 1);
         const reemplazoManual = await create({ ...periodo, id_gasolinera: 2 });
@@ -191,10 +244,30 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         ]);
         assert.ok((carreraViaje[0].status === 201 && carreraViaje[1].status === 409)
             || (carreraViaje[0].status === 409 && carreraViaje[1].status === 200));
-        for (const [suffix, method] of [["", "DELETE"], ["/enviar", "POST"], ["/confirmar", "POST"], ["/anular", "POST"]]) {
-            const res = await jefe(base + route + suffix, { method, body: JSON.stringify({ motivo: "No implementado" }) });
-            assert.equal(res.status, 404);
+        // Eliminar un borrador libera entregas y revierte la eliminación de detalles si falla.
+        const borrador = reemplazoManual.body;
+        const borrarRuta = "/liquidaciones/" + borrador.id_liquidacion;
+        const falloBorrar = t.mock.method(liquidacionModel, "remove", async () => { throw new Error("Fallo al eliminar cabecera"); });
+        assert.equal((await request(borrarRuta, "DELETE", { version: borrador.version })).status, 500);
+        falloBorrar.mock.restore();
+        assert.deepEqual((await request(borrarRuta)).body, borrador);
+        assert.equal((await request(borrarRuta, "DELETE", { version: borrador.version + 1 })).status, 409);
+        assert.equal((await request(borrarRuta, "DELETE", { version: borrador.version })).status, 200);
+        assert.equal((await request(borrarRuta)).status, 404);
+        assert.equal((await preview({ ...periodo, id_gasolinera: 2 })).body.cantidad, 1);
+        assert.equal((await isolated.query("SELECT count(*)::int n FROM detalle_liquidacion WHERE id_liquidacion=$1", [borrador.id_liquidacion])).rows[0].n, 0);
+        // Anular también está permitido desde borrador y desde enviada.
+        for (const enviarPrimero of [false, true]) {
+            let nueva = (await create({ ...periodo, id_gasolinera: 2 })).body;
+            const nuevaRuta = "/liquidaciones/" + nueva.id_liquidacion;
+            if (enviarPrimero) {
+                nueva = (await request(nuevaRuta + "/enviar", "POST", { version: nueva.version })).body;
+            }
+            const respuesta = await request(nuevaRuta + "/anular", "POST", { version: nueva.version, motivo: "Descartada" });
+            assert.equal(respuesta.status, 200, JSON.stringify(respuesta.body));
+            assert.equal(respuesta.body.estado, "ANULADA");
         }
+        assert.equal((await request("/liquidaciones/999999/enviar", "POST", { version: 1 })).status, 404);
         assert.equal((await request("/liquidaciones/999999")).status, 404);
         assert.equal((await request("/liquidaciones/abc")).status, 400);
         assert.equal((await request("/liquidaciones/999999", "PUT", { ...periodo, version: 1, id_detalles_viaje: [] })).status, 404);
