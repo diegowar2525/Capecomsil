@@ -50,6 +50,8 @@ OPERADOR mantiene sus operaciones habituales y consulta tarifas/configuraciones.
 Solo JEFE tiene asignados sus permisos de modificación y los administrativos.
 El módulo de liquidaciones también es exclusivo del jefe: `liquidaciones.consultar`,
 `liquidaciones.crear` y `liquidaciones.editar`, agregados por la migración 020.
+La migración 021 agrega `liquidaciones.enviar`, `liquidaciones.confirmar`,
+`liquidaciones.anular` y `liquidaciones.eliminar`, también exclusivos del jefe.
 OPERADOR no puede consultar ni modificar liquidaciones.
 Las consultas administrativas disponibles son:
 

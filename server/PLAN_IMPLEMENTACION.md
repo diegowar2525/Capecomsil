@@ -39,7 +39,12 @@ la base de trabajo; deben revisarse y aplicarse en orden cuando corresponda.
    copias históricas, totales y protección frente a operaciones simultáneas.
    Retención y recargo quedan en cero por decisión del usuario.
 
-Quedan pendientes enviar, confirmar, anular, generar un reemplazo explícito y
-la auditoría del módulo. Anular no creará automáticamente otro borrador.
-No hay eliminación física; editar un borrador permite retirar todas sus entregas.
+4. Enviar y confirmar: implementados con validaciones de estado, versión y totales.
+5. Anular: implementado con motivo obligatorio, sin factura asociada y conservando
+   detalles. No genera un reemplazo. Eliminar físicamente un borrador también está
+   implementado por petición del usuario; libera sus entregas sin borrar viajes.
+6. Auditoría de cambios: pospuesta por decisión del usuario.
+
+El reemplazo de liquidaciones anuladas queda fuera de esta etapa. La migración
+021 agrega los permisos de acciones y actualiza las protecciones de la base.
 Contrato y ejemplos en [LIQUIDACIONES.md](LIQUIDACIONES.md).
