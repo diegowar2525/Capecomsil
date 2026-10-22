@@ -23,3 +23,54 @@
   box-shadow: var(--shadow-sm);
   padding: 20px;
 }
+
+/* Header móvil oculto en escritorio */
+.mobile-header {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .main-container {
+        margin-left: 0;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 20px;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-toggle-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: inherit;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .mobile-header-title {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .view-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 767px) {
+    .view-content {
+        padding: 16px;
+    }
+}

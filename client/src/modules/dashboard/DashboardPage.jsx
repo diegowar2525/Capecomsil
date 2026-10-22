@@ -1,16 +1,10 @@
+import { columns } from './dashboard.columns.js';
 import React from 'react';
 import { PageHeader } from '../../components/PageHeader/PageHeader';
 import { DataTable } from '../../components/DataTable/DataTable';
 
-export function Dashboard({ stats = [], recentTrips = [] }) {
-    const columns = [
-        { key: 'codigo', label: 'N° Guía / Viaje' },
-        { key: 'fecha', label: 'Fecha' },
-        { key: 'vehiculo', label: 'Unidad' },
-        { key: 'ruta', label: 'Terminal → Gasolinera' },
-        { key: 'galones', label: 'Galones' },
-        { key: 'estado', label: 'Estado' },
-    ];
+export function Dashboard({ stats = {}, recentTrips = [] }) {
+
 
     return (
         <div>

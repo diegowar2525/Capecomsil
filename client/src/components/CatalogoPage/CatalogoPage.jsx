@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { PageHeader } from '../../components/PageHeader/PageHeader';
-import { DataTable } from '../../components/DataTable/DataTable';
-import { Modal } from '../../components/Modal/Modal';
+import { PageHeader } from '../PageHeader/PageHeader';
+import { DataTable } from '../DataTable/DataTable';
+import { Modal } from '../Modal/Modal';
+import { FormField } from '../FormField/FormField.jsx';
 
-export function CatalogoGenerico({ title, subtitle, actionLabel, columns = [], fields = [] }) {
+export function CatalogoPage({ title, subtitle, actionLabel, columns = [], fields = [], rowKey = 'id' }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
@@ -23,7 +24,7 @@ export function CatalogoGenerico({ title, subtitle, actionLabel, columns = [], f
                 />
             </div>
 
-            <DataTable columns={columns} data={[]} />
+            <DataTable columns={columns} data={[]} rowKey={rowKey} />
 
             <Modal
                 isOpen={isModalOpen}
@@ -34,16 +35,13 @@ export function CatalogoGenerico({ title, subtitle, actionLabel, columns = [], f
                         <button className="btn btn-outline" onClick={() => setIsModalOpen(false)}>
                             Cancelar
                         </button>
-                        <button className="btn btn-primary">Guardar</button>
+                        <button type="button" className="btn btn-primary" disabled title="Conexión con la API pendiente">Guardar</button>
                     </>
                 }
             >
                 <form className="form-grid">
                     {fields.map((field) => (
-                        <div key={field.name} className="form-group">
-                            <label className="form-label">{field.label}</label>
-                            <input type={field.type || 'text'} className="form-control" />
-                        </div>
+                        <FormField key={field.name} {...field} />
                     ))}
                 </form>
             </Modal>

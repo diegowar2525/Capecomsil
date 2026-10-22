@@ -50,6 +50,7 @@
 }
 
 .sidebar-link {
+  text-decoration: none;
   width: 100%;
   display: flex;
   align-items: center;
@@ -74,4 +75,74 @@
 .sidebar-link.active {
   background-color: var(--accent-primary);
   color: var(--text-inverse);
+}
+
+/* Botón de cierre: oculto en escritorio */
+.sidebar-close-btn {
+    display: none;
+}
+
+/* Fondo oscuro del menú móvil */
+.sidebar-overlay {
+    display: none;
+}
+
+@media (max-width: 1023px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 100;
+        width: min(var(--sidebar-width), 85vw);
+    }
+
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 90;
+    }
+
+    .sidebar-brand {
+        justify-content: space-between;
+    }
+
+    .sidebar-close-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-inverse);
+        font-size: 1.75rem;
+        cursor: pointer;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar {
+        transition: none;
+    }
+}
+
+@media (max-width: 1023px) {
+    .sidebar {
+        height: 100dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .sidebar-link:focus-visible,
+    .sidebar-close-btn:focus-visible,
+    .sidebar-toggle-btn:focus-visible {
+        outline: 3px solid #60a5fa;
+        outline-offset: 3px;
+    }
 }
