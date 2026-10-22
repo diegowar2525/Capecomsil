@@ -76,4 +76,18 @@ const validateFiltros = (query = {}) => {
         estado, periodo_desde, periodo_hasta, limit, offset };
 };
 
-module.exports = { validateCreacion, validateEdicion, validateDisponibles, validateFiltros };
+const validateTransicion = (data) => {
+    validateCampos(data, ["version"]);
+    return { version: validateId(data.version) };
+};
+
+const validateAnulacion = (data) => {
+    validateCampos(data, ["version", "motivo"]);
+    const motivo = validateOptionalText(data.motivo, "motivo", 150);
+    if (!motivo) {
+        throw createHttpError("Indique el motivo de anulación", 400);
+    }
+    return { version: validateId(data.version), motivo };
+};
+
+module.exports = { validateCreacion, validateEdicion, validateDisponibles, validateFiltros, validateTransicion, validateAnulacion };

@@ -58,4 +58,26 @@ const recalcularTotales = async (client, id) => {
     return result.rows[0] ?? null;
 };
 
-module.exports = { findAll, findById, findByIdForUpdate, create, update, recalcularTotales };
+const cambiarEstado = async (client, id, estado, motivo) => {
+    const result = await client.query(
+        `UPDATE liquidacion SET estado=$2::text, version=version+1,
+         fecha_envio=CASE WHEN $2='ENVIADA' THEN clock_timestamp() ELSE fecha_envio END,
+         fecha_confirmacion=CASE WHEN $2='CONFIRMADA' THEN clock_timestamp() ELSE fecha_confirmacion END,
+         fecha_anulacion=CASE WHEN $2='ANULADA' THEN clock_timestamp() ELSE fecha_anulacion END,
+         motivo_anulacion=CASE WHEN $2='ANULADA' THEN $3 ELSE motivo_anulacion END
+         WHERE id_liquidacion=$1 RETURNING id_liquidacion`, [id, estado, motivo ?? null]
+    );
+    return result.rows[0] ?? null;
+};
+
+const tieneFactura = async (client, id) => {
+    const result = await client.query("SELECT EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=$1) AS existe", [id]);
+    return result.rows[0].existe;
+};
+
+const remove = async (client, id) => {
+    const result = await client.query("DELETE FROM liquidacion WHERE id_liquidacion=$1 RETURNING id_liquidacion", [id]);
+    return result.rows[0] ?? null;
+};
+
+module.exports = { findAll, findById, findByIdForUpdate, create, update, recalcularTotales, cambiarEstado, tieneFactura, remove };

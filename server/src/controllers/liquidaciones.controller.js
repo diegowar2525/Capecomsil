@@ -45,4 +45,40 @@ const update = async (req, res, next) => {
     }
 };
 
-module.exports = { findAll, findById, findDisponibles, create, update };
+const enviar = async (req, res, next) => {
+    try {
+        const resultado = await liquidacionesService.enviar(req.params.id, req.body);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const confirmar = async (req, res, next) => {
+    try {
+        const resultado = await liquidacionesService.confirmar(req.params.id, req.body);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const anular = async (req, res, next) => {
+    try {
+        const resultado = await liquidacionesService.anular(req.params.id, req.body);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const remove = async (req, res, next) => {
+    try {
+        const resultado = await liquidacionesService.remove(req.params.id, req.body);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };

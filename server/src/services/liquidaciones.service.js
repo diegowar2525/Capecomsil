@@ -4,7 +4,7 @@ const detalleLiquidacionModel = require("../models/detalle_liquidacion.model");
 const gasolineraModel = require("../models/gasolinera.model");
 const { lock } = require("../utils/transaction.lock");
 const { validateId } = require("../utils/validators/common.validators");
-const { validateCreacion, validateEdicion, validateDisponibles, validateFiltros } = require("../utils/validators/liquidacion.validators");
+const { validateCreacion, validateEdicion, validateDisponibles, validateFiltros, validateTransicion, validateAnulacion } = require("../utils/validators/liquidacion.validators");
 const { createHttpError } = require("../utils/errors/http.error");
 
 const exigirBorrador = (liquidacion) => {
@@ -142,4 +142,71 @@ const update = async (id, data) => {
     return guardarBorrador(validateId(id), validateEdicion(data));
 };
 
-module.exports = { findAll, findById, findDisponibles, create, update };
+const ejecutarAccion = async (id, datosValidados, accion) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await lock(client);
+        const liquidacion = await liquidacionModel.findByIdForUpdate(client, id);
+        if (!liquidacion) {
+            throw createHttpError("Liquidación no encontrada", 404);
+        }
+        if (liquidacion.version !== datosValidados.version) {
+            throw createHttpError("La liquidación fue modificada; vuelva a consultarla", 409);
+        }
+        const estadosPermitidos = {
+            enviar: ["BORRADOR"], confirmar: ["ENVIADA"],
+            anular: ["BORRADOR", "ENVIADA", "CONFIRMADA"], eliminar: ["BORRADOR"]
+        };
+        if (!estadosPermitidos[accion].includes(liquidacion.estado)) {
+            throw createHttpError("El estado de la liquidación no permite esta operación", 409);
+        }
+        if ((accion === "anular" || accion === "eliminar") && await liquidacionModel.tieneFactura(client, id)) {
+            throw createHttpError("La liquidación tiene una factura asociada", 409);
+        }
+        if (accion === "enviar") {
+            const detalles = await detalleLiquidacionModel.findByLiquidacion(id, client);
+            if (detalles.length === 0) {
+                throw createHttpError("No se puede enviar una liquidación sin entregas", 409);
+            }
+            if (liquidacion.retencion !== "0.00" || liquidacion.recargo !== "0.00") {
+                throw createHttpError("La gestión de retenciones y recargos todavía no está habilitada", 409);
+            }
+        }
+        let resultado;
+        if (accion === "eliminar") {
+            await detalleLiquidacionModel.removeNoSeleccionados(client, id, []);
+            resultado = await liquidacionModel.remove(client, id);
+        } else {
+            const estados = { enviar: "ENVIADA", confirmar: "CONFIRMADA", anular: "ANULADA" };
+            // El trigger verifica copias históricas y totales antes de permitir el envío.
+            await liquidacionModel.cambiarEstado(client, id, estados[accion], datosValidados.motivo);
+            resultado = await consultarCompleta(client, id);
+        }
+        await client.query("COMMIT");
+        return resultado;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+const enviar = async (id, data) => {
+    return ejecutarAccion(validateId(id), validateTransicion(data), "enviar");
+};
+
+const confirmar = async (id, data) => {
+    return ejecutarAccion(validateId(id), validateTransicion(data), "confirmar");
+};
+
+const anular = async (id, data) => {
+    return ejecutarAccion(validateId(id), validateAnulacion(data), "anular");
+};
+
+const remove = async (id, data) => {
+    return ejecutarAccion(validateId(id), validateTransicion(data), "eliminar");
+};
+
+module.exports = { findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };
