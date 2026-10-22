@@ -65,4 +65,5 @@ router.use("/planes-mantenimiento", require("./planes_mantenimiento.routes"));
 router.use("/gastos", require("./gastos.routes"));
 router.use("/abastecimientos-combustible", require("./abastecimientos_combustible.routes"));
 router.use("/informes", require("./informes.routes"));
+router.use("/liquidaciones", require("./liquidaciones.routes"));
 module.exports = router;
