@@ -52,7 +52,7 @@ cobros a clientes necesitarán sus propios permisos.
 
 El permiso `viajes.editar` habilita la edición transaccional. `cierres.*` e `importaciones.*` reservan capacidades
 para etapas posteriores: su existencia no habilita funcionalidades. El cierre y
-la reapertura de remuneraciones siguen bloqueados como antes.
+la reapertura de remuneraciones fueron retirados para dejar un único cierre operativo.
 Las asignaciones se cargan explícitamente al crear el esquema o aplicar la migración.
 Agregar permisos nuevos requiere una migración con sus asignaciones; no se conceden
 automáticamente a roles existentes.
@@ -76,9 +76,9 @@ administrativos de consulta y mutación están protegidos por sus permisos espec
 
 ## Instalación
 
-Para una base nueva, usar `database/schema.sql`: contiene 46 tablas y los catálogos
+Para una base nueva, usar `database/schema.sql`: contiene 45 tablas y los catálogos
 iniciales, incluida la tabla de intentos de la etapa 2. No aplicar después las
-migraciones 014/015/016/017/018 ni duplicar estos datos en el seed.
+migraciones 014/015/016/017/018/019 ni duplicar estos datos en el seed.
 
 Para una base existente actualizada hasta la migración 013, revisar y ejecutar
 `database/migrations/014_usuarios_roles_permisos.sql`. Es transaccional y conserva

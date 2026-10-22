@@ -8,7 +8,8 @@
    con protección del último jefe activo (017).
 5. Edición de viajes: implementada, con cabecera, entregas, tramos, recálculos,
    control de versiones y autoría en una transacción (018).
-6. Cierre operativo: pendiente. Cierre manual solo del jefe o automático a las
+6. Cierre operativo: pendiente. El cierre propio de remuneraciones fue retirado
+   (migración 019), conservando importes y costos. Cierre manual solo del jefe o automático a las
    18:00 del día siguiente, hora de Ecuador. Bloquea altas, edición y anulación de
    viajes; gastos y abastecimientos siguen disponibles. El jefe reabre con motivo;
    jefe y operadores corrigen hasta las 18:00 del día siguiente a la reapertura,

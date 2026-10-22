@@ -4,7 +4,7 @@ Cada viaje recibe `fecha_inicio` y `fecha_fin` con fecha y hora local sin zona, 
 `"2026-10-13T08:00:00"` y `"2026-10-13T12:00:00"`. El fin debe ser posterior al inicio
 y estar dentro del mismo día. No se acepta el antiguo campo `fecha` en el registro de viajes.
 El día de `fecha_inicio` determina la remuneración diaria y la configuración aplicable.
-Registrar o anular un viaje recalcula el importe diario y sus asignaciones dentro de la misma transacción.
+Registrar, editar o anular un viaje recalcula el importe diario y sus asignaciones dentro de la misma transacción.
 
 ## Reglas con la configuración inicial de $35 + $35
 
@@ -22,7 +22,7 @@ Los feriados no vienen precargados: deben registrarse antes de generar remunerac
 
 Con tres viajes en un día normal, las asignaciones son 11.67, 11.67 y 11.66, ordenadas por ID de viaje.
 Se calcula en PostgreSQL con NUMERIC y centavos enteros, sin aritmética binaria de JavaScript.
-Mientras el día está abierto, registrar o anular viajes redistribuye sus costos. La remuneración diaria conserva
+Registrar, editar o anular viajes redistribuye sus costos. La remuneración diaria conserva
 la modalidad y configuración que utilizó por primera vez. La anulación del último viaje elimina sus asignaciones,
 pero puede dejar un costo diario sin asignar para un chofer fijo.
 
@@ -70,17 +70,25 @@ El operador debe elegir únicamente su período de actividad; una configuración
 
 `GET /api/remuneraciones-chofer?id_chofer=1&fecha_desde=2026-10-01&fecha_hasta=2026-10-31`
 consulta lo ya generado. `GET /api/remuneraciones-chofer/:id` consulta un día.
-Incluyen `total`, `costo_asignado`, `costo_sin_asignar`, modalidad y estado. Los importes se devuelven como texto decimal.
+Incluyen `total`, `costo_asignado`, `costo_sin_asignar` y modalidad. Los importes se devuelven como texto decimal.
 GET de un viaje y POST de creación incluyen `costos` con sus asignaciones actuales.
 
-`POST /api/remuneraciones-chofer/:id/cerrar` y `/:id/reabrir` devuelven **403**.
-No existe clave provisional ni campo de rol que permita saltarse el bloqueo. PostgreSQL también impide cambiar el estado a CERRADO.
-El historial está preparado, pero su escritura y las autorizaciones se implementarán con usuarios.
+Las remuneraciones no tienen cierre propio. Se retiraron `estado`, `fecha_cierre`,
+la tabla de historial de cierres y las rutas `/:id/cerrar` y `/:id/reabrir`.
+Estas rutas ya no existen (404 para peticiones autenticadas válidas); el GET individual
+ya no devuelve `historial`. Los importes históricos y las asignaciones se conservan.
+
+El único cierre previsto será el operativo del día, pendiente del paso 6. Protegerá
+las altas, ediciones y anulaciones de viajes; al reabrir y corregir viajes se recalcularán
+sus remuneraciones. Los permisos `cierres.*` se mantienen reservados para ese módulo.
 
 ## Transacciones y despliegue
 
-Aplicar una sola vez `database/migrations/012_remuneracion_diaria.sql` a una base anterior y desplegar el backend actualizado conjuntamente.
-La migración conserva datos y rechaza viajes antiguos de varios días o costos CHOFER manuales que requieran conciliación.
+Para una base actualizada hasta la 018, aplicar `database/migrations/019_retirar_cierre_remuneracion.sql`
+y desplegar el backend actualizado conjuntamente. Retira exclusivamente la estructura de cierre,
+incluidos sus posibles eventos, y actualiza la función de recálculo sin borrar remuneraciones ni costos.
+La migración no se aplica automáticamente. Si la base es anterior, revisar y aplicar primero
+las migraciones faltantes en orden; la 012 se conserva como antecedente histórico.
 Para instalación nueva: `schema.sql`, después `seed.sql`; no ejecutar además las migraciones anteriores.
 
 Las operaciones de remuneración y los cambios de configuración/calendario toman el mismo candado transaccional de PostgreSQL

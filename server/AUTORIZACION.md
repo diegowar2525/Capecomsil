@@ -59,8 +59,8 @@ No se devuelven hashes de contraseñas ni tokens. Crear, editar, desactivar y
 restablecer cuentas por HTTP está implementado en la etapa 4:
 [ADMINISTRACION_USUARIOS.md](ADMINISTRACION_USUARIOS.md).
 
-Los endpoints antiguos de cerrar/reabrir remuneraciones exigen `cierres.cerrar`
-y `cierres.reabrir`, pero el servicio sigue rechazándolos incluso para el jefe.
+Los endpoints antiguos de cerrar/reabrir remuneraciones fueron retirados.
+Los permisos `cierres.*` se conservan para el futuro cierre operativo.
 La edición de viajes usa `viajes.editar` y su historial `viajes.consultar`:
 ver [VIAJES.md](VIAJES.md). El cierre del día operativo y la importación histórica
 aún no están implementados; disponer de sus permisos no los habilita.

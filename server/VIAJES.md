@@ -132,7 +132,7 @@ del viaje, entregas, tramos y costos. No hay rutas para modificar o borrar el hi
 Cubre ediciones realizadas por esta API, no reconstruye autoría de registros antiguos.
 Si falla el historial o una validación, se revierte toda la edición y sus recálculos.
 
-Base nueva: `database/schema.sql` (46 tablas). Base actualizada hasta la 017:
+Base nueva: `database/schema.sql` (45 tablas). Base actualizada hasta la 017:
 aplicar `database/migrations/018_edicion_viajes.sql`. La migración asigna versión 1
 a viajes existentes sin inventar eventos anteriores. No se ejecuta automáticamente.
 El cierre de días todavía corresponde al punto 6; esta edición aún no bloquea por

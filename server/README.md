@@ -58,7 +58,7 @@ credenciales; la 017 añade el historial administrativo. No se aplican automáti
 
 ## Base de datos
 
-Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 46 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
+Para una base vacía, ejecutar `database/schema.sql` desde la raíz del proyecto. Define las 45 tablas actuales, restricciones, funciones, triggers y la extensión `btree_gist`, además de los roles y permisos iniciales. Requiere permisos para crear esos objetos.
 
 ```sh
 psql -1 -v ON_ERROR_STOP=1 -d capecomsildb -f database/schema.sql
@@ -107,7 +107,7 @@ está registrado en [PLAN_IMPLEMENTACION.md](PLAN_IMPLEMENTACION.md).
 
 Los importes dependen de la configuración vigente. Los feriados deben registrarse antes de generar las remuneraciones correspondientes. La modalidad y configuración aplicadas se conservan en el registro diario.
 
-`/api/configuraciones-remuneracion` y `/api/feriados` ofrecen CRUD. `POST /api/remuneraciones-chofer/generar` genera un período explícito de un chofer; los GET de lista y detalle consultan los días generados. Los POST `/:id/cerrar` y `/:id/reabrir` siguen bloqueados con 403, incluso para el jefe; queda pendiente implementar el cierre del día operativo.
+`/api/configuraciones-remuneracion` y `/api/feriados` ofrecen CRUD. `POST /api/remuneraciones-chofer/generar` genera un período explícito de un chofer; los GET de lista y detalle consultan los días generados. Las remuneraciones no tienen estado ni cierre propio: se retiraron las rutas de cerrar/reabrir y su historial mediante la migración 019. El único cierre previsto es el operativo del día, todavía pendiente.
 
 El registro de viajes requiere configuraciones vigentes de remuneración, combustible, viático y peajes, incluido cero cuando un trayecto no tenga peaje. No se presupone un costo cero si falta una configuración. Las configuraciones de costos se administran en:
 

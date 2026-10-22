@@ -85,7 +85,7 @@ Al anular, se conservan combustible y peajes como estimaciones históricas del v
 Los informes vigentes deben excluir viajes ANULADOS. Se eliminan sus asignaciones de chofer
 y viático y se redistribuyen entre los restantes. Sin viajes, el viático diario queda en cero;
 la remuneración conserva las reglas del chofer fijo. Ninguna de estas operaciones registra
-pagos ni gastos reales. El cierre y reapertura de remuneraciones siguen bloqueados.
+pagos ni gastos reales. Las remuneraciones no tienen cierre propio; el cierre operativo del día está pendiente.
 
 ## Pruebas
 

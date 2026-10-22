@@ -7,11 +7,11 @@ Los nombres siguientes coinciden con `schema.sql`. Las entidades no enumeradas n
 ### VIAJE
 
 `id_viaje` INTEGER PK; `id_vehiculo` INTEGER FK → VEHICULO; `id_chofer` INTEGER FK → CHOFER;
-`fecha` DATE NOT NULL; `estado` VARCHAR(30) REGISTRADO/ANULADO; `fecha_anulacion` TIMESTAMP nullable;
-`motivo_anulacion` VARCHAR(150) nullable.
+`fecha_inicio` y `fecha_fin` TIMESTAMP NOT NULL; `estado` VARCHAR(30) REGISTRADO/ANULADO;
+`fecha_anulacion` TIMESTAMP nullable; `motivo_anulacion` VARCHAR(150) nullable; `version` INTEGER.
 
-Se sustituyen `fecha_inicio` y `fecha_fin` por `fecha`. Cada viaje pertenece a un único día;
-no se registran horarios ni pernoctaciones. El recorrido, las entregas y la aplicación de tarifas se conservan.
+Cada viaje pertenece a un único día, con hora de fin posterior a la de inicio.
+El día de inicio determina la remuneración. El recorrido, las entregas y la aplicación de tarifas se conservan.
 
 ### CHOFER
 
@@ -70,27 +70,14 @@ No se altera el calendario de fechas que ya tienen remuneraciones generadas.
 | importe_base | NUMERIC(12,2), no negativo |
 | importe_adicional | NUMERIC(12,2), no negativo |
 | total | NUMERIC(12,2), base + adicional |
-| estado | VARCHAR(10): ABIERTO / CERRADO |
 | fecha_creacion | TIMESTAMP |
-| fecha_cierre | TIMESTAMP nullable |
 | observacion | TEXT nullable |
 
 UNIQUE (`id_chofer`, `fecha`). Existe una remuneración por chofer y día, aunque haya varios viajes.
 
-### HISTORIAL_REMUNERACION_CHOFER
-
-| Atributo | Tipo / restricción |
-|---|---|
-| id_historial_remuneracion_chofer | INTEGER PK |
-| id_remuneracion_chofer | INTEGER FK → REMUNERACION_CHOFER |
-| accion | VARCHAR(10): CIERRE / REAPERTURA |
-| fecha | TIMESTAMP |
-| motivo | TEXT obligatorio |
-| responsable | TEXT obligatorio |
-
-Estructura reservada: todavía no se generan eventos porque cierre y reapertura están bloqueados.
-Al implementar usuarios, `responsable` deberá vincularse a una identidad autenticada mediante la migración correspondiente;
-no se aceptará una identidad enviada libremente por el frontend. No existe todavía una relación con USUARIO.
+La migración 019 retira el estado, la fecha de cierre y el antiguo historial de cierres.
+La remuneración conserva importes y configuración histórica. El cierre operativo de
+viajes se implementará por separado; todavía no forma parte del esquema.
 
 ## Relaciones
 
@@ -102,7 +89,6 @@ erDiagram
     FERIADO o|--o{ REMUNERACION_CHOFER : corresponde
     REMUNERACION_CHOFER o|--o{ COSTO_VIAJE : se_distribuye
     VIAJE ||--o{ COSTO_VIAJE : tiene
-    REMUNERACION_CHOFER ||--o{ HISTORIAL_REMUNERACION_CHOFER : registra
 ```
 
 No se incluyen pagos a choferes. El cliente mantiene sus roles de pago fuera del sistema.

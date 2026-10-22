@@ -8,11 +8,11 @@ Esta etapa por sí sola no hace que la aplicación completa esté lista para pro
 
 ## Instalación
 
-1. Base nueva: ejecutar `database/schema.sql` (46 tablas). Base existente con etapa 1:
+1. Base nueva: ejecutar `database/schema.sql` (45 tablas). Base existente con etapa 1:
    aplicar `database/migrations/015_autenticacion_intentos.sql`; si falta la etapa 1,
    aplicar antes la 014. Después aplicar la 016 para revocar sesiones al desactivar
    cuentas o cambiar credenciales, la 017 para el historial administrativo y la 018
-   para edición y auditoría de viajes.
+   para edición y auditoría de viajes. La 019 retira el cierre propio de remuneraciones.
    No aplicar estas migraciones sobre el esquema nuevo completo.
 2. Configurar `.env` siguiendo `.env.example`. `AUTH_ORIGINS` contiene orígenes
    exactos sin barra final. En producción es obligatorio configurar orígenes HTTPS
