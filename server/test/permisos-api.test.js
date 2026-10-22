@@ -17,7 +17,7 @@ const mounts = {
     productos_transportados: "productos-transportados", productos: "productos", proveedores: "proveedores",
     recepciones_compra: "recepciones-compra", remuneraciones: "remuneraciones-chofer", tarifas: "tarifas",
     terminales: "terminales", trayectos: "trayectos", vehiculos: "vehiculos", viajes: "viajes",
-    usuarios: "usuarios", roles: "roles", permisos: "permisos"
+    usuarios: "usuarios", roles: "roles", permisos: "permisos", liquidaciones: "liquidaciones"
 };
 
 test("Permisos: toda ruta operativa declara un permiso existente", () => {
