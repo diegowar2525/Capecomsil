@@ -20,7 +20,7 @@ const main = async () => {
     try {
         const nombre_usuario = await rl.question("Nombre de usuario: ");
         const nombre = await rl.question("Nombre personal: ");
-        process.stdout.write("Contraseña (15 a 128 caracteres, entrada oculta): ");
+        process.stdout.write("Contraseña (10 a 128 caracteres, entrada oculta): ");
         ocultar = true;
         const password = await rl.question("");
         process.stdout.write("\nRepita la contraseña: ");

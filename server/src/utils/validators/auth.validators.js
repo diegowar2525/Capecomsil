@@ -14,9 +14,9 @@ const validateNombreUsuario = (value) => {
 };
 
 const validatePassword = (value, nueva = false) => {
-    if (typeof value !== "string" || [...value].length < (nueva ? 15 : 1)
+    if (typeof value !== "string" || [...value].length < (nueva ? 10 : 1)
         || [...value].length > 128 || Buffer.byteLength(value, "utf8") > 512) {
-        throw createHttpError(nueva ? "La contraseña debe tener entre 15 y 128 caracteres" : "Contraseña inválida", 400);
+        throw createHttpError(nueva ? "La contraseña debe tener entre 10 y 128 caracteres" : "Contraseña inválida", 400);
     }
     return value;
 };
