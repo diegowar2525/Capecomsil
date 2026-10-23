@@ -37,8 +37,20 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
-  padding: 0 12px;
+  color: var(--sidebar-category-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 12px;
   margin-bottom: 6px;
   font-weight: 600;
 }
@@ -145,4 +157,21 @@
         outline: 3px solid #60a5fa;
         outline-offset: 3px;
     }
+}
+.sidebar-section-label:hover {
+  background-color: var(--bg-sidebar-hover);
+}
+
+.sidebar-section-label:focus-visible {
+  outline: 3px solid var(--sidebar-category-color);
+  outline-offset: 2px;
+}
+
+.sidebar-section-chevron {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-menu-list[hidden] {
+  display: none;
 }

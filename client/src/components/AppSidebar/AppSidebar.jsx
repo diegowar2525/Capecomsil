@@ -1,5 +1,44 @@
 
-import { useRef } from 'react';
+import { useId, useState } from 'react';
+
+function SidebarGroup({ group, activePath, onClose }) {
+    const menuId = useId();
+    const [isExpanded, setIsExpanded] = useState(() =>
+        group.items.some((item) => item.path === activePath)
+    );
+
+    return (
+        <div>
+            <button
+                type="button"
+                className="sidebar-section-label"
+                aria-expanded={isExpanded}
+                aria-controls={menuId}
+                onClick={() => setIsExpanded((expanded) => !expanded)}
+            >
+                <span>{group.section}</span>
+                <span className="sidebar-section-chevron" aria-hidden="true">
+                    {isExpanded ? '▾' : '▸'}
+                </span>
+            </button>
+
+            <ul id={menuId} className="sidebar-menu-list" hidden={!isExpanded}>
+                {group.items.map((item) => (
+                    <li key={item.path}>
+                        <a
+                            href={`#${item.path}`}
+                            aria-current={activePath === item.path ? 'page' : undefined}
+                            className={`sidebar-link ${activePath === item.path ? 'active' : ''}`}
+                            onClick={onClose}
+                        >
+                            <span>{item.label}</span>
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
 
 export function Sidebar({
     groups,
@@ -36,34 +75,12 @@ export function Sidebar({
 
             <nav className="sidebar-nav">
                 {groups.map((group) => (
-                    <div key={group.section}>
-                        <p className="sidebar-section-label">
-                            {group.section}
-                        </p>
-
-                        <ul className="sidebar-menu-list">
-                            {group.items.map((item) => (
-                                <li key={item.path}>
-                                    <a
-                                        href={`#${item.path}`}
-                                        aria-current={
-                                            activePath === item.path
-                                                ? 'page'
-                                                : undefined
-                                        }
-                                        className={`sidebar-link ${
-                                            activePath === item.path
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        onClick={onClose}
-                                    >
-                                        <span>{item.label}</span>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    <SidebarGroup
+                        key={`${group.section}:${activePath}`}
+                        group={group}
+                        activePath={activePath}
+                        onClose={onClose}
+                    />
                 ))}
             </nav>
         </aside>
