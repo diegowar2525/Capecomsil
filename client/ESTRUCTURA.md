@@ -1,8 +1,8 @@
 # Organización del frontend
 
 La aplicación conserva el diseño inicial y aún no está conectada a las APIs.
-Los formularios de ejemplo no guardan datos. Las pantallas operativas tienen
-su propio componente; sus formularios se implementarán con los contratos del backend.
+Los formularios no guardan datos. Las pantallas operativas incluyen plantillas de
+formularios y acciones según los contratos actuales del backend. Ver COBERTURA_API.md.
 
 - `App.jsx`: compone layout, navegación y pantalla activa.
 - `app/routes.jsx`: registro de rutas con componente, etiqueta y grupo del menú.
@@ -11,8 +11,8 @@ su propio componente; sus formularios se implementarán con los contratos del ba
 - `app/AppRoutes.jsx`: resuelve pantallas y muestra página no encontrada.
 - `layouts/AppLayout.jsx`: estructura visual compartida.
 - `modules/<modulo>/`: página, columnas y configuración propias del módulo.
-- `components/`: elementos reutilizables. `CatalogoPage` se usa únicamente en
-  catálogos sencillos; sus campos se declaran aparte de las columnas.
+- `components/`: elementos reutilizables. `CatalogoPage` comparte listado, búsqueda local, acciones y modales entre
+  catálogos y operaciones. Los campos, filtros y acciones se declaran aparte de las columnas.
 - `styles/`: conserva variables, estilos base, componentes y vistas.
 
 ## Agregar una pantalla
@@ -49,7 +49,7 @@ menú no sustituye los permisos del backend. Al integrar APIs, crear
 cada módulo. No se crean servicios vacíos ni un sistema de autenticación ficticio.
 
 Viajes conserva un formulario visual provisional con cabecera, entregas múltiples
-y tramos; cargar catálogos y enviar datos está pendiente. Liquidaciones muestra columnas por gasolinera y período.
+y tramos; cargar catálogos y enviar datos está pendiente. Liquidaciones incluye borradores, selección de entregas y modales de transición de estado.
 Facturación y cobros continúan pendientes también en el backend.
 
 `DataTable` admite `rowKey` (nombre de campo o función), `loading` y `error`.
@@ -96,3 +96,27 @@ la API cuando son más restrictivos que el esquema, como el RUC obligatorio.
 Los booleanos se muestran como Activo/Inactivo o Sí/No. Los campos calculados
 no se convierten automáticamente en entradas editables. Los indicadores del
 dashboard son un contrato visual provisional y no tienen endpoint de agregación.
+
+## Plantillas y acciones de los módulos
+
+- `<modulo>.fields.js`: campos editables; `<modulo>.columns.js`: datos de consulta.
+- `<modulo>.actions.js`: acciones, estados permitidos, campos y tablas de los modales.
+- `<modulo>.filters.js`: filtros del contrato de consulta; no ejecutan peticiones todavía.
+- `CatalogoPage/TemplateForm.jsx`: campos condicionales, selección múltiple, grupos y filas dinámicas.
+- `CatalogoPage/catalogo.actions.js`: acciones comunes de los catálogos.
+- `Modal`: cierre con Escape, manejo de foco, bloqueo de scroll y disposición adaptable.
+
+`CatalogoPage` admite `data` y `catalogos`. Los catálogos genéricos son un mapa por
+`source` con opciones `{ value, label }`; el formulario especializado de viajes
+conserva sus arrays de entidades. Los selectores permanecen vacíos sin datos.
+Las acciones por fila respetan estados declarados; con listas vacías hay una
+sección explícita de vista previa para examinar los modales sin inventar registros.
+Los filtros remotos y el guardado permanecen deshabilitados; el buscador solo
+filtra los datos recibidos por props.
+
+La edición de viajes reconstruye la vista con `domain/edicion.js`. La integración
+futura debe conservar IDs de entregas/tramos y enviar versión y motivo en PUT;
+el preparador de creación no es todavía un adaptador de edición.
+
+Usuarios, roles, permisos y autenticación quedan fuera por decisión del usuario.
+Verificación: `node --test test/plantillas.test.js test/viajes.recorrido.test.js`.
