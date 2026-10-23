@@ -15,16 +15,16 @@ export function Dashboard({ stats = {}, recentTrips = [] }) {
 
             <section className="kpi-grid">
                 <div className="kpi-card">
-                    <span className="kpi-label">Viajes en Curso</span>
-                    <strong className="kpi-value">{stats.viajesActivos ?? '—'}</strong>
+                    <span className="kpi-label">Viajes registrados</span>
+                    <strong className="kpi-value">{stats.viajesRegistrados ?? '—'}</strong>
                 </div>
                 <div className="kpi-card">
                     <span className="kpi-label">Volumen Transportado (Gal)</span>
                     <strong className="kpi-value">{stats.volumenTotal ?? '—'}</strong>
                 </div>
                 <div className="kpi-card">
-                    <span className="kpi-label">Liquidaciones Pendientes</span>
-                    <strong className="kpi-value">{stats.liquidacionesPendientes ?? '—'}</strong>
+                    <span className="kpi-label">Liquidaciones en borrador</span>
+                    <strong className="kpi-value">{stats.liquidacionesBorrador ?? '—'}</strong>
                 </div>
                 <div className="kpi-card">
                     <span className="kpi-label">Facturación del Mes</span>
@@ -34,7 +34,7 @@ export function Dashboard({ stats = {}, recentTrips = [] }) {
 
             <section className="surface-card">
                 <h3 style={{ marginBottom: '16px', fontSize: '1rem' }}>Actividad Reciente de Viajes</h3>
-                <DataTable columns={columns} data={recentTrips} />
+                <DataTable rowKey="id_viaje" columns={columns} data={recentTrips} />
             </section>
         </div>
     );

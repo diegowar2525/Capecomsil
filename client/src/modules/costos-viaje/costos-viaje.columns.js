@@ -1,6 +1,6 @@
 export const columns = [
     {
-        "key": "id_costo_viaje",
+        "key": "id_costo",
         "label": "ID"
     },
     {

@@ -7,7 +7,7 @@ export function CostosViajePage() {
     return (
         <section>
             <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_costo_viaje" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
+            <DataTable rowKey="id_costo" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
         </section>
     );
 }

@@ -6,7 +6,7 @@ export function FormField({ name, label, type = 'text', options = [], ...props }
         <div className="form-group">
             <label htmlFor={id} className="form-label">{label}</label>
             {type === 'select' ? (
-                <select id={id} name={name} className="form-select" defaultValue="" {...props}>
+                <select id={id} name={name} className="form-select" {...(props.value === undefined ? { defaultValue: '' } : {})} {...props}>
                     <option value="">Seleccionar…</option>
                     {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
