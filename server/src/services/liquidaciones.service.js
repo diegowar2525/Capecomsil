@@ -156,8 +156,11 @@ const ejecutarAccion = async (id, datosValidados, accion) => {
         }
         const estadosPermitidos = {
             enviar: ["BORRADOR"], confirmar: ["ENVIADA"],
-            anular: ["BORRADOR", "ENVIADA", "CONFIRMADA"], eliminar: ["BORRADOR"]
+            anular: ["ENVIADA", "CONFIRMADA"], eliminar: ["BORRADOR"]
         };
+        if (accion === "anular" && liquidacion.estado === "BORRADOR") {
+            throw createHttpError("Un borrador no se puede anular; puede eliminarlo", 409);
+        }
         if (!estadosPermitidos[accion].includes(liquidacion.estado)) {
             throw createHttpError("El estado de la liquidación no permite esta operación", 409);
         }
