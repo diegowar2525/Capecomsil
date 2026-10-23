@@ -12,9 +12,11 @@ Todas las operaciones requieren sesión y su permiso. Las escrituras requieren
 
 ## DETALLE_VIAJE
 
-`id_detalle_viaje` (PK), `id_viaje` (FK), `id_tarifa` (FK obligatoria), `id_producto_transportado` (FK), `galones`, `tarifa_aplicada`, `valor_transporte`.
+`id_detalle_viaje` (PK), `id_viaje` (FK), `id_gasolinera`, `id_terminal`, `id_modalidad_tarifa`, exactamente una FK entre `id_tarifa` e `id_tarifa_capacidad`, `id_producto_transportado` (FK), `galones`, `tarifa_aplicada`, `valor_transporte`.
 
-Relaciones: un viaje tiene varios detalles; una tarifa puede utilizarse en varios detalles; una liquidación agrupa entregas mediante `detalle_liquidacion`; cada producto transportado puede aparecer en varias entregas. Gasolinera y terminal se obtienen desde la tarifa de cada detalle. COSTO_VIAJE continúa asociado al viaje completo.
+Relaciones: un viaje tiene varios detalles; una tarifa puede utilizarse en varios detalles; una liquidación agrupa entregas mediante `detalle_liquidacion`; cada producto transportado puede aparecer en varias entregas. Gasolinera y terminal se conservan en cada detalle. COSTO_VIAJE continúa asociado al viaje completo.
+
+La modalidad vigente en la fecha de inicio selecciona tarifa por gasolinera/terminal o por gasolinera/capacidad del vehículo. Ambas cobran sobre galones entregados. Ver [TARIFAS_CAPACIDAD.md](TARIFAS_CAPACIDAD.md), incluida la migración 024 necesaria para instalaciones existentes.
 
 Las tarifas utilizadas conservan su protección histórica, incluso si el viaje está anulado. La vigencia se valida al asignar o cambiar una tarifa, mover una entrega a otro viaje y cambiar la fecha del viaje. Las claves foráneas impiden eliminar tarifas utilizadas.
 
@@ -44,7 +46,7 @@ La relación con liquidaciones se almacena en `detalle_liquidacion`, que conserv
 }
 ```
 
-Inicio y fin requieren fecha y hora local sin zona, dentro del mismo día y con fin posterior al inicio. El día de inicio determina la vigencia de las tarifas y la remuneración diaria del chofer. Los galones deben ser positivos y admitir como máximo dos decimales. Debe existir una tarifa que cubra la fecha para cada gasolinera y terminal, sin importar su estado administrativo. Se rechaza repetir la misma combinación de gasolinera, terminal y combustible; un combustible sí puede entregarse a varios destinos.
+Inicio y fin requieren fecha y hora local sin zona, dentro del mismo día y con fin posterior al inicio. El día de inicio determina la vigencia de las tarifas y la remuneración diaria del chofer. Los galones deben ser positivos y admitir como máximo dos decimales. Debe existir una tarifa que cubra la fecha según la modalidad de la gasolinera. Por terminal se conserva el comportamiento histórico sin filtrar su estado administrativo; por capacidad se exige una tarifa activa para la capacidad exacta del vehículo, sin alternativa automática. Se rechaza repetir la misma combinación de gasolinera, terminal y combustible; un combustible sí puede entregarse a varios destinos.
 
 La respuesta 201 incluye viaje, detalles, tramos, `kilometros_recorridos`, `total_galones` y `valor_transporte`. Las cantidades e importes son cadenas decimales. El precio se copia de la tarifa y el importe se redondea a dos decimales por entrega en PostgreSQL NUMERIC. Los totales suman los detalles. El registro no asocia entregas a liquidaciones. Los detalles de la respuesta POST se consultan dentro de la misma transacción y tienen la misma representación que en el GET individual: incluyen nombres de gasolinera, terminal y combustible, y el campo calculado `id_liquidacion`, que es null al crear el viaje. Estado, tarifas e importes enviados por el cliente se ignoran.
 

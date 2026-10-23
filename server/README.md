@@ -30,6 +30,8 @@ Desde `client`, ejecutar `npm install` y `npm run dev` para iniciar Vite. La pan
 
 ## Estado actual
 
+Tarifas por capacidad e historial de modalidades por gasolinera: [guía de API y migración 024](TARIFAS_CAPACIDAD.md). El servidor selecciona la modalidad según la fecha del viaje; las pantallas correspondientes ya tienen plantillas de catálogo y modal.
+
 La tabla describe código presente en el repositorio. No implica que los módulos tengan interfaz ni que todas las pruebas se hayan ejecutado satisfactoriamente.
 
 | Área | Implementación actual |
