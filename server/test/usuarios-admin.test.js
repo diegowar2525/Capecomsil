@@ -45,6 +45,8 @@ test("Administración HTTP: ciclo de cuentas, historial atómico y último jefe 
         await admin.query("ALTER TABLE usuario DROP COLUMN correo, DROP COLUMN imagen_url");
         const perfilMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/023_usuario_perfil.sql"), "utf8");
         await admin.query(perfilMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const tarifasMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
+        await admin.query(tarifasMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
