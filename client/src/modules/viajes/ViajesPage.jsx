@@ -1,13 +1,12 @@
-import { ViajeForm } from './ViajeForm.jsx';
+import { ViajeForm } from './components/ViajeForm.jsx';
 import { columns } from './viajes.columns.js';
 import React, { useState } from 'react';
 import { PageHeader } from '../../components/PageHeader/PageHeader';
 import { DataTable } from '../../components/DataTable/DataTable';
 import { Modal } from '../../components/Modal/Modal';
 
-export function Viajes({ viajes = [] }) {
+export function Viajes({ viajes = [], catalogos = {} }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
-
 
 
     return (
@@ -47,7 +46,7 @@ export function Viajes({ viajes = [] }) {
                     </>
                 }
             >
-                <ViajeForm />
+                <ViajeForm catalogos={catalogos} />
             </Modal>
         </div>
     );
