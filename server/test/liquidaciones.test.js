@@ -65,6 +65,8 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         assert.equal((await admin.query("SELECT version FROM liquidacion")).rows[0].version, 1);
         const accionesMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/021_liquidaciones_acciones.sql"), "utf8");
         await admin.query(accionesMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const restriccionMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/022_liquidaciones_no_anular_borrador.sql"), "utf8");
+        await admin.query(restriccionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -256,17 +258,21 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         assert.equal((await request(borrarRuta)).status, 404);
         assert.equal((await preview({ ...periodo, id_gasolinera: 2 })).body.cantidad, 1);
         assert.equal((await isolated.query("SELECT count(*)::int n FROM detalle_liquidacion WHERE id_liquidacion=$1", [borrador.id_liquidacion])).rows[0].n, 0);
-        // Anular también está permitido desde borrador y desde enviada.
-        for (const enviarPrimero of [false, true]) {
-            let nueva = (await create({ ...periodo, id_gasolinera: 2 })).body;
-            const nuevaRuta = "/liquidaciones/" + nueva.id_liquidacion;
-            if (enviarPrimero) {
-                nueva = (await request(nuevaRuta + "/enviar", "POST", { version: nueva.version })).body;
-            }
-            const respuesta = await request(nuevaRuta + "/anular", "POST", { version: nueva.version, motivo: "Descartada" });
-            assert.equal(respuesta.status, 200, JSON.stringify(respuesta.body));
-            assert.equal(respuesta.body.estado, "ANULADA");
-        }
+        // El borrador rechaza anulación por HTTP y también mediante SQL directo.
+        let nueva = (await create({ ...periodo, id_gasolinera: 2 })).body;
+        const nuevaRuta = "/liquidaciones/" + nueva.id_liquidacion;
+        const intento = await request(nuevaRuta + "/anular", "POST", { version: nueva.version, motivo: "Descartada" });
+        assert.equal(intento.status, 409);
+        assert.deepEqual((await request(nuevaRuta)).body, nueva);
+        await assert.rejects(isolated.query(`UPDATE liquidacion SET estado='ANULADA', version=version+1,
+            fecha_anulacion=clock_timestamp(), motivo_anulacion='Intento directo' WHERE id_liquidacion=$1`,
+            [nueva.id_liquidacion]), { code: "23514", constraint: "liquidacion_transicion" });
+        assert.deepEqual((await request(nuevaRuta)).body, nueva);
+        // Enviada sí permite anular; confirmada se verifica antes en esta misma prueba.
+        nueva = (await request(nuevaRuta + "/enviar", "POST", { version: nueva.version })).body;
+        const respuesta = await request(nuevaRuta + "/anular", "POST", { version: nueva.version, motivo: "Descartada" });
+        assert.equal(respuesta.status, 200, JSON.stringify(respuesta.body));
+        assert.equal(respuesta.body.estado, "ANULADA");
         assert.equal((await request("/liquidaciones/999999/enviar", "POST", { version: 1 })).status, 404);
         assert.equal((await request("/liquidaciones/999999")).status, 404);
         assert.equal((await request("/liquidaciones/abc")).status, 400);
