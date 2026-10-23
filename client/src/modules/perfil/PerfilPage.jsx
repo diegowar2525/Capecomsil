@@ -3,7 +3,6 @@ import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
 import { usePerfil } from './hooks/usePerfil.js';
 import { Avatar } from './components/Avatar.jsx';
 import { PerfilModal } from './components/PerfilModal.jsx';
-import './perfil.css';
 
 export function PerfilPage() {
     const { usuario, loading, error, recargar, guardar } = usePerfil();

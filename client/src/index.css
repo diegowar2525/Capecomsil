@@ -12,6 +12,7 @@
 @import './styles/components/form.css';
 @import './styles/components/table.css';
 
-/* Views */
-@import './styles/views/dashboard.css';
-@import './styles/views/viajes.css';
+/* Modules */
+@import './styles/modules/dashboard.css';
+@import './styles/modules/viajes.css';
+@import './styles/modules/perfil.css';
