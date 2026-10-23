@@ -8,6 +8,7 @@ const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { exigirPermiso } = require("../src/middlewares/auth.middleware");
 
 const mounts = {
+    tarifas_capacidad: "tarifas-capacidad", modalidades_tarifa: "modalidades-tarifa",
     abastecimientos_combustible: "abastecimientos-combustible", categorias_producto: "categorias-producto",
     choferes: "choferes", configuracion_combustible: "configuraciones-combustible",
     configuracion_peaje_trayecto: "configuraciones-peaje-trayecto", configuracion_remuneracion: "configuraciones-remuneracion",

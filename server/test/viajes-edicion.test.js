@@ -73,6 +73,12 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         await admin.query("SET CONSTRAINTS ALL IMMEDIATE");
         await admin.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         assert.equal((await admin.query("SELECT version FROM viaje")).rows[0].version, 1);
+        for (const archivo of ['020_liquidaciones_borradores.sql','021_liquidaciones_acciones.sql','022_liquidaciones_no_anular_borrador.sql']) {
+            const sql = fs.readFileSync(path.join(__dirname, '../../database/migrations', archivo), 'utf8');
+            await admin.query(sql.replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        }
+        const capacidadMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
+        await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -157,7 +163,9 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         const liquidacion = (await isolated.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (1,'2026-10-01','2026-10-31') RETURNING id_liquidacion")).rows[0].id_liquidacion;
         await isolated.query("INSERT INTO detalle_liquidacion(id_liquidacion,id_detalle_viaje) VALUES ($1,$2)", [liquidacion, actual.detalles[0].id_detalle_viaje]);
         assert.equal((await editar(payload(actual))).status, 409);
-        await isolated.query("UPDATE liquidacion SET estado='ANULADA',fecha_anulacion=CURRENT_TIMESTAMP,motivo_anulacion='Corrección' WHERE id_liquidacion=$1", [liquidacion]);
+        await require('../src/models/liquidacion.model').recalcularTotales(isolated, liquidacion);
+        await isolated.query("UPDATE liquidacion SET estado='ENVIADA',fecha_envio=CURRENT_TIMESTAMP,version=version+1 WHERE id_liquidacion=$1", [liquidacion]);
+        await isolated.query("UPDATE liquidacion SET estado='ANULADA',fecha_anulacion=CURRENT_TIMESTAMP,motivo_anulacion='Corrección',version=version+1 WHERE id_liquidacion=$1", [liquidacion]);
         const copiaLiquidacion = (await isolated.query("SELECT * FROM detalle_liquidacion WHERE id_liquidacion=$1", [liquidacion])).rows;
         assert.equal((await editar({ ...payload(actual), detalles: [payload(actual).detalles[1]] })).status, 409);
         const correccion = payload(actual);

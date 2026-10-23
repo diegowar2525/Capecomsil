@@ -22,7 +22,7 @@ test("Migración 019: retira cierre, conserva remuneraciones y costos y permite 
         await client.query(original.match(/CREATE FUNCTION proteger_cierre_remuneracion\(\)[\s\S]*?EXECUTE FUNCTION proteger_cierre_remuneracion\(\);/)[0]);
         const calculoAnterior = schema.match(/CREATE FUNCTION recalcular_remuneracion\([\s\S]*?\n\$\$;/)[0]
             .replace("CREATE FUNCTION", "CREATE OR REPLACE FUNCTION")
-            .replace("    IF FOUND THEN\n", "    IF FOUND THEN\n" + original.match(/        IF r.estado='CERRADO' THEN[\s\S]*?        END IF;\n/)[0]);
+            .replace(/    IF FOUND THEN\r?\n/, "    IF FOUND THEN\n" + original.match(/        IF r.estado='CERRADO' THEN[\s\S]*?        END IF;\r?\n/)[0]);
         await client.query(calculoAnterior);
         await client.query(`INSERT INTO configuracion_remuneracion(importe_diario,adicional_dia_especial,fecha_inicio) VALUES (35,35,'2026-01-01');
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','DIARIO_FIJO');

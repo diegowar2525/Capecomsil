@@ -67,6 +67,8 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         await admin.query(accionesMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const restriccionMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/022_liquidaciones_no_anular_borrador.sql"), "utf8");
         await admin.query(restriccionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const capacidadMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
+        await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
