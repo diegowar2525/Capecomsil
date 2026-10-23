@@ -1568,6 +1568,8 @@ CREATE TABLE rol_permiso (
 CREATE INDEX idx_rol_permiso_permiso ON rol_permiso(id_permiso);
 
 CREATE TABLE usuario (
+    correo VARCHAR(254),
+    imagen_url VARCHAR(2048),
     id_usuario INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre_usuario VARCHAR(50) NOT NULL UNIQUE,
     nombre VARCHAR(150) NOT NULL,
