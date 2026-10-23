@@ -1,6 +1,6 @@
 # Organización del frontend
 
-La aplicación conserva el diseño inicial y aún no está conectada a las APIs.
+La aplicación conserva el diseño inicial. Los módulos operativos siguen como plantillas; Mi perfil se conecta a la API de la sesión actual.
 Los formularios no guardan datos. Las pantallas operativas incluyen plantillas de
 formularios y acciones según los contratos actuales del backend. Ver COBERTURA_API.md.
 
@@ -118,5 +118,26 @@ La edición de viajes reconstruye la vista con `domain/edicion.js`. La integraci
 futura debe conservar IDs de entregas/tramos y enviar versión y motivo en PUT;
 el preparador de creación no es todavía un adaptador de edición.
 
-Usuarios, roles, permisos y autenticación quedan fuera por decisión del usuario.
+La administración de usuarios, roles, permisos y el formulario de inicio de sesión siguen fuera del alcance; el perfil propio ya está conectado.
 Verificación: `node --test test/plantillas.test.js test/viajes.recorrido.test.js`.
+
+## Perfil del usuario autenticado
+
+- `modules/perfil/context/PerfilProvider.jsx`: consulta compartida de sesión y actualización del perfil; no guarda credenciales en localStorage.
+- `hooks/usePerfil.js`: acceso al perfil compartido por sidebar y página.
+- `services/perfil.api.js`: GET/PATCH `/api/auth/me`, cookies y encabezado CSRF.
+- `domain/perfil.js`: preparación de los tres campos editables; vacíos opcionales se envían como null.
+- `components/SidebarPerfil.jsx` y `Avatar.jsx`: foto, nombre y rol con iniciales si falta/falla la foto.
+- `PerfilPage.jsx` y `components/PerfilModal.jsx`: ficha propia y modal de edición, errores y confirmación real del servidor.
+
+La ruta `#/perfil` no crea otra categoría: se abre desde el avatar del sidebar.
+No se muestra identidad ficticia cuando no hay sesión. Todavía no hay formulario
+de login, administración del jefe ni subida de archivos. La foto usa una URL.
+
+Requisitos: backend funcionando, sesión válida y migración 023 aplicada a la base.
+En desarrollo, Vite reenvía `/api` a `http://127.0.0.1:3000`; se puede cambiar con
+la variable de entorno `API_PROXY_TARGET` al arrancar Vite. En producción, servir
+`/api` mediante el backend/proxy del mismo origen. Mantener los orígenes permitidos
+por el backend y la configuración de cookies. Esta tarea no aplica migraciones.
+
+Pruebas: `node --test test/perfil.test.js test/plantillas.test.js test/viajes.recorrido.test.js`.

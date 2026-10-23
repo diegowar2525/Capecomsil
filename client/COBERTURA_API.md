@@ -1,7 +1,7 @@
 # Cobertura visual de la API
 
-Estas son plantillas, no una integración activa. No hay peticiones, persistencia,
-permisos de interfaz ni sesiones. Guardar, confirmar y consultar el servidor están
+Los módulos operativos siguen siendo plantillas. Mi perfil es la excepción:
+consulta y actualiza los datos del usuario mediante la sesión existente. Guardar, confirmar y consultar el servidor están
 deshabilitados. Las pantallas reutilizan tablas, campos y modales del diseño existente.
 
 Todas las rutas citadas parten de `/api`. La API sigue siendo la autoridad para
@@ -38,7 +38,7 @@ validaciones, permisos, cálculos, dependencias y transiciones.
 
 ## Fuera del alcance
 
-Usuarios, roles, permisos y autenticación se diseñarán con otro estilo.
+La administración de usuarios, roles, permisos y la pantalla de inicio de sesión siguen pendientes. Mi perfil ya utiliza GET/PATCH /api/auth/me.
 `/health` no requiere pantalla de negocio. Facturación y cobros a clientes mantienen
 su plantilla anterior: aún no existe su API. Cierre operativo e importación histórica
 siguen pendientes. No se modificaron backend, esquema ni datos.
