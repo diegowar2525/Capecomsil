@@ -1,3 +1,5 @@
+const modalidadTarifaModel = require("../models/modalidad_tarifa.model");
+const tarifaCapacidadModel = require("../models/tarifa_capacidad.model");
 const peajeModel = require("../models/configuracion_peaje_trayecto.model");
 const trayectoModel = require("../models/trayecto.model");
 const vehiculoModel = require("../models/vehiculo.model");
@@ -49,7 +51,8 @@ const preparar = async (client, datosValidados, anteriores = []) => {
         };
     });
     validateRecorrido(recorrido, datosValidados.detalles);
-    if (!(await vehiculoModel.findByIdForShare(client, datosValidados.id_vehiculo))) {
+    const vehiculo = await vehiculoModel.findByIdForShare(client, datosValidados.id_vehiculo);
+    if (!vehiculo) {
         throw createHttpError("El vehículo no existe", 400);
     }
     if (!(await choferModel.findByIdForShare(client, datosValidados.id_chofer))) {
@@ -90,17 +93,18 @@ const preparar = async (client, datosValidados, anteriores = []) => {
     for (const detalle of ordenados) {
         const clave = `${detalle.id_gasolinera}:${detalle.id_terminal}`;
         if (!tarifas.has(clave)) {
-            const tarifa = await tarifaModel.findVigenteForUpdate(
-                client,
-                detalle.id_gasolinera,
-                detalle.id_terminal,
-                datosValidados.fecha_inicio.slice(0, 10)
-            );
+            const fecha = datosValidados.fecha_inicio.slice(0, 10);
+            const modalidad = await modalidadTarifaModel.findVigente(client, detalle.id_gasolinera, fecha);
+            if (!modalidad) {
+                throw createHttpError(`No existe modalidad vigente para gasolinera ${detalle.id_gasolinera} en ${fecha}`, 409);
+            }
+            const tarifa = modalidad.modalidad === 'POR_CAPACIDAD'
+                ? await tarifaCapacidadModel.findVigente(client, detalle.id_gasolinera, capacidad.capacidad_galones, fecha)
+                : await tarifaModel.findVigenteForUpdate(client, detalle.id_gasolinera, detalle.id_terminal, fecha);
             if (!tarifa) {
-                throw createHttpError(
-                    `No existe tarifa vigente para gasolinera ${detalle.id_gasolinera} y terminal ${detalle.id_terminal}`,
-                    409
-                );
+                throw createHttpError(modalidad.modalidad === 'POR_CAPACIDAD'
+                    ? `Falta tarifa vigente para gasolinera ${detalle.id_gasolinera}, capacidad ${capacidad.capacidad_galones} galones y fecha ${fecha}`
+                    : `No existe tarifa vigente para gasolinera ${detalle.id_gasolinera} y terminal ${detalle.id_terminal} en ${fecha}`, 409);
             }
             tarifas.set(clave, tarifa);
         }
