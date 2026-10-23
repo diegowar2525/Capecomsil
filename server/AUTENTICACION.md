@@ -102,3 +102,34 @@ capacidad antes de desplegar. No reducir sus parámetros para acelerar las prueb
 
 Referencias del diseño: [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
 y [OWASP CSRF: encabezados personalizados para APIs](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#employing-custom-request-headers-for-ajaxapi).
+
+## Edición del perfil propio
+
+`PATCH /api/auth/me` permite al usuario autenticado (JEFE u OPERADOR) actualizar
+únicamente `nombre`, `correo` e `imagen_url`. No recibe un ID: obtiene la identidad
+de la sesión. Devuelve 200 con los datos públicos actualizados del usuario.
+
+```json
+{
+  "nombre": "Nombre del usuario",
+  "correo": "usuario@example.com",
+  "imagen_url": "https://example.com/perfil.jpg"
+}
+```
+
+El cuerpo debe contener al menos un campo. Los campos omitidos se conservan;
+`correo` e `imagen_url` admiten `null` para retirarlos. El nombre no puede quedar
+vacío (máximo 150 caracteres), el correo admite hasta 254 y la URL hasta 2048.
+La foto se referencia mediante HTTP/HTTPS sin credenciales en la URL; este endpoint
+no sube archivos. El correo no sustituye el nombre de usuario al iniciar sesión.
+
+Requiere sesión activa, contraseña definitiva, JSON y `X-CSRF-Protection: 1`.
+Campos como `id_usuario`, `id_rol`, `activo`, `nombre_usuario` y credenciales se
+rechazan con 400. No concede permisos de administración: el operador no puede
+editar otros usuarios, desactivarse o eliminar cuentas. Los cambios se registran
+atómicamente en el historial con el propio usuario como actor.
+
+`GET /api/auth/me` y la respuesta del login incluyen `correo` e `imagen_url`.
+Aplicar `database/migrations/023_usuario_perfil.sql` antes de desplegar este código
+sobre una base existente. `database/schema.sql` ya contiene los campos para nuevas
+instalaciones. La migración no se ha aplicado a la base de la aplicación.

@@ -69,3 +69,16 @@ sobre el esquema nuevo completo. No se ejecutan automáticamente al arrancar.
 Las pruebas usan esquemas temporales y comprueban la migración, contraseñas temporales,
 restricciones de acceso, revocaciones, rollback del historial y cambios concurrentes
 del último jefe. La interfaz de administración sigue pendiente en el frontend.
+
+## Correo y foto de perfil
+
+La creación y edición administrativa aceptan también `correo` e `imagen_url`
+(opcionales). En edición, omitirlos conserva sus valores; `null` los retira.
+Se incluyen en consultas públicas e historial, nunca junto con contraseñas.
+La foto es una URL HTTP/HTTPS, no un archivo cargado. El correo no es identificador
+de acceso ni tiene restricción de unicidad.
+
+Los operadores pueden editar exclusivamente su nombre, correo y foto mediante
+`PATCH /api/auth/me`; no reciben permisos `usuarios.editar` ni `usuarios.desactivar`.
+La identidad sale de la sesión. Ver AUTENTICACION.md y la migración
+`database/migrations/023_usuario_perfil.sql`.
