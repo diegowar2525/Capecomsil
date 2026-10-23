@@ -1,4 +1,4 @@
-const { validateId } = require("./common.validators");
+const { validateId, validateImagenUrl, validateOptionalText } = require("./common.validators");
 const { createHttpError } = require("../errors/http.error");
 const { validateNombreUsuario, validatePassword } = require("./auth.validators");
 
@@ -9,16 +9,42 @@ const validateCampos = (data, campos) => {
     }
 };
 
+const validateContacto = (data) => {
+    const resultado = {};
+    if (Object.hasOwn(data, "correo")) {
+        const correo = validateOptionalText(data.correo, "correo", 254);
+        if (correo !== null && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            throw createHttpError("Correo electrónico inválido", 400);
+        }
+        resultado.correo = correo;
+    }
+    if (Object.hasOwn(data, "imagen_url")) resultado.imagen_url = validateImagenUrl(data.imagen_url);
+    return resultado;
+};
+
+const validatePerfil = (data) => {
+    validateCampos(data, ["nombre", "correo", "imagen_url"]);
+    if (!Object.keys(data).length) throw createHttpError("Indique al menos un campo del perfil", 400);
+    const resultado = validateContacto(data);
+    if (Object.hasOwn(data, "nombre")) {
+        if (typeof data.nombre !== "string" || !data.nombre.trim() || data.nombre.trim().length > 150) {
+            throw createHttpError("El nombre es obligatorio y admite máximo 150 caracteres", 400);
+        }
+        resultado.nombre = data.nombre.trim();
+    }
+    return resultado;
+};
+
 const validateEdicion = (data) => {
-    validateCampos(data, ["nombre_usuario", "nombre", "id_rol"]);
+    validateCampos(data, ["nombre_usuario", "nombre", "id_rol", "correo", "imagen_url"]);
     if (typeof data.nombre !== "string" || !data.nombre.trim() || data.nombre.trim().length > 150) {
         throw createHttpError("El nombre es obligatorio y admite máximo 150 caracteres", 400);
     }
-    return { nombre_usuario: validateNombreUsuario(data.nombre_usuario), nombre: data.nombre.trim(), id_rol: validateId(data.id_rol) };
+    return { ...validateContacto(data), nombre_usuario: validateNombreUsuario(data.nombre_usuario), nombre: data.nombre.trim(), id_rol: validateId(data.id_rol) };
 };
 
 const validateCreacion = (data) => {
-    validateCampos(data, ["nombre_usuario", "nombre", "id_rol", "password_temporal"]);
+    validateCampos(data, ["nombre_usuario", "nombre", "id_rol", "password_temporal", "correo", "imagen_url"]);
     const { password_temporal, ...perfil } = data;
     return { ...validateEdicion(perfil), password_temporal: validatePassword(password_temporal, true) };
 };
@@ -73,6 +99,7 @@ const validateFiltros = (query = {}) => {
 };
 
 module.exports = {
+    validatePerfil,
     validateCreacion,
     validateEdicion,
     validateEstado,

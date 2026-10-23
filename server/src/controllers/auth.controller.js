@@ -1,3 +1,4 @@
+const usuariosService = require("../services/usuarios.service");
 const authService = require("../services/auth.service");
 const config = require("../config/auth");
 const { readToken } = require("../utils/session-cookie");
@@ -43,7 +44,17 @@ const cambiarPassword = async (req, res, next) => {
     }
 };
 
+const updatePerfil = async (req, res, next) => {
+    try {
+        const resultado = await usuariosService.updatePerfil(req.auth.usuario.id_usuario, req.body);
+        return res.status(200).json(resultado);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
+    updatePerfil,
     login,
     me,
     logout,

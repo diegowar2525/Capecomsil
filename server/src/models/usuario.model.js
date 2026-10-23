@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 
-const camposPublicos = `u.id_usuario, u.nombre_usuario, u.nombre, u.id_rol,
+const camposPublicos = `u.id_usuario, u.nombre_usuario, u.nombre, u.correo, u.imagen_url, u.id_rol,
     r.codigo AS rol, u.activo, u.requiere_cambio_password,
     u.fecha_creacion, u.fecha_actualizacion`;
 
@@ -54,18 +54,18 @@ const countJefesActivos = async (client) => {
 
 const create = async (client, data) => {
     const result = await client.query(
-        `INSERT INTO usuario(nombre_usuario, nombre, id_rol, password_hash)
-         VALUES ($1, $2, $3, $4) RETURNING id_usuario`,
-        [data.nombre_usuario, data.nombre, data.id_rol, data.password_hash]
+        `INSERT INTO usuario(nombre_usuario, nombre, id_rol, password_hash, correo, imagen_url)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_usuario`,
+        [data.nombre_usuario, data.nombre, data.id_rol, data.password_hash, data.correo ?? null, data.imagen_url ?? null]
     );
     return result.rows[0] ?? null;
 };
 
 const update = async (client, id, data) => {
     const result = await client.query(
-        `UPDATE usuario SET nombre_usuario=$2, nombre=$3, id_rol=$4,
+        `UPDATE usuario SET nombre_usuario=$2, nombre=$3, id_rol=$4, correo=$5, imagen_url=$6,
          fecha_actualizacion=clock_timestamp() WHERE id_usuario=$1 RETURNING id_usuario`,
-        [id, data.nombre_usuario, data.nombre, data.id_rol]
+        [id, data.nombre_usuario, data.nombre, data.id_rol, data.correo, data.imagen_url]
     );
     return result.rows[0] ?? null;
 };
@@ -86,7 +86,17 @@ const resetPassword = async (client, id, passwordHash) => {
     return result.rows[0] ?? null;
 };
 
+const updatePerfil = async (client, id, data) => {
+    const result = await client.query(
+        `UPDATE usuario SET nombre=$2, correo=$3, imagen_url=$4,
+         fecha_actualizacion=clock_timestamp() WHERE id_usuario=$1 RETURNING id_usuario`,
+        [id, data.nombre, data.correo, data.imagen_url]
+    );
+    return result.rows[0] ?? null;
+};
+
 module.exports = {
+    updatePerfil,
     lockAdministracion,
     findByIdForUpdate,
     countJefesActivos,

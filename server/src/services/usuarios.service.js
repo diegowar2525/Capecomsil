@@ -8,7 +8,7 @@ const rolPermisoModel = require("../models/rol_permiso.model");
 const sesionModel = require("../models/sesion.model");
 const historialModel = require("../models/usuario_historial.model");
 const { hashPassword } = require("../utils/password");
-const { validateCreacion, validateEdicion, validateEstado, validateRestablecimiento } = require("../utils/validators/usuario.validators");
+const { validatePerfil, validateCreacion, validateEdicion, validateEstado, validateRestablecimiento } = require("../utils/validators/usuario.validators");
 
 // Lista explícita: nunca serializar credenciales ni cuerpos HTTP en el historial.
 const snapshot = (usuario) => {
@@ -16,7 +16,7 @@ const snapshot = (usuario) => {
         return null;
     }
     return {
-        nombre_usuario: usuario.nombre_usuario, nombre: usuario.nombre,
+        nombre_usuario: usuario.nombre_usuario, nombre: usuario.nombre, correo: usuario.correo, imagen_url: usuario.imagen_url,
         id_rol: usuario.id_rol, activo: usuario.activo,
         requiere_cambio_password: usuario.requiere_cambio_password
     };
@@ -85,7 +85,7 @@ const update = async (id, data, idActor) => {
             throw createHttpError("Rol no encontrado", 404);
         }
         await protegerUltimoJefe(client, anterior, rol.codigo !== "JEFE");
-        await usuarioModel.update(client, idUsuario, datosValidados);
+        await usuarioModel.update(client, idUsuario, { ...anterior, ...datosValidados });
         if (anterior.id_rol !== datosValidados.id_rol || anterior.nombre_usuario !== datosValidados.nombre_usuario) {
             await sesionModel.revocarByUsuario(client, idUsuario);
         }
@@ -138,7 +138,33 @@ const findById = async (id) => {
     return resultado;
 };
 
+// El identificador proviene de la sesión autenticada, nunca del cuerpo o de parámetros.
+const updatePerfil = async (idActor, data) => {
+    const id = validateId(idActor);
+    const datosValidados = validatePerfil(data);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        await usuarioModel.lockAdministracion(client);
+        const anterior = await usuarioModel.findByIdForUpdate(client, id);
+        if (!anterior?.activo) throw createHttpError("Sesión inválida o vencida", 401);
+        if (anterior.requiere_cambio_password) throw createHttpError("Debe cambiar su contraseña antes de continuar", 403);
+        await usuarioModel.updatePerfil(client, id, { ...anterior, ...datosValidados });
+        const resultado = await usuarioModel.findById(id, client);
+        await historialModel.create(client, { id_usuario: id, id_actor: id, accion: "EDITAR",
+            motivo: "Actualización del perfil propio", anterior: snapshot(anterior), posterior: snapshot(resultado) });
+        await client.query("COMMIT");
+        return resultado;
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
+    updatePerfil,
     create,
     update,
     updateEstado,
