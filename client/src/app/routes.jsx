@@ -1,4 +1,6 @@
 import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
+import { TarifasCapacidadPage } from '../modules/tarifas-capacidad/TarifasCapacidadPage.jsx';
+import { ModalidadesTarifaPage } from '../modules/modalidades-tarifa/ModalidadesTarifaPage.jsx';
 import { InformesPage } from '../modules/informes/InformesPage.jsx';
 import { InventarioPage } from '../modules/inventario/InventarioPage.jsx';
 import { RecepcionesCompraPage } from '../modules/recepciones-compra/RecepcionesCompraPage.jsx';
@@ -49,7 +51,9 @@ export const routes = [
     { path: '/terminales', label: "Terminales de Carga", section: "Catálogos", Component: TerminalesPage },
     { path: '/productos', label: "Productos transportados", section: "Catálogos", Component: ProductosPage },
     { path: '/proveedores', label: "Proveedores", section: "Catálogos", Component: ProveedoresPage },
-    { path: '/tarifas', label: 'Tarifas', section: 'Configuración', Component: TarifasPage },
+    { path: '/tarifas', label: 'Tarifas por terminal', section: 'Configuración', Component: TarifasPage },
+    { path: '/tarifas-capacidad', label: 'Tarifas por capacidad', section: 'Configuración', Component: TarifasCapacidadPage },
+    { path: '/modalidades-tarifa', label: 'Modalidades de tarifa', section: 'Configuración', Component: ModalidadesTarifaPage },
     { path: '/trayectos', label: 'Trayectos', section: 'Catálogos', Component: TrayectosPage },
     { path: '/categorias-producto', label: 'Categorías de productos', section: 'Catálogos', Component: CategoriasProductoPage },
     { path: '/productos-inventario', label: 'Productos de inventario', section: 'Catálogos', Component: ProductosInventarioPage },
