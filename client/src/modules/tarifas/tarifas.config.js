@@ -1,6 +1,6 @@
 export const page = {
-    "title": "Tarifas",
-    "subtitle": "Consulta y administración de tarifas",
+    "title": "Tarifas por terminal",
+    "subtitle": "Precio por galón para gasolineras con modalidad por terminal de carga, según la fecha del viaje.",
     "rowKey": "id_tarifa",
     "actionLabel": "Nuevo registro",
     "api": "/tarifas"
