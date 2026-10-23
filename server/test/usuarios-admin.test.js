@@ -12,6 +12,11 @@ const { verifyPassword } = require("../src/utils/password");
 test("Administración: validación estricta de perfiles, estados y credenciales", () => {
     const perfil = { nombre_usuario: " Operador.Test ", nombre: " Operador ", id_rol: 2 };
     assert.equal(validators.validateEdicion(perfil).nombre_usuario, "operador.test");
+    assert.deepEqual(validators.validatePerfil({ correo: " operador@example.com ", imagen_url: null }), { correo: "operador@example.com", imagen_url: null });
+    for (const data of [null, [], {}, { nombre: " " }, { correo: "incorrecto" }, { correo: 123 },
+        { imagen_url: "javascript:alert(1)" }, { imagen_url: "https://user:password@example.com/a" }, { imagen_url: "x".repeat(2049) }]) {
+        assert.throws(() => validators.validatePerfil(data), { status: 400 });
+    }
     for (const data of [null, [], {}, { ...perfil, activo: false }, { ...perfil, password_hash: "x" }, { ...perfil, id_rol: true }]) {
         assert.throws(() => validators.validateEdicion(data), { status: 400 });
     }
@@ -36,6 +41,10 @@ test("Administración HTTP: ciclo de cuentas, historial atómico y último jefe 
         await admin.query(schema.split("-- Historial administrativo de usuarios, sin credenciales.")[0]);
         const migration = fs.readFileSync(path.join(__dirname, "../../database/migrations/017_administracion_usuarios.sql"), "utf8");
         await admin.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        // Simula actualizar una instalación anterior sin campos de perfil.
+        await admin.query("ALTER TABLE usuario DROP COLUMN correo, DROP COLUMN imagen_url");
+        const perfilMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/023_usuario_perfil.sql"), "utf8");
+        await admin.query(perfilMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -50,6 +59,36 @@ test("Administración HTTP: ciclo de cuentas, historial atómico y último jefe 
         const request = (client, route, method = "GET", data) => client(base + route, {
             method, ...(data === undefined ? {} : { body: JSON.stringify(data) })
         });
+        const propio = { nombre: "Operador actualizado", correo: "operador@example.com", imagen_url: "https://example.com/avatar.jpg" };
+        const perfilRes = await request(operador, "/auth/me", "PATCH", propio);
+        assert.equal(perfilRes.status, 200);
+        const perfilActual = await perfilRes.json();
+        assert.equal(perfilActual.id_usuario, operador.idUsuario);
+        assert.equal(perfilActual.correo, propio.correo);
+        assert.equal(perfilActual.imagen_url, propio.imagen_url);
+        assert.equal(perfilActual.rol, "OPERADOR");
+        assert.equal(perfilActual.activo, true);
+        assert.equal(Object.hasOwn(perfilActual, "password_hash"), false);
+        assert.equal((await (await request(operador, "/auth/me")).json()).usuario.imagen_url, propio.imagen_url);
+        const nombreSolo = await (await request(operador, "/auth/me", "PATCH", { nombre: "Otro nombre" })).json();
+        assert.equal(nombreSolo.correo, propio.correo);
+        assert.equal(nombreSolo.imagen_url, propio.imagen_url);
+        for (const extra of [{ id_usuario: jefe.idUsuario }, { id_rol: rolJefe }, { activo: false },
+            { nombre_usuario: "otro.usuario" }, { password_hash: "x" }, { requiere_cambio_password: false }]) {
+            assert.equal((await request(operador, "/auth/me", "PATCH", { ...propio, ...extra })).status, 400);
+        }
+        assert.equal((await request(operador, `/usuarios/${operador.idUsuario}/estado`, "PATCH", { activo: false, motivo: "Propio" })).status, 403);
+        assert.equal((await request(operador, "/auth/me", "DELETE")).status, 404);
+        assert.equal((await fetch(base + "/auth/me", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(propio) })).status, 401);
+        assert.equal((await fetch(base + "/auth/me", { method: "PATCH", headers: { Cookie: operador.cookie, "Content-Type": "application/json" }, body: JSON.stringify(propio) })).status, 403);
+        const falloPerfil = t.mock.method(historialModel, "create", async () => { throw new Error("Fallo de auditoría del perfil"); });
+        assert.equal((await request(operador, "/auth/me", "PATCH", { nombre: "No persistir" })).status, 500);
+        falloPerfil.mock.restore();
+        assert.equal((await (await request(operador, "/auth/me")).json()).usuario.nombre, "Otro nombre");
+        const sinFoto = await (await request(operador, "/auth/me", "PATCH", { correo: null, imagen_url: null })).json();
+        assert.equal(sinFoto.correo, null);
+        assert.equal(sinFoto.imagen_url, null);
+        assert.equal((await request(jefe, "/auth/me", "PATCH", { correo: "jefe@example.com" })).status, 200);
         const perfil = { nombre_usuario: "nuevo.operador", nombre: "Nuevo operador", id_rol: rolOperador };
         const temporal = "Temporal inicial de pruebas 123";
         const passwordNueva = "Contraseña personal de pruebas 456";

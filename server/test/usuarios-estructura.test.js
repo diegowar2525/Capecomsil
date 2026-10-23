@@ -30,6 +30,8 @@ for (const mode of ["esquema nuevo", "migración 014"]) {
                 await client.query("INSERT INTO gasolinera(nombre) VALUES ('Dato previo')");
                 // Conservar la transacción exterior para revertir todos los objetos de prueba.
                 await client.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+                const perfilMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/023_usuario_perfil.sql"), "utf8");
+                await client.query(perfilMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
                 assert.equal((await client.query("SELECT nombre FROM gasolinera")).rows[0].nombre, "Dato previo");
             }
             const roles = await rolModel.findAll(client);
