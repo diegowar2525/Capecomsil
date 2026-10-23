@@ -13,6 +13,8 @@ validaciones, permisos, cálculos, dependencias y transiciones.
 | `/choferes`, `/terminales`, `/gasolineras`, `/proveedores` | CRUD mediante listado y modales; proveedores incluye `/:id/cuentas-por-pagar` |
 | `/productos-transportados` | Catálogo existente renombrado Productos transportados |
 | `/productos`, `/categorias-producto`, `/trayectos`, `/tarifas` | Catálogos nuevos con CRUD visual |
+| `/tarifas-capacidad` | CRUD visual con cuatro capacidades, precio por galón y vigencia, sin terminal |
+| `/modalidades-tarifa` | Historial filtrado por gasolinera y cambio con fecha efectiva; también disponible en modales de Gasolineras |
 | `/configuraciones-viatico`, `/configuraciones-remuneracion`, `/configuraciones-combustible`, `/configuraciones-peaje-trayecto`, `/feriados` | CRUD visual de configuraciones y vigencias |
 | `/viajes` | Crear, consultar, editar y anular; historial por `/:id/historial`; detalle incluye entregas, tramos y costos |
 | `/gastos`, `/abastecimientos-combustible` | Listado y filtros, creación, detalle y anulación. Sin editar ni eliminar |
@@ -41,7 +43,7 @@ validaciones, permisos, cálculos, dependencias y transiciones.
 La administración de usuarios, roles, permisos y la pantalla de inicio de sesión siguen pendientes. Mi perfil ya utiliza GET/PATCH /api/auth/me.
 `/health` no requiere pantalla de negocio. Facturación y cobros a clientes mantienen
 su plantilla anterior: aún no existe su API. Cierre operativo e importación histórica
-siguen pendientes. No se modificaron backend, esquema ni datos.
+siguen pendientes. La migración 024 añade modalidades históricas y tarifas por capacidad; estas plantillas aún no ejecutan escrituras.
 
 ## Comprobación
 
