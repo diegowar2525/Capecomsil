@@ -1,13 +1,10 @@
-import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
-import { DataTable } from '../../components/DataTable/DataTable.jsx';
+import { CatalogoPage } from '../../components/CatalogoPage/CatalogoPage.jsx';
+import { fields } from './mantenimiento.fields.js';
 import { columns } from './mantenimiento.columns.js';
 import { page } from './mantenimiento.config.js';
+import { actions } from './mantenimiento.actions.js';
+import { filters } from './mantenimiento.filters.js';
 
-export function MantenimientoPage() {
-    return (
-        <section>
-            <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_mantenimiento" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
-        </section>
-    );
+export function MantenimientoPage(props) {
+    return <CatalogoPage {...page} fields={fields} columns={columns} actions={actions} filters={filters} {...props} />;
 }

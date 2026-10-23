@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { inicializarViaje } from '../domain/edicion.js';
 import { construirRecorrido, prepararViaje, punto } from '../domain/recorrido.js';
 
 const nuevoProducto = () => ({ key: crypto.randomUUID(), id_producto_transportado: '', galones: '' });
@@ -6,14 +7,15 @@ const nuevaParada = () => ({ key: crypto.randomUUID(), id_gasolinera: '', produc
 const opciones = (items, id, label = 'nombre') => items.filter((item) => item.estado !== false)
     .map((item) => ({ value: String(item[id]), label: item[label] }));
 
-export function useViajeForm(catalogos = {}, onPrepare) {
+export function useViajeForm(catalogos = {}, onPrepare, initialViaje) {
     const { terminales = [], gasolineras = [], vehiculos = [], choferes = [], productos = [], trayectos = [] } = catalogos;
-    const [cabecera, setCabecera] = useState({ fecha_inicio: '', fecha_fin: '', id_vehiculo: '', id_chofer: '' });
-    const [origen, setOrigen] = useState('');
-    const [paradas, setParadas] = useState(() => [nuevaParada()]);
-    const [agregarFinal, setAgregarFinal] = useState(false);
-    const [destinoFinal, setDestinoFinal] = useState('');
-    const [seleccion, setSeleccion] = useState({});
+    const [initial] = useState(() => inicializarViaje(initialViaje));
+    const [cabecera, setCabecera] = useState(initial.cabecera);
+    const [origen, setOrigen] = useState(initial.origen);
+    const [paradas, setParadas] = useState(() => initial.paradas.length ? initial.paradas : [nuevaParada()]);
+    const [agregarFinal, setAgregarFinal] = useState(Boolean(initial.destinoFinal));
+    const [destinoFinal, setDestinoFinal] = useState(initial.destinoFinal);
+    const [seleccion, setSeleccion] = useState(initial.seleccion);
     const [error, setError] = useState('');
     const recorrido = construirRecorrido({ origen, paradas, destinoFinal: agregarFinal ? destinoFinal || 'pendiente:' : '', trayectos, seleccion });
     const lugares = [...opciones(terminales, 'id_terminal').map((item) => ({ ...item, value: punto('terminal', item.value), label: `Terminal: ${item.label}` })),

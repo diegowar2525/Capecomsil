@@ -1,13 +1,11 @@
-import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
-import { DataTable } from '../../components/DataTable/DataTable.jsx';
+import { CatalogoPage } from '../../components/CatalogoPage/CatalogoPage.jsx';
 import { columns } from './costos-viaje.columns.js';
-import { page } from './costos-viaje.config.js';
 
-export function CostosViajePage() {
-    return (
-        <section>
-            <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_costo" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
-        </section>
-    );
+const actions = [{ id: 'costs', label: 'Consultar costos de un viaje', global: true, readOnly: true,
+    fields: [{ name: 'id_viaje', label: 'Viaje', type: 'select', source: 'id_viaje', required: true }],
+    columns: [], tables: [{ name: 'costos', label: 'Costos calculados', columns, rowKey: 'id_costo' }] }];
+
+export function CostosViajePage(props) {
+    return <CatalogoPage title="Costos de viaje" subtitle="Costos calculados por el servidor y consultados desde el detalle del viaje."
+        columns={columns} rowKey="id_costo" actions={actions} {...props} />;
 }

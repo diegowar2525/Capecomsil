@@ -1,5 +1,7 @@
 export const page = {
-    "title": "Gastos Operativos",
-    "subtitle": "Administración de egresos generales de operación",
-    "actionLabel": "Nuevo Gasto"
+    "title": "Gastos operativos",
+    "subtitle": "Los viáticos diarios se vinculan sin viaje y con tipo VIATICO. Registre combustible desde Abastecimientos.",
+    "rowKey": "id_gasto",
+    "actionLabel": "Registrar gasto",
+    "api": "/gastos"
 };

@@ -4,8 +4,8 @@ import { ViajeCabecera } from './ViajeCabecera.jsx';
 import { EntregaForm } from './EntregaForm.jsx';
 import { RecorridoPreview } from './RecorridoPreview.jsx';
 
-export function ViajeForm({ catalogos = {}, onPrepare }) {
-    const form = useViajeForm(catalogos, onPrepare);
+export function ViajeForm({ catalogos = {}, onPrepare, initialViaje }) {
+    const form = useViajeForm(catalogos, onPrepare, initialViaje);
     const submit = (event) => {
         event.preventDefault();
         form.preparar();

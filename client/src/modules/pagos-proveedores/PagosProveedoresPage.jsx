@@ -1,13 +1,10 @@
-import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
-import { DataTable } from '../../components/DataTable/DataTable.jsx';
+import { CatalogoPage } from '../../components/CatalogoPage/CatalogoPage.jsx';
+import { fields } from './pagos-proveedores.fields.js';
 import { columns } from './pagos-proveedores.columns.js';
 import { page } from './pagos-proveedores.config.js';
+import { actions } from './pagos-proveedores.actions.js';
+import { filters } from './pagos-proveedores.filters.js';
 
-export function PagosProveedoresPage() {
-    return (
-        <section>
-            <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_pago_proveedor" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
-        </section>
-    );
+export function PagosProveedoresPage(props) {
+    return <CatalogoPage {...page} fields={fields} columns={columns} actions={actions} filters={filters} {...props} />;
 }

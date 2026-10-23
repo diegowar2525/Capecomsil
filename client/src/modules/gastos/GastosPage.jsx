@@ -1,13 +1,10 @@
-import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
-import { DataTable } from '../../components/DataTable/DataTable.jsx';
+import { CatalogoPage } from '../../components/CatalogoPage/CatalogoPage.jsx';
+import { fields } from './gastos.fields.js';
 import { columns } from './gastos.columns.js';
 import { page } from './gastos.config.js';
+import { actions } from './gastos.actions.js';
+import { filters } from './gastos.filters.js';
 
-export function GastosPage() {
-    return (
-        <section>
-            <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_gasto" columns={columns} data={[]} emptyMessage="Esta pantalla aún no está conectada al sistema." />
-        </section>
-    );
+export function GastosPage(props) {
+    return <CatalogoPage {...page} fields={fields} columns={columns} actions={actions} filters={filters} {...props} />;
 }

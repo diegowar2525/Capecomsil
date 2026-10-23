@@ -1,5 +1,7 @@
 export const page = {
-    "title": "Mantenimiento de Flota",
-    "subtitle": "Control preventivo y correctivo de unidades",
-    "actionLabel": "Registrar Mantenimiento"
+    "title": "Mantenimiento",
+    "subtitle": "Consulta y administración de mantenimiento",
+    "rowKey": "id_mantenimiento",
+    "actionLabel": "Registrar mantenimiento",
+    "api": "/mantenimientos"
 };
