@@ -120,7 +120,8 @@ Para anular:
 { "version": 4, "motivo": "Corrección de las entregas" }
 ```
 
-Admite BORRADOR, ENVIADA o CONFIRMADA, siempre que no exista factura asociada.
+Admite únicamente ENVIADA o CONFIRMADA, siempre que no exista factura asociada.
+Un BORRADOR devuelve 409 y se conserva sin cambios; puede eliminarse con DELETE.
 El motivo es obligatorio, se recortan espacios externos y admite hasta 150
 caracteres. Registra ANULADA, `fecha_anulacion` y `motivo_anulacion`, conserva
 los importes y detalles y libera las entregas. No crea una nueva liquidación.
@@ -190,3 +191,5 @@ temporales; no implica que se haya aplicado la migración a la base de trabajo.
 `test/liquidaciones.test.js` cubre validación, permisos, reservas, valores históricos,
 edición, transiciones, eliminación, bloqueo por factura, rollback, versiones y
 concurrencia entre liquidaciones y viajes.
+
+La migración `022_liquidaciones_no_anular_borrador.sql` actualiza el trigger para rechazar también la anulación directa por SQL de un borrador.
