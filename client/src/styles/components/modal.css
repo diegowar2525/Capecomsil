@@ -57,3 +57,41 @@
   gap: 12px;
   background-color: var(--bg-primary);
 }
+
+.modal-overlay {
+  z-index: 200;
+}
+
+.modal-container {
+  max-width: 760px;
+  max-height: 90dvh;
+}
+
+.modal-body {
+  min-height: 0;
+}
+
+.modal-footer {
+  flex-wrap: wrap;
+}
+
+.modal-close-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    padding: 8px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+
+  .modal-title {
+    overflow-wrap: anywhere;
+  }
+}

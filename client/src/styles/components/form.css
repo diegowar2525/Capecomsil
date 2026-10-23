@@ -51,3 +51,98 @@
   font-weight: 600;
   color: var(--text-secondary);
 }
+
+/* Formularios y acciones compartidos por las plantillas de la API. */
+.form-group {
+  min-width: 0;
+}
+
+.form-control,
+.form-select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.form-select[multiple] {
+  min-height: 120px;
+}
+
+.template-notice {
+  color: var(--text-secondary);
+  font-size: .875rem;
+  margin: 12px 0;
+}
+
+.record-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.template-preview {
+  margin: 16px 0;
+}
+
+.template-preview summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+}
+
+.template-details {
+  grid-column: 1 / -1;
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.template-detail-row {
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px 0;
+  margin-bottom: 12px;
+}
+
+.template-detail-row>button {
+  margin-top: 12px;
+}
+
+.record-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.record-detail dt {
+  color: var(--text-secondary);
+  font-size: .8rem;
+}
+
+.record-detail dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+
+  .form-grid,
+  .record-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .search-input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .record-actions .btn {
+    min-height: 44px;
+  }
+}
