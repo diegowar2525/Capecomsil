@@ -7,7 +7,7 @@ import { createServer } from 'vite';
 import { inicializarViaje } from '../src/modules/viajes/domain/edicion.js';
 
 test('Las rutas y formularios de la plantilla se renderizan sin autenticación ni operaciones activas', async () => {
-    const server = await createServer({ server: { middlewareMode: true, watch: null }, appType: 'custom' });
+    const server = await createServer({ server: { middlewareMode: true, watch: null, hmr: false }, appType: 'custom' });
     const warnings = [];
     const originalError = console.error;
     console.error = (...args) => warnings.push(args.join(' '));
