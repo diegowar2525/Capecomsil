@@ -59,9 +59,11 @@ export function Sidebar({
             inert={isMobile && !isOpen}
         >
             <div className="sidebar-brand">
-                <span className="sidebar-brand-title">
+                <a className="sidebar-brand-title" href="#/dashboard" onClick={onClose}
+                    aria-label="Capecomsil S.A — Ir al dashboard"
+                    aria-current={activePath === '/dashboard' ? 'page' : undefined}>
                     Capecomsil S.A
-                </span>
+                </a>
 
                 <button
                     type="button"
