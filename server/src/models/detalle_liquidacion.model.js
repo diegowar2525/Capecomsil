@@ -3,11 +3,11 @@ const pool = require("../config/database");
 const findByLiquidacion = async (id, client = pool) => {
     const result = await client.query(
         `SELECT dl.*, d.id_viaje, d.id_producto_transportado, p.nombre AS nombre_producto_transportado,
-            p.unidad_medida, t.id_terminal, te.nombre AS nombre_terminal,
+            p.unidad_medida, d.id_terminal, te.nombre AS nombre_terminal,
             to_char(v.fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
             veh.placa, ch.nombre AS nombre_chofer
          FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
-         JOIN viaje v USING(id_viaje) JOIN tarifa t USING(id_tarifa)
+         JOIN viaje v USING(id_viaje)
          JOIN terminal te USING(id_terminal) JOIN producto_transportado p USING(id_producto_transportado)
          JOIN vehiculo veh USING(id_vehiculo) JOIN chofer ch USING(id_chofer)
          WHERE dl.id_liquidacion=$1 ORDER BY dl.id_detalle_liquidacion`, [id]
@@ -18,7 +18,7 @@ const findByLiquidacion = async (id, client = pool) => {
 const findDisponibles = async (filtros, client = pool) => {
     const result = await client.query(
         `SELECT d.id_detalle_viaje, d.id_viaje, d.id_producto_transportado, d.galones,
-            d.tarifa_aplicada, d.valor_transporte, t.id_gasolinera, t.id_terminal,
+            d.tarifa_aplicada, d.valor_transporte, d.id_gasolinera, d.id_terminal,
             te.nombre AS nombre_terminal, p.nombre AS nombre_producto_transportado, p.unidad_medida,
             v.id_vehiculo, veh.placa, v.id_chofer, ch.nombre AS nombre_chofer,
             to_char(v.fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
@@ -28,10 +28,10 @@ const findDisponibles = async (filtros, client = pool) => {
             count(*) OVER()::integer AS cantidad_disponible,
             sum(d.galones) OVER()::text AS galones_disponibles,
             sum(d.valor_transporte) OVER()::text AS transporte_disponible
-         FROM detalle_viaje d JOIN viaje v USING(id_viaje) JOIN tarifa t USING(id_tarifa)
+         FROM detalle_viaje d JOIN viaje v USING(id_viaje)
          JOIN terminal te USING(id_terminal) JOIN producto_transportado p USING(id_producto_transportado)
          JOIN vehiculo veh USING(id_vehiculo) JOIN chofer ch USING(id_chofer)
-         WHERE t.id_gasolinera=$1 AND v.estado='REGISTRADO'
+         WHERE d.id_gasolinera=$1 AND v.estado='REGISTRADO'
            AND v.fecha_inicio >= $2::date AND v.fecha_inicio < $3::date + interval '1 day'
            AND NOT EXISTS (
                SELECT 1 FROM detalle_liquidacion dl JOIN liquidacion l USING(id_liquidacion)

@@ -41,9 +41,9 @@ const findAll = async (filtros, client = pool) => {
             AND ($4::integer IS NULL OR v.id_chofer=$4)
             AND ($5::text IS NULL OR v.estado=$5)
             AND (($6::integer IS NULL AND $7::integer IS NULL) OR EXISTS (
-        SELECT 1 FROM detalle_viaje d JOIN tarifa ta USING (id_tarifa)
-        WHERE d.id_viaje=v.id_viaje AND ($6::integer IS NULL OR ta.id_gasolinera=$6)
-            AND ($7::integer IS NULL OR ta.id_terminal=$7)))
+        SELECT 1 FROM detalle_viaje d
+        WHERE d.id_viaje=v.id_viaje AND ($6::integer IS NULL OR d.id_gasolinera=$6)
+            AND ($7::integer IS NULL OR d.id_terminal=$7)))
         ORDER BY v.fecha_inicio DESC,v.id_viaje DESC LIMIT $8 OFFSET $9`,
         [
             filtros.fecha_desde,

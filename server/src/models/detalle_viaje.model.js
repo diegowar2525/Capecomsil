@@ -1,8 +1,6 @@
 const pool = require("../config/database");
 
 // Campo de consulta compatible con la API anterior; ya no es una columna de la entrega.
-
-// Campo de consulta compatible con la API anterior; ya no es una columna de la entrega.
 const liquidacionVigente = `(SELECT dl.id_liquidacion FROM detalle_liquidacion dl
     JOIN liquidacion l USING(id_liquidacion) WHERE dl.id_detalle_viaje=d.id_detalle_viaje
     AND l.estado<>'ANULADA') AS id_liquidacion`;
@@ -12,13 +10,12 @@ const findByViaje = async (id, client = pool) => {
         `
         SELECT 
             d.*, ${liquidacionVigente},
-            t.id_gasolinera,
-            t.id_terminal,
+
             g.nombre AS nombre_gasolinera, 
             te.nombre AS nombre_terminal,
             p.nombre AS nombre_producto_transportado, 
             p.unidad_medida
-        FROM detalle_viaje d JOIN tarifa t USING (id_tarifa)
+        FROM detalle_viaje d
         JOIN gasolinera g USING (id_gasolinera) JOIN terminal te USING (id_terminal)
         JOIN producto_transportado p USING (id_producto_transportado)
         WHERE d.id_viaje=$1 ORDER BY d.id_detalle_viaje`,
@@ -46,22 +43,26 @@ const create = async (client, id, detalle, tarifa) => {
             detalle_viaje (
                 id_viaje,
                 id_tarifa,
+                id_tarifa_capacidad,
+                id_terminal,
                 id_producto_transportado,
                 galones,
                 tarifa_aplicada,
                 valor_transporte
             )
         VALUES
-            ($1, $2, $3, $4, $5, round($4::numeric * $5::numeric, 2))
+            ($1, $2, $6, $7, $3, $4, $5, round($4::numeric * $5::numeric, 2))
         RETURNING
             *
     `,
         [
             id,
-            tarifa.id_tarifa,
+            tarifa.id_tarifa ?? null,
             detalle.id_producto_transportado,
             detalle.galones,
-            tarifa.valor_por_galon
+            tarifa.valor_por_galon,
+            tarifa.id_tarifa_capacidad ?? null,
+            detalle.id_terminal
         ]
     );
 
@@ -71,9 +72,9 @@ const create = async (client, id, detalle, tarifa) => {
 const update = async (client, id, detalle, tarifa) => {
     const result = await client.query(
         `UPDATE detalle_viaje SET id_tarifa=$2, id_producto_transportado=$3,
-         galones=$4, tarifa_aplicada=$5, valor_transporte=round($4::numeric*$5::numeric,2)
+         galones=$4, tarifa_aplicada=$5, valor_transporte=round($4::numeric*$5::numeric,2), id_tarifa_capacidad=$6, id_terminal=$7
          WHERE id_detalle_viaje=$1 RETURNING *`,
-        [id, tarifa.id_tarifa, detalle.id_producto_transportado, detalle.galones, tarifa.valor_por_galon]
+        [id, tarifa.id_tarifa ?? null, detalle.id_producto_transportado, detalle.galones, tarifa.valor_por_galon, tarifa.id_tarifa_capacidad ?? null, detalle.id_terminal]
     );
     return result.rows[0] ?? null;
 };
