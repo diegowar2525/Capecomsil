@@ -1426,7 +1426,7 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado IN ('ENVIADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
             (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
@@ -1781,7 +1781,7 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado IN ('ENVIADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
             (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
