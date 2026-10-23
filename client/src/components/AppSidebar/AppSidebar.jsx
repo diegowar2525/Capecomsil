@@ -1,3 +1,4 @@
+import { SidebarPerfil } from '../../modules/perfil/components/SidebarPerfil.jsx';
 
 import { useId, useState } from 'react';
 
@@ -74,6 +75,8 @@ export function Sidebar({
                     &times;
                 </button>
             </div>
+
+            <SidebarPerfil activePath={activePath} onClose={onClose} />
 
             <nav className="sidebar-nav">
                 {groups.map((group) => (

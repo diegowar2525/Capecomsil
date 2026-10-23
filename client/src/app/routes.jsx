@@ -1,3 +1,4 @@
+import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
 import { InformesPage } from '../modules/informes/InformesPage.jsx';
 import { InventarioPage } from '../modules/inventario/InventarioPage.jsx';
 import { RecepcionesCompraPage } from '../modules/recepciones-compra/RecepcionesCompraPage.jsx';
@@ -31,6 +32,7 @@ import { ProductosPage } from '../modules/productos/ProductosPage.jsx';
 import { ProveedoresPage } from '../modules/proveedores/ProveedoresPage.jsx';
 
 export const routes = [
+    { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
     { path: '/dashboard', label: "Dashboard", Component: Dashboard },
     { path: '/viajes', label: "Viajes", section: "Operaciones", Component: Viajes },
     { path: '/costos-viaje', label: "Costos de Viaje", section: "Operaciones", Component: CostosViajePage },

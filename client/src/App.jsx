@@ -1,3 +1,4 @@
+import { PerfilProvider } from './modules/perfil/context/PerfilProvider.jsx';
 import { AppLayout } from './layouts/AppLayout.jsx';
 import { AppRoutes } from './app/AppRoutes.jsx';
 import { routes } from './app/routes.jsx';
@@ -9,9 +10,11 @@ const navigation = getNavigation(routes);
 export function App() {
     const path = useLocation();
     return (
+        <PerfilProvider>
         <AppLayout navigation={navigation} activePath={path}>
             <AppRoutes path={path} />
         </AppLayout>
+        </PerfilProvider>
     );
 }
 

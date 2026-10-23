@@ -32,7 +32,7 @@ y registra sus cambios en `usuario_historial` (migración 017). La migración 01
 sesiones al desactivar usuarios o cambiar sus credenciales.
 No usar SQL manual como interfaz habitual de gestión de cuentas.
 
-## Asignaciones iniciales
+## Asignaciones iniciales 
 
 El jefe recibe todos los permisos definidos. El operador recibe:
 
