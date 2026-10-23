@@ -66,4 +66,6 @@ router.use("/gastos", require("./gastos.routes"));
 router.use("/abastecimientos-combustible", require("./abastecimientos_combustible.routes"));
 router.use("/informes", require("./informes.routes"));
 router.use("/liquidaciones", require("./liquidaciones.routes"));
+router.use("/tarifas-capacidad", require("./tarifas_capacidad.routes"));
+router.use("/modalidades-tarifa", require("./modalidades_tarifa.routes"));
 module.exports = router;
