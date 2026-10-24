@@ -52,7 +52,9 @@ test('Sidebar y página muestran identidad real y solo edición de perfil', asyn
         const page = render(PerfilPage, value);
         assert.match(page, /Editar perfil/);
         assert.match(page, /ana@example.com/);
+        assert.doesNotMatch(page, /<table|Limpiar filtros|Orden por ID/);
         assert.doesNotMatch(page, /Desactivar|Eliminar|Administrar usuarios/);
+        assert.doesNotMatch(render(PerfilPage, { ...value, usuario: { ...usuario, requiere_cambio_password: true } }), /\+ Editar perfil/);
         assert.match(render(PerfilPage, { usuario: null, loading: false, error: 'No hay sesión' }), /No hay sesión/);
     } finally { await server.close(); }
 });

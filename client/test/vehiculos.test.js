@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import { prepararVehiculo } from '../src/modules/vehiculos/domain/vehiculo.js';
 import * as api from '../src/modules/vehiculos/services/vehiculos.api.js';
 
+test('Vehículos: la acción adicional del catálogo conserva fecha opcional y endpoint de kilometraje', async (t) => {
+    const calls = [];
+    t.mock.method(globalThis, 'fetch', async (url) => {
+        calls.push(url);
+        return { ok: true, json: async () => ({ kilometraje_estimado: '1200.50' }) };
+    });
+    assert.equal((await api.api.ejecutar('kilometraje', 3, { fecha_hasta: null })).kilometraje_estimado, '1200.50');
+    assert.equal(calls[0], '/api/vehiculos/3/kilometraje');
+    await api.api.ejecutar('kilometraje', 3, { fecha_hasta: '2026-10-23T08:15:30' });
+    assert.equal(new URL(calls[1], 'http://localhost').searchParams.get('fecha_hasta'), '2026-10-23T08:15:30');
+    assert.throws(() => api.api.ejecutar('otra', 3, {}), /no admitida/);
+});
+
 test('Vehículos: formulario conserva decimales, fecha local, cero y estado; elimina campos ajenos', () => {
     const form = {
         placa: ' abc-123 ', marca: ' Marca ', modelo: ' Modelo ', anio: '2026',
