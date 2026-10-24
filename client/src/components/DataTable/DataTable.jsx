@@ -1,5 +1,10 @@
 
-import React from 'react';
+import React, {
+    useState,
+    useRef,
+    useEffect,
+    useLayoutEffect
+} from 'react';
 
 export function DataTable({
     columns = [],
@@ -7,32 +12,140 @@ export function DataTable({
     rowKey = 'id',
     loading = false,
     error = null,
-    emptyMessage = 'No hay registros disponibles',
-    maxColumns = 4
+    emptyMessage = 'No hay registros disponibles'
 }) {
-    // Identificar la columna de acciones
+    const containerRef = useRef(null);
+    const measureRef = useRef(null);
+    const [visibleCount, setVisibleCount] = useState(null);
+
     const actionColumn = columns.find(
         (col) => col.key === 'actions'
     );
 
-    // Obtener únicamente las columnas de información
     const infoColumns = columns.filter(
         (col) => col.key !== 'actions'
     );
 
-    // Máximo 4 columnas de información + acciones
+    // Calcular cuántas columnas caben realmente
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+        const measureTable = measureRef.current;
+
+        if (!container || !measureTable) return;
+
+        const calculateColumns = () => {
+            const availableWidth = container.clientWidth;
+            const headers = Array.from(
+                measureTable.querySelectorAll('thead th')
+            );
+
+            const widths = headers.map((th) =>
+                th.getBoundingClientRect().width
+            );
+
+            const actionWidth = actionColumn
+                ? widths[widths.length - 1]
+                : 0;
+
+            let usedWidth = actionWidth;
+            let count = 0;
+
+            for (let i = 0; i < infoColumns.length; i++) {
+                const columnWidth = widths[i] ?? 0;
+
+                if (usedWidth + columnWidth > availableWidth) {
+                    break;
+                }
+
+                usedWidth += columnWidth;
+                count++;
+            }
+
+            // Mantener al menos una columna de información
+            setVisibleCount(
+                Math.min(infoColumns.length, Math.max(1, count))
+            );
+        };
+
+        calculateColumns();
+
+        const observer = new ResizeObserver(calculateColumns);
+        observer.observe(container);
+
+        return () => observer.disconnect();
+    }, [columns, data, actionColumn, infoColumns]);
+
     const visibleColumns = [
-        ...infoColumns.slice(0, maxColumns),
+        ...infoColumns.slice(0, visibleCount ?? infoColumns.length),
         ...(actionColumn ? [actionColumn] : [])
     ];
 
+    const getColumnClass = (key) => {
+        return [
+            'id',
+            rowKey,
+            'estado',
+            'actions'
+        ].includes(key)
+            ? 'table-cell-center'
+            : '';
+    };
+
+    const renderCell = (col, row) => {
+        if (col.render) return col.render(row);
+
+        const value = row[col.key];
+
+        if (typeof value === 'boolean') {
+            return value
+                ? (col.key === 'estado' ? 'Activo' : 'Sí')
+                : (col.key === 'estado' ? 'Inactivo' : 'No');
+        }
+
+        return value ?? '—';
+    };
+
     return (
-        <div className="table-wrapper">
+        <div ref={containerRef} className="table-wrapper">
+            {/* Tabla invisible para medir columnas */}
+            <div className="table-measure-container" aria-hidden="true">
+                <table ref={measureRef} className="data-table table-measure">
+                    <thead>
+                        <tr>
+                            {[...infoColumns, ...(actionColumn ? [actionColumn] : [])]
+                                .map((col) => (
+                                    <th key={col.key}>{col.label}</th>
+                                ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((row, idx) => (
+                            <tr key={idx}>
+                                {[...infoColumns, ...(actionColumn ? [actionColumn] : [])]
+                                    .map((col) => (
+                                        <td key={col.key}>
+                                            {col.key === 'actions'
+                                                ? 'Ver Editar Eliminar'
+                                                : renderCell(col, row)}
+                                        </td>
+                                    ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Tabla visible */}
             <table className="data-table">
                 <thead>
                     <tr>
                         {visibleColumns.map((col) => (
-                            <th key={col.key}>{col.label}</th>
+                            <th
+                                key={col.key}
+                                className={getColumnClass(col.key)}
+                            >
+                                {col.label}
+                            </th>
                         ))}
                     </tr>
                 </thead>
@@ -61,18 +174,11 @@ export function DataTable({
                                 }
                             >
                                 {visibleColumns.map((col) => (
-                                    <td key={col.key}>
-                                        {col.render
-                                            ? col.render(row)
-                                            : typeof row[col.key] === 'boolean'
-                                                ? (row[col.key]
-                                                    ? (col.key === 'estado'
-                                                        ? 'Activo'
-                                                        : 'Sí')
-                                                    : (col.key === 'estado'
-                                                        ? 'Inactivo'
-                                                        : 'No'))
-                                                : row[col.key] ?? '—'}
+                                    <td
+                                        key={col.key}
+                                        className={getColumnClass(col.key)}
+                                    >
+                                        {renderCell(col, row)}
                                     </td>
                                 ))}
                             </tr>

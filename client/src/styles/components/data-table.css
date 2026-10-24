@@ -1,3 +1,4 @@
+/* Contenedor de la tabla */
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -6,6 +7,7 @@
   background-color: var(--bg-surface);
 }
 
+/* Tabla principal */
 .data-table {
   width: 100%;
   border-collapse: collapse;
@@ -23,7 +25,7 @@
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-color);
 
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
 }
 
@@ -34,21 +36,33 @@
   font-size: 0.875rem;
   color: var(--text-primary);
 
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
 }
 
-/* Última fila */
+/* Centrar columnas ID, Estado y Acciones */
+.data-table th.table-cell-center,
+.data-table td.table-cell-center {
+  text-align: center;
+}
+
+/* Separadores verticales */
+.data-table th:not(:last-child),
+.data-table td:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+
+/* Última fila sin borde inferior */
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Hover */
+/* Efecto hover */
 .data-table tbody tr:hover {
   background-color: var(--bg-primary);
 }
 
-/* Acciones */
+/* Contenedor de botones de acciones */
 .data-table .record-actions {
   display: flex;
   align-items: center;
@@ -59,14 +73,36 @@
 }
 
 /* Estado vacío */
-.table-empty-state {
+.data-table .table-empty-state {
   text-align: center;
   vertical-align: middle;
   padding: 48px 16px !important;
   color: var(--text-secondary);
 }
 
-/* Adaptación a móviles */
+
+/* Tabla auxiliar para medir el ancho de las columnas */
+.table-measure-container {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  width: max-content;
+  height: 0;
+  overflow: hidden;
+}
+
+.table-measure {
+  width: max-content;
+  table-layout: auto;
+}
+
+.table-measure th,
+.table-measure td {
+  white-space: nowrap;
+}
+
+
+/* Responsive */
 @media (max-width: 768px) {
 
   .data-table th,

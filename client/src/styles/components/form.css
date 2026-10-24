@@ -126,6 +126,40 @@
   overflow-wrap: anywhere;
 }
 
+
+/* Contenedor del checkbox: una columna normal */
+.form-checkbox-wrapper {
+  grid-column: auto;
+  min-width: 0;
+}
+
+/* Mantener etiqueta arriba y control debajo */
+.form-checkbox-wrapper .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Etiqueta Estado */
+.form-checkbox-wrapper .form-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Checkbox */
+.form-checkbox-wrapper input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 10px 12px;
+  align-self: flex-start;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+
 @media (max-width: 767px) {
 
   .form-grid,
