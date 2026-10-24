@@ -1,4 +1,5 @@
 export const columns = [
+    { "key": "nombre_categoria", "label": "Categoría" },
     {
         "key": "id_producto",
         "label": "Código"
