@@ -1,15 +1,16 @@
 # Cobertura visual de la API
 
-Los módulos operativos siguen siendo plantillas. Mi perfil es la excepción:
-consulta y actualiza los datos del usuario mediante la sesión existente. Guardar, confirmar y consultar el servidor están
-deshabilitados. Las pantallas reutilizan tablas, campos y modales del diseño existente.
+Mi perfil y Vehículos están conectados al servidor mediante la sesión existente.
+Los demás módulos operativos siguen siendo plantillas, con las operaciones de
+guardado y consulta deshabilitadas. Las pantallas reutilizan tablas, campos y
+modales del diseño existente.
 
 Todas las rutas citadas parten de `/api`. La API sigue siendo la autoridad para
 validaciones, permisos, cálculos, dependencias y transiciones.
 
 | API | Plantilla / acciones |
 | --- | --- |
-| `/vehiculos` | Catálogo: crear, consultar, editar y eliminar; kilometraje por `/:id/kilometraje` |
+| `/vehiculos` | Conectado: listado, búsqueda local, crear, detalle, editar y eliminar con confirmación; consulta de kilometraje por `/:id/kilometraje` con fecha de corte opcional |
 | `/choferes`, `/terminales`, `/gasolineras`, `/proveedores` | CRUD mediante listado y modales; proveedores incluye `/:id/cuentas-por-pagar` |
 | `/productos-transportados` | Catálogo existente renombrado Productos transportados |
 | `/productos`, `/categorias-producto`, `/trayectos`, `/tarifas` | Catálogos nuevos con CRUD visual |

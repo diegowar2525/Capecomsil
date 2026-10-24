@@ -141,3 +141,21 @@ la variable de entorno `API_PROXY_TARGET` al arrancar Vite. En producción, serv
 por el backend y la configuración de cookies. Esta tarea no aplica migraciones.
 
 Pruebas: `node --test test/perfil.test.js test/plantillas.test.js test/viajes.recorrido.test.js`.
+
+## Convenciones para módulos conectados
+
+Perfil y vehículos usan `src/services/http.js` para transporte HTTP (cookies, CSRF,
+JSON, errores y cancelación) y `src/hooks/useForm.js` para valores controlados,
+preparación, envío, errores y bloqueo de envíos duplicados.
+
+- `services/`: endpoints y adaptación de respuestas; sin estado de React.
+- `domain/`: preparación y validación pura de objetos de valores; sin peticiones.
+- `hooks/`: consultas y coordinación de operaciones; mantienen los datos actualizados.
+- `components/`: presentación con Modal y FormField compartidos; reciben operaciones por props.
+- `context/`: solo cuando el estado se comparte entre distintas zonas, como el perfil del sidebar.
+- La página coordina navegación, búsqueda y mensajes de éxito.
+
+Montar el formulario cuando termine la carga del registro y cambiar su key al
+cambiar de identidad. Los valores iniciales se leen al montar para no sobrescribir
+la edición del usuario. TemplateForm sigue disponible para módulos sin conectar;
+los formularios de perfil y vehículos usan campos controlados con useForm.
