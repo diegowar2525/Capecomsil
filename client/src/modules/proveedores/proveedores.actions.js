@@ -6,6 +6,7 @@ export const relatedAction = {
     "tables": [
         {
             "name": "cuentas_por_pagar",
+            "rowKey": "id_factura_proveedor",
             "label": "Facturas pendientes",
             "columns": [
                 {
