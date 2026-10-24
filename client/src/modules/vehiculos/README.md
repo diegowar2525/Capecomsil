@@ -14,4 +14,4 @@ con los demás catálogos.
   envíos duplicados. Ya no existen modales ni hooks de registro exclusivos del módulo.
 
 Se mantienen las cookies de sesión, CSRF, fechas locales y decimales. El backend
-valida los permisos y dependencias. No se agregaron paginación ni un ícono de orden.
+valida los permisos y dependencias. Utiliza la paginación, el ícono de orden y los filtros avanzados compartidos.

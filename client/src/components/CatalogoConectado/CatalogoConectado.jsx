@@ -4,6 +4,7 @@ import { DataTable } from '../DataTable/DataTable.jsx';
 import { crudActions } from '../CatalogoPage/catalogo.actions.js';
 import { CatalogoModal } from './CatalogoModal.jsx';
 import { CatalogoFiltros } from './CatalogoFiltros.jsx';
+import { CatalogoPaginacion } from './CatalogoPaginacion.jsx';
 import { useCatalogoFiltros } from '../../hooks/useCatalogoFiltros.js';
 
 export function CatalogoConectado({ definition, controller }) {
@@ -35,8 +36,9 @@ export function CatalogoConectado({ definition, controller }) {
         </> : <>
         <CatalogoFiltros title={page.title} data={data} filters={filters} state={filterState}
             loading={loading} error={error} refreshDisabled={Boolean(dialog)} onRefresh={recargar} />
-        <DataTable columns={tableColumns} data={filterState.visible} rowKey={rowKey} loading={loading} error={error}
+        <DataTable columns={tableColumns} data={filterState.pagination.rows} rowKey={rowKey} loading={loading} error={error}
             emptyMessage={filterState.active ? 'No hay coincidencias con los filtros.' : 'No hay registros disponibles.'} />
+        {!loading && !error && <CatalogoPaginacion state={filterState} disabled={Boolean(dialog)} />}
         </>}
         {dialog && (!single || canEdit) && <CatalogoModal key={`${dialog.action.id}-${dialog.id ?? 'nuevo'}`} {...dialog} definition={definition}
             guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} onClose={() => setDialog(null)} onSaved={saved} />}
