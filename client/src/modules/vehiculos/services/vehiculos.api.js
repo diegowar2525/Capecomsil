@@ -9,3 +9,15 @@ export const consultarKilometraje = (id, fecha, signal) => {
     const query = fecha ? `?${new URLSearchParams({ fecha_hasta: fecha })}` : '';
     return requestJson(`/api/vehiculos/${id}/kilometraje${query}`, { signal });
 };
+
+export const api = {
+    listar: listarVehiculos,
+    consultar: consultarVehiculo,
+    crear: crearVehiculo,
+    actualizar: actualizarVehiculo,
+    eliminar: eliminarVehiculo,
+    ejecutar: (action, id, values) => {
+        if (action !== 'kilometraje') throw new Error('Acción no admitida.');
+        return consultarKilometraje(id, values.fecha_hasta);
+    }
+};
