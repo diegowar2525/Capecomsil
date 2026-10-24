@@ -127,7 +127,7 @@ Verificación: `node --test test/plantillas.test.js test/viajes.recorrido.test.j
 - `services/perfil.api.js`: GET/PATCH `/api/auth/me`, cookies y encabezado CSRF.
 - `domain/perfil.js`: preparación de los tres campos editables; vacíos opcionales se envían como null.
 - `components/SidebarPerfil.jsx` y `Avatar.jsx`: foto, nombre y rol con iniciales si falta/falla la foto.
-- `PerfilPage.jsx` y `components/PerfilModal.jsx`: ficha propia y modal de edición, errores y confirmación real del servidor.
+- `PerfilPage.jsx` configura CatalogoConectado en modo single; `components/PerfilFicha.jsx` conserva la presentación del perfil y CatalogoModal realiza la edición.
 
 La ruta `#/perfil` no crea otra categoría: se abre desde el avatar del sidebar.
 No se muestra identidad ficticia cuando no hay sesión. Todavía no hay formulario
@@ -143,7 +143,7 @@ Pruebas: `node --test test/perfil.test.js test/plantillas.test.js test/viajes.re
 
 ## Convenciones para módulos conectados
 
-Los ocho catálogos conectados después de vehículos reutilizan
+Los nueve catálogos conectados, incluido vehículos, reutilizan
 `components/CatalogoConectado/`: página, modal, formulario controlado y detalle.
 Cada módulo conserva `services/`, `domain/` y `hooks/`, además de sus campos,
 columnas y configuración. Los hooks del módulo usan `useCatalogo` para el CRUD;
@@ -200,3 +200,16 @@ Si se incorpora paginación del servidor, trasladar filtrado y orden a la API an
 de paginar. Actualizar conserva la selección; Limpiar filtros también restablece
 el orden ascendente. Si una escritura deja el registro fuera del filtro actual,
 no se muestra en la tabla hasta cambiar o limpiar ese filtro.
+
+## Ficha individual y acciones de consulta
+
+CatalogoConectado admite mode: single para perfil: muestra la ficha personalizada
+Card, carga, error, reintento y edición. No muestra tabla, filtros ni controles de
+orden. canEdit conserva el bloqueo por contraseña temporal. El guardado se delega
+al PerfilProvider, que actualiza la identidad compartida con el sidebar; no se
+recarga el contexto después de guardar.
+
+Las acciones query de CatalogoModal muestran campos de consulta y resultados en
+el mismo modal. Se usan para kilometraje con fecha opcional y no disparan el flujo
+de guardado ni cierre. Las acciones especiales de proveedores y gasolineras
+siguen disponibles. La paginación y el ícono para alternar el orden quedan pendientes.
