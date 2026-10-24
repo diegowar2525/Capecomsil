@@ -1,0 +1,48 @@
+.record-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.record-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.record-action-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.record-action-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.record-action-delete {
+    color: #dc2626;
+}
+
+.record-action-delete:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+@media (max-width: 600px) {
+    .record-action-btn {
+        width: 40px;
+        height: 40px;
+    }
+}

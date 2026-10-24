@@ -6,6 +6,13 @@ import { CatalogoModal } from './CatalogoModal.jsx';
 import { CatalogoFiltros } from './CatalogoFiltros.jsx';
 import { CatalogoPaginacion } from './CatalogoPaginacion.jsx';
 import { useCatalogoFiltros } from '../../hooks/useCatalogoFiltros.js';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
+
+const actionIcons = {
+    eye: Eye,
+    pencil: Pencil,
+    trash: Trash2
+};
 
 export function CatalogoConectado({ definition, controller }) {
     const { page, columns = [], rowKey, filters = [], actions = crudActions, mode = 'list', Card } = definition;
@@ -21,10 +28,39 @@ export function CatalogoConectado({ definition, controller }) {
         setMessage(action === 'delete' ? 'Registro eliminado correctamente.' : 'Cambios guardados correctamente.');
         if (!single) recargar();
     };
-    const tableColumns = [...columns, { key: 'actions', label: 'Acciones', render: (row) =>
-        <div className="record-actions">{actions.map((action) =>
-            <button key={action.id} type="button" className="btn btn-outline" onClick={() => open(action, row[rowKey])}>{action.label}</button>
-        )}</div> }];
+
+    const tableColumns = [
+        ...columns,
+        {
+            key: 'actions',
+            label: 'Acciones',
+            render: (row) => (
+                <div className="record-actions">
+                    {actions.map((action) => {
+                        const Icon = actionIcons[action.icon];
+
+                        return (
+                            <button
+                                key={action.id}
+                                type="button"
+                                className={`record-action-btn record-action-${action.id}`}
+                                onClick={() => open(action, row[rowKey])}
+                                title={action.label}
+                                aria-label={action.label}
+                            >
+                                {Icon ? (
+                                    <Icon size={18} strokeWidth={1.8} />
+                                ) : (
+                                    action.label
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            )
+        }
+    ];
+
     return <section>
         <PageHeader {...page} actionLabel={!loading && !error && (!single || canEdit) ? page.actionLabel : undefined}
             onAction={() => open({ id: single ? 'edit' : 'create', label: page.actionLabel }, single ? registro[rowKey] : undefined)} />
@@ -34,11 +70,11 @@ export function CatalogoConectado({ definition, controller }) {
             {error && <div><p role="alert">{error}</p><button type="button" className="btn btn-outline" onClick={recargar}>Volver a consultar</button></div>}
             {registro && Card && <Card registro={registro} />}
         </> : <>
-        <CatalogoFiltros title={page.title} data={data} filters={filters} state={filterState}
-            loading={loading} error={error} refreshDisabled={Boolean(dialog)} onRefresh={recargar} />
-        <DataTable columns={tableColumns} data={filterState.pagination.rows} rowKey={rowKey} loading={loading} error={error}
-            emptyMessage={filterState.active ? 'No hay coincidencias con los filtros.' : 'No hay registros disponibles.'} />
-        {!loading && !error && <CatalogoPaginacion state={filterState} disabled={Boolean(dialog)} />}
+            <CatalogoFiltros title={page.title} data={data} filters={filters} state={filterState}
+                loading={loading} error={error} refreshDisabled={Boolean(dialog)} onRefresh={recargar} />
+            <DataTable columns={tableColumns} data={filterState.pagination.rows} rowKey={rowKey} loading={loading} error={error}
+                emptyMessage={filterState.active ? 'No hay coincidencias con los filtros.' : 'No hay registros disponibles.'} />
+            {!loading && !error && <CatalogoPaginacion state={filterState} disabled={Boolean(dialog)} />}
         </>}
         {dialog && (!single || canEdit) && <CatalogoModal key={`${dialog.action.id}-${dialog.id ?? 'nuevo'}`} {...dialog} definition={definition}
             guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} onClose={() => setDialog(null)} onSaved={saved} />}

@@ -10,8 +10,9 @@
 @import './styles/components/modal.css';
 @import './styles/components/button.css';
 @import './styles/components/form.css';
-@import './styles/components/table.css';
+@import './styles/components/data-table.css';
 @import './styles/components/catalogo-filtros.css';
+@import './styles/components/botones-accion.css';
 
 /* Modules */
 @import './styles/modules/dashboard.css';
