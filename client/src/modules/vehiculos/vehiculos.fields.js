@@ -42,7 +42,8 @@ export const fields = [
         "name": "fecha_inicio_control_km",
         "label": "Inicio del control de km",
         "required": false,
-        "type": "datetime-local"
+        "type": "datetime-local",
+        "step": 1
     },
     {
         "name": "imagen_url",

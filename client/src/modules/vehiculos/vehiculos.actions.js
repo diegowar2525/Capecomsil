@@ -6,7 +6,8 @@ export const relatedAction = {
         {
             "name": "fecha_hasta",
             "label": "Fecha de corte",
-            "type": "datetime-local"
+            "type": "datetime-local",
+            "step": 1
         }
     ],
     "columns": [
