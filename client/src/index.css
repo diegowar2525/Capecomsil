@@ -11,6 +11,7 @@
 @import './styles/components/button.css';
 @import './styles/components/form.css';
 @import './styles/components/table.css';
+@import './styles/components/catalogo-filtros.css';
 
 /* Modules */
 @import './styles/modules/dashboard.css';

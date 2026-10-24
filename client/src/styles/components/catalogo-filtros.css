@@ -1,0 +1,13 @@
+.catalogo-filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.catalogo-filtros .form-control,
+.catalogo-filtros .form-select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
