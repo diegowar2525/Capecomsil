@@ -1,10 +1,6 @@
 
-import React, {
-    useState,
-    useRef,
-    useEffect,
-    useLayoutEffect
-} from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
+import { Check, X } from 'lucide-react';
 
 export function DataTable({
     columns = [],
@@ -22,8 +18,12 @@ export function DataTable({
         (col) => col.key === 'actions'
     );
 
+    const statusColumn = columns.find(
+        (col) => col.key === 'estado'
+    );
+
     const infoColumns = columns.filter(
-        (col) => col.key !== 'actions'
+        (col) => col.key !== 'actions' && col.key !== 'estado'
     );
 
     // Calcular cuántas columnas caben realmente
@@ -47,7 +47,11 @@ export function DataTable({
                 ? widths[widths.length - 1]
                 : 0;
 
-            let usedWidth = actionWidth;
+            const statusWidth = statusColumn
+                ? widths[infoColumns.length]
+                : 0;
+
+            let usedWidth = actionWidth + statusWidth;
             let count = 0;
 
             for (let i = 0; i < infoColumns.length; i++) {
@@ -73,10 +77,11 @@ export function DataTable({
         observer.observe(container);
 
         return () => observer.disconnect();
-    }, [columns, data, actionColumn, infoColumns]);
+    }, [columns, data, actionColumn, statusColumn, infoColumns]);
 
     const visibleColumns = [
         ...infoColumns.slice(0, visibleCount ?? infoColumns.length),
+        ...(statusColumn ? [statusColumn] : []),
         ...(actionColumn ? [actionColumn] : [])
     ];
 
@@ -91,19 +96,37 @@ export function DataTable({
             : '';
     };
 
+
     const renderCell = (col, row) => {
         if (col.render) return col.render(row);
 
         const value = row[col.key];
 
+        // Mostrar iconos para el campo Estado
+        if (col.key === 'estado' && typeof value === 'boolean') {
+            return (
+                <span
+                    className={`table-status ${value ? 'is-active' : 'is-inactive'}`}
+                    title={value ? 'Activo' : 'Inactivo'}
+                    role="img"
+                    aria-label={value ? 'Activo' : 'Inactivo'}
+                >
+                    {value
+                        ? <Check size={20} strokeWidth={2.5} aria-hidden="true" />
+                        : <X size={20} strokeWidth={2.5} aria-hidden="true" />
+                    }
+                </span>
+            );
+        }
+
+        // Otros campos booleanos
         if (typeof value === 'boolean') {
-            return value
-                ? (col.key === 'estado' ? 'Activo' : 'Sí')
-                : (col.key === 'estado' ? 'Inactivo' : 'No');
+            return value ? 'Sí' : 'No';
         }
 
         return value ?? '—';
     };
+
 
     return (
         <div ref={containerRef} className="table-wrapper">
@@ -112,7 +135,11 @@ export function DataTable({
                 <table ref={measureRef} className="data-table table-measure">
                     <thead>
                         <tr>
-                            {[...infoColumns, ...(actionColumn ? [actionColumn] : [])]
+                            {[
+                                ...infoColumns,
+                                ...(statusColumn ? [statusColumn] : []),
+                                ...(actionColumn ? [actionColumn] : [])
+                            ]
                                 .map((col) => (
                                     <th key={col.key}>{col.label}</th>
                                 ))}
@@ -121,7 +148,11 @@ export function DataTable({
                     <tbody>
                         {data.map((row, idx) => (
                             <tr key={idx}>
-                                {[...infoColumns, ...(actionColumn ? [actionColumn] : [])]
+                                {[
+                                    ...infoColumns,
+                                    ...(statusColumn ? [statusColumn] : []),
+                                    ...(actionColumn ? [actionColumn] : [])
+                                ]
                                     .map((col) => (
                                         <td key={col.key}>
                                             {col.key === 'actions'

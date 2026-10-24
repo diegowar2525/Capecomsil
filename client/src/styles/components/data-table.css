@@ -16,8 +16,8 @@
 
 /* Encabezados */
 .data-table th {
-  background-color: var(--bg-primary);
-  color: var(--text-secondary);
+  background-color: var(--accent-primary);
+  color: var(--text-inverse);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -100,6 +100,26 @@
 .table-measure td {
   white-space: nowrap;
 }
+
+
+/* Iconos de estado */
+.data-table .table-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* Estado activo */
+.data-table .table-status.is-active {
+  color: #16a34a;
+}
+
+/* Estado inactivo */
+.data-table .table-status.is-inactive {
+  color: #dc2626;
+}
+
 
 
 /* Responsive */
