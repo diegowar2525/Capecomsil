@@ -212,4 +212,25 @@ recarga el contexto después de guardar.
 Las acciones query de CatalogoModal muestran campos de consulta y resultados en
 el mismo modal. Se usan para kilometraje con fecha opcional y no disparan el flujo
 de guardado ni cierre. Las acciones especiales de proveedores y gasolineras
-siguen disponibles. La paginación y el ícono para alternar el orden quedan pendientes.
+siguen disponibles. Los listados comparten paginación y un ícono accesible para alternar el orden; perfil conserva su ficha sin estos controles.
+
+## Paginación y filtros avanzados
+
+CatalogoConectado aplica búsqueda y filtros al listado completo, después ordena
+por ID y finalmente divide el resultado en páginas de 10, 25 o 50 registros.
+El orden inicial sigue siendo ascendente. Cambiar filtros, orden o tamaño vuelve
+a la primera página; una reducción del listado limita la página a la última válida.
+La paginación es local: no reduce los registros descargados desde la API.
+
+CatalogoFiltros mantiene búsqueda y estado visibles. Un botón con SVG, etiqueta
+accesible y tooltip alterna el orden. Los demás campos están en Más filtros, con
+contador de filtros activos aunque la sección esté cerrada. CatalogoPaginacion
+muestra el rango, página, tamaño y navegación. Los controles se redistribuyen en
+móvil y los botones de navegación tienen un área mínima de 44 px.
+
+Cada módulo declara textos, selecciones, rangos inclusivos (min/max) y presencia
+de foto donde aplique. Los valores nulos no cumplen rangos numéricos; cero sí es
+válido. Un rango invertido devuelve cero coincidencias, sin corregir la entrada
+silenciosamente. Limpiar filtros conserva el tamaño elegido y vuelve al orden
+ascendente y a la primera página. Las opciones siguen derivándose de todos los
+registros cargados, no solo de la página visible.
