@@ -1,7 +1,7 @@
 # Cobertura visual de la API
 
-Mi perfil y Vehículos están conectados al servidor mediante la sesión existente.
-Los demás módulos operativos siguen siendo plantillas, con las operaciones de
+Mi perfil y todos los módulos de la sección Catálogos están conectados al servidor mediante la sesión existente.
+Las pantallas de Configuración y los demás módulos operativos siguen siendo plantillas, con las operaciones de
 guardado y consulta deshabilitadas. Las pantallas reutilizan tablas, campos y
 modales del diseño existente.
 
@@ -11,11 +11,12 @@ validaciones, permisos, cálculos, dependencias y transiciones.
 | API | Plantilla / acciones |
 | --- | --- |
 | `/vehiculos` | Conectado: listado, búsqueda local, crear, detalle, editar y eliminar con confirmación; consulta de kilometraje por `/:id/kilometraje` con fecha de corte opcional |
-| `/choferes`, `/terminales`, `/gasolineras`, `/proveedores` | CRUD mediante listado y modales; proveedores incluye `/:id/cuentas-por-pagar` |
-| `/productos-transportados` | Catálogo existente renombrado Productos transportados |
-| `/productos`, `/categorias-producto`, `/trayectos`, `/tarifas` | Catálogos nuevos con CRUD visual |
+| `/choferes`, `/terminales`, `/gasolineras`, `/proveedores` | CRUD conectado mediante listado y modales; proveedores consulta `/:id/cuentas-por-pagar`; gasolineras consulta y cambia modalidades |
+| `/productos-transportados` | CRUD conectado de productos transportados |
+| `/productos`, `/categorias-producto`, `/trayectos` | CRUD conectado, con categorías y extremos de trayecto obtenidos de la API |
+| `/tarifas` | Plantilla de tarifas por terminal pendiente de conexión |
 | `/tarifas-capacidad` | CRUD visual con cuatro capacidades, precio por galón y vigencia, sin terminal |
-| `/modalidades-tarifa` | Historial filtrado por gasolinera y cambio con fecha efectiva; también disponible en modales de Gasolineras |
+| `/modalidades-tarifa` | Consulta y cambio conectados desde Gasolineras; la pantalla independiente de Configuración sigue como plantilla |
 | `/configuraciones-viatico`, `/configuraciones-remuneracion`, `/configuraciones-combustible`, `/configuraciones-peaje-trayecto`, `/feriados` | CRUD visual de configuraciones y vigencias |
 | `/viajes` | Crear, consultar, editar y anular; historial por `/:id/historial`; detalle incluye entregas, tramos y costos |
 | `/gastos`, `/abastecimientos-combustible` | Listado y filtros, creación, detalle y anulación. Sin editar ni eliminar |

@@ -1,8 +1,8 @@
 # Organización del frontend
 
-La aplicación conserva el diseño inicial. Los módulos operativos siguen como plantillas; Mi perfil se conecta a la API de la sesión actual.
-Los formularios no guardan datos. Las pantallas operativas incluyen plantillas de
-formularios y acciones según los contratos actuales del backend. Ver COBERTURA_API.md.
+La aplicación conserva el diseño inicial. Mi perfil y toda la sección Catálogos
+se conectan a la API de la sesión actual. Configuración y las demás pantallas
+operativas conservan sus plantillas. Ver COBERTURA_API.md.
 
 - `App.jsx`: compone layout, navegación y pantalla activa.
 - `app/routes.jsx`: registro de rutas con componente, etiqueta y grupo del menú.
@@ -43,10 +43,9 @@ El módulo `viajes` separa responsabilidades así:
 `services/viajes.api.js` se creará cuando se conecte la API; no contiene lógica
 de recorrido ni se añade un servicio vacío en esta etapa.
 
-Incorporar sesión y permisos antes de conectar operaciones. La visibilidad del
-menú no sustituye los permisos del backend. Al integrar APIs, crear
-`services/http.js` para cookies, CSRF y errores comunes, y `<modulo>.api.js` en
-cada módulo. No se crean servicios vacíos ni un sistema de autenticación ficticio.
+La visibilidad del menú no sustituye los permisos del backend. Al conectar las
+operaciones restantes, reutilizar `services/http.js` para cookies, CSRF y errores
+comunes, y declarar sus endpoints en `<modulo>.api.js` dentro de cada módulo.
 
 Viajes conserva un formulario visual provisional con cabecera, entregas múltiples
 y tramos; cargar catálogos y enviar datos está pendiente. Liquidaciones incluye borradores, selección de entregas y modales de transición de estado.
@@ -144,6 +143,24 @@ Pruebas: `node --test test/perfil.test.js test/plantillas.test.js test/viajes.re
 
 ## Convenciones para módulos conectados
 
+Los ocho catálogos conectados después de vehículos reutilizan
+`components/CatalogoConectado/`: página, modal, formulario controlado y detalle.
+Cada módulo conserva `services/`, `domain/` y `hooks/`, además de sus campos,
+columnas y configuración. Los hooks del módulo usan `useCatalogo` para el CRUD;
+`useRegistroCatalogo` carga el registro completo, selectores y consultas
+relacionadas antes de abrir una acción. Ambos cancelan las lecturas al desmontar.
+
+Los servicios usan `crearCatalogoApi` y añaden solo endpoints particulares:
+opciones de trayectos/categorías, cuentas por pagar e historial/cambio de modalidad.
+Las escrituras recargan el listado para recuperar nombres de referencias y valores
+normalizados. Los errores conservan el formulario; las confirmaciones de eliminación
+identifican el registro. Las operaciones siguen sujetas a permisos del servidor.
+
+Trayectos deriva los tipos de extremos para editar y descarta IDs de opciones
+ocultas al enviar. Productos de inventario exige condición para categorías de
+llantas y la limpia al seleccionar otra categoría. No se limita el CRUD a datos
+activos: los registros inactivos existentes permanecen consultables/editables.
+
 Perfil y vehículos usan `src/services/http.js` para transporte HTTP (cookies, CSRF,
 JSON, errores y cancelación) y `src/hooks/useForm.js` para valores controlados,
 preparación, envío, errores y bloqueo de envíos duplicados.
@@ -159,3 +176,27 @@ Montar el formulario cuando termine la carga del registro y cambiar su key al
 cambiar de identidad. Los valores iniciales se leen al montar para no sobrescribir
 la edición del usuario. TemplateForm sigue disponible para módulos sin conectar;
 los formularios de perfil y vehículos usan campos controlados con useForm.
+
+## Orden y filtros de catálogos conectados
+
+Los nueve catálogos muestran ID ascendente por defecto y permiten elegir
+descendente. El orden se aplica en el frontend sin modificar el listado original
+ni depender del ORDER BY de cada endpoint.
+
+- `domain/catalogoFiltros.js`: orden numérico, combinación de filtros y opciones únicas.
+- `hooks/useCatalogoFiltros.js`: búsqueda, selección, orden y limpieza.
+- `components/CatalogoConectado/CatalogoFiltros.jsx`: controles etiquetados, contador y distribución adaptable.
+- `<modulo>.filters.js`: campos específicos; todos reutilizan `filtroEstado`.
+
+Vehículos filtra marca, capacidad y año; choferes, remuneración; gasolineras,
+agente de retención; terminales, ubicación; productos transportados, unidad;
+proveedores, RUC/dirección; trayectos, origen/destino; categorías, llantas;
+productos de inventario, categoría/marca/condición. Los filtros se combinan y
+la búsqueda ignora mayúsculas y acentos. Las opciones se obtienen del listado
+completo para que un filtro no oculte las opciones de los demás.
+
+Son filtros locales sobre el listado completo devuelto por los endpoints actuales.
+Si se incorpora paginación del servidor, trasladar filtrado y orden a la API antes
+de paginar. Actualizar conserva la selección; Limpiar filtros también restablece
+el orden ascendente. Si una escritura deja el registro fuera del filtro actual,
+no se muestra en la tabla hasta cambiar o limpiar ese filtro.
