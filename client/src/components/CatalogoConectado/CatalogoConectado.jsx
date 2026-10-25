@@ -6,13 +6,8 @@ import { CatalogoModal } from './CatalogoModal.jsx';
 import { CatalogoFiltros } from './CatalogoFiltros.jsx';
 import { CatalogoPaginacion } from './CatalogoPaginacion.jsx';
 import { useCatalogoFiltros } from '../../hooks/useCatalogoFiltros.js';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { RowActions } from '../RowActions/RowActions.jsx';
 
-const actionIcons = {
-    eye: Eye,
-    pencil: Pencil,
-    trash: Trash2
-};
 
 export function CatalogoConectado({ definition, controller }) {
     const { page, columns = [], rowKey, filters = [], actions = crudActions, mode = 'list', Card } = definition;
@@ -29,37 +24,21 @@ export function CatalogoConectado({ definition, controller }) {
         if (!single) recargar();
     };
 
+
     const tableColumns = [
         ...columns,
         {
             key: 'actions',
             label: 'Acciones',
             render: (row) => (
-                <div className="record-actions">
-                    {actions.filter((action) => ['detail', 'edit', 'delete'].includes(action.id)).map((action) => {
-                        const Icon = actionIcons[action.icon];
-
-                        return (
-                            <button
-                                key={action.id}
-                                type="button"
-                                className={`record-action-btn record-action-${action.id}`}
-                                onClick={() => open(action, row[rowKey])}
-                                title={action.label}
-                                aria-label={action.label}
-                            >
-                                {Icon ? (
-                                    <Icon size={18} strokeWidth={1.8} />
-                                ) : (
-                                    action.label
-                                )}
-                            </button>
-                        );
-                    })}
-                </div>
+                <RowActions
+                    actions={actions}
+                    onAction={(action) => open(action, row[rowKey])}
+                />
             )
         }
     ];
+
 
     return <section>
         <PageHeader {...page} actionLabel={!loading && !error && (!single || canEdit) ? page.actionLabel : undefined}

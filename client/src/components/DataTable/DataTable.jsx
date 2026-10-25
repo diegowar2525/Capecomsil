@@ -1,6 +1,7 @@
 
 import { useState, useRef, useLayoutEffect } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, EllipsisVertical } from 'lucide-react';
+
 
 export function DataTable({
     columns = [],
@@ -155,9 +156,19 @@ export function DataTable({
                                 ]
                                     .map((col) => (
                                         <td key={col.key}>
-                                            {col.key === 'actions'
-                                                ? 'Ver Editar Eliminar'
-                                                : renderCell(col, row)}
+                                            {col.key === 'actions' ? (
+                                                <>
+                                                    <span className="table-measure-desktop-actions">
+                                                        Ver Editar Eliminar
+                                                    </span>
+
+                                                    <span className="table-measure-mobile-actions">
+                                                        <EllipsisVertical size={20} />
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                renderCell(col, row)
+                                            )}
                                         </td>
                                     ))}
                             </tr>
