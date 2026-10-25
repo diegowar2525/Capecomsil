@@ -1,4 +1,5 @@
 import { Avatar } from './Avatar.jsx';
+import { CerrarSesion } from '../../login/components/CerrarSesion.jsx';
 
 export function PerfilFicha({ registro: usuario }) {
     return <div className="profile-card">
@@ -10,5 +11,6 @@ export function PerfilFicha({ registro: usuario }) {
             <div><dt>Rol</dt><dd>{{ JEFE: 'Jefe', OPERADOR: 'Operador' }[usuario.rol] ?? usuario.rol}</dd></div>
         </dl>
         {usuario.requiere_cambio_password && <p role="status">Debes cambiar tu contraseña temporal antes de editar el perfil.</p>}
+        <div className="profile-actions"><CerrarSesion /></div>
     </div>;
 }

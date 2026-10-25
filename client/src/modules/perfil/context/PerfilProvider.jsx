@@ -5,12 +5,18 @@ import { consultarPerfil, actualizarPerfil } from '../services/perfil.api.js';
 export function PerfilProvider({ children }) {
     const [state, setState] = useState({ usuario: null, loading: true, error: '' });
     const [revision, setRevision] = useState(0);
+    const establecerSesion = (usuario) => setState({ usuario, loading: false, error: '' });
+    useEffect(() => {
+        const expired = () => setState({ usuario: null, loading: false, error: '' });
+        window.addEventListener('sesion-expirada', expired);
+        return () => window.removeEventListener('sesion-expirada', expired);
+    }, []);
     useEffect(() => {
         const controller = new AbortController();
         consultarPerfil(controller.signal).then((usuario) => {
             if (!controller.signal.aborted) setState({ usuario, loading: false, error: '' });
         }).catch((error) => {
-            if (!controller.signal.aborted) setState({ usuario: null, loading: false, error: error.message });
+            if (!controller.signal.aborted) setState({ usuario: null, loading: false, error: error.status === 401 ? '' : error.message });
         });
         return () => controller.abort();
     }, [revision]);
@@ -28,5 +34,5 @@ export function PerfilProvider({ children }) {
             throw error;
         }
     };
-    return <PerfilContext.Provider value={{ ...state, recargar, guardar }}>{children}</PerfilContext.Provider>;
+    return <PerfilContext.Provider value={{ ...state, recargar, guardar, establecerSesion }}>{children}</PerfilContext.Provider>;
 }
