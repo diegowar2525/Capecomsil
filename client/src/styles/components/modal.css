@@ -95,3 +95,18 @@
     overflow-wrap: anywhere;
   }
 }
+.catalogo-related-action {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.catalogo-related-action > .btn {
+    max-width: 100%;
+    white-space: normal;
+}
+
+.catalogo-related-action > div:not(:empty) {
+    margin-top: 16px;
+}
+

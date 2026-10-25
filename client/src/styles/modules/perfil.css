@@ -55,21 +55,59 @@
     color: var(--sidebar-category-color);
 }
 
+
 .profile-card {
-    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    min-height: 480px;
+    margin: 24px auto;
+    padding: 28px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
+    box-sizing: border-box;
 }
 
-.profile-card>.profile-avatar {
+/* Información del perfil en una sola columna */
+.profile-card > .record-detail {
+    display: grid;
+    text-align: center;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+/* Evitar desbordamiento del texto */
+.profile-card > .record-detail dd {
+    overflow-wrap: anywhere;
+}
+
+/* Avatar del perfil */
+.profile-card > .profile-avatar {
     width: 80px;
     height: 80px;
     font-size: 1.5rem;
+    align-self: center;
+}
+
+/* Acciones al final de la tarjeta */
+.profile-actions {
+    margin-top: auto;
+    padding-top: 16px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
 }
 
 @media (max-width: 767px) {
     .profile-card {
-        padding: 16px;
+        max-width: 100%;
+        min-height: auto;
+        margin: 16px auto;
+        padding: 20px;
+        gap: 16px;
     }
 }

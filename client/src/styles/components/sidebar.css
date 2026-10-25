@@ -10,6 +10,9 @@
   flex-direction: column;
   z-index: 40;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted) transparent;
 }
 
 .sidebar-brand {
@@ -106,16 +109,52 @@
   display: none;
 }
 
+.sidebar-section-label:hover {
+  background-color: var(--bg-sidebar-hover);
+}
+
+.sidebar-section-label:focus-visible {
+  outline: 3px solid var(--sidebar-category-color);
+  outline-offset: 2px;
+}
+
+.sidebar-section-chevron {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-menu-list[hidden] {
+  display: none;
+}
+
+
 @media (max-width: 1023px) {
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    z-index: 100;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: auto;
+
     width: min(var(--sidebar-width), 85vw);
+    height: 100dvh;
+
+    transform: translateX(-100%);
+    visibility: hidden;
+    pointer-events: none;
+
+    transition:
+      transform 0.25s ease,
+      visibility 0.25s ease;
+
+    z-index: 100;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .sidebar.sidebar-open {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .sidebar-overlay {
@@ -134,28 +173,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
+
     width: 36px;
     height: 36px;
+
     border: none;
     border-radius: 8px;
     background: transparent;
     color: var(--text-inverse);
+
     font-size: 1.75rem;
     cursor: pointer;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sidebar {
-    transition: none;
-  }
-}
-
-@media (max-width: 1023px) {
-  .sidebar {
-    height: 100dvh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 
   .sidebar-link:focus-visible,
@@ -166,20 +194,8 @@
   }
 }
 
-.sidebar-section-label:hover {
-  background-color: var(--bg-sidebar-hover);
-}
-
-.sidebar-section-label:focus-visible {
-  outline: 3px solid var(--sidebar-category-color);
-  outline-offset: 2px;
-}
-
-.sidebar-section-chevron {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.sidebar-menu-list[hidden] {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
 }

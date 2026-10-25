@@ -4,7 +4,7 @@
   --bg-surface: #ffffff;
   --bg-sidebar: #0f172a;
   --bg-sidebar-hover: #1e293b;
-  
+
   --text-primary: #2a0f0f;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
@@ -16,7 +16,14 @@
   --accent-light: #ede9fe;
 
   --border-color: #e2e8f0;
-  
+
+  /* Variables adicionales para Login / Bloqueo (Tonos Azules Ejecutivos) */
+  --login-blue-primary: #0284c7;
+  --login-blue-hover: #0369a1;
+  --login-blue-light: #e0f2fe;
+  --login-blue-glow: rgba(2, 132, 199, 0.25);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.35), 0 8px 10px -6px rgba(15, 23, 42, 0.2);
+
   /* Estados para Badges */
   --status-success-bg: #dcfce7;
   --status-success-text: #15803d;
