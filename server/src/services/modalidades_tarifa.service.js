@@ -29,8 +29,15 @@ const create = async (data) => {
         if (anterior.modalidad === datosValidados.modalidad) {
             throw createHttpError("Esa modalidad ya está vigente en la fecha indicada", 409);
         }
+        if (await modalidadTarifaModel.puedeCorregir(client, anterior)) {
+            const resultado = await modalidadTarifaModel.corregir(
+                client, anterior.id_modalidad_tarifa, datosValidados.modalidad
+            );
+            await client.query("COMMIT");
+            return resultado;
+        }
         if (anterior.fecha_inicio === datosValidados.fecha_inicio) {
-            throw createHttpError("Ya existe un cambio de modalidad en esa fecha", 409);
+            throw createHttpError("No se puede reemplazar la modalidad: el período tiene entregas, recorridos o liquidaciones asociados", 409);
         }
 
         await modalidadTarifaModel.cerrar(client, anterior.id_modalidad_tarifa, datosValidados.fecha_inicio);

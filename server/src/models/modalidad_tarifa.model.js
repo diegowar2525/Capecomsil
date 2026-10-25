@@ -46,4 +46,30 @@ const create = async (client, data) => {
     return result.rows[0];
 };
 
-module.exports = { findAll, findVigente, cerrar, create };
+const puedeCorregir = async (client, periodo) => {
+    const { id_gasolinera: idGasolinera, id_modalidad_tarifa: id, fecha_inicio: inicio, fecha_fin: fin } = periodo;
+    // El bloqueo de la gasolinera impide nuevas referencias durante la comprobación.
+    await client.query('SELECT id_gasolinera FROM gasolinera WHERE id_gasolinera = $1 FOR UPDATE', [idGasolinera]);
+    const result = await client.query(`
+        SELECT
+            NOT EXISTS (SELECT 1 FROM detalle_viaje WHERE id_modalidad_tarifa = $2)
+            AND NOT EXISTS (SELECT 1 FROM tramo_viaje t JOIN trayecto r USING (id_trayecto)
+                JOIN viaje v USING (id_viaje)
+                WHERE (r.id_gasolinera_origen = $1 OR r.id_gasolinera_destino = $1)
+                AND daterange($3::date, $4::date, '[]') @> v.fecha_inicio::date)
+            AND NOT EXISTS (SELECT 1 FROM liquidacion WHERE id_gasolinera = $1
+                AND daterange(periodo_inicio, periodo_fin, '[]') && daterange($3::date, $4::date, '[]'))
+            AS permitido
+    `, [idGasolinera, id, inicio, fin]);
+    return result.rows[0].permitido;
+};
+
+const corregir = async (client, id, modalidad) => {
+    const result = await client.query(`
+        UPDATE modalidad_tarifa_gasolinera SET modalidad = $2
+        WHERE id_modalidad_tarifa = $1 RETURNING ${fields}
+    `, [id, modalidad]);
+    return result.rows[0];
+};
+
+module.exports = { findAll, findVigente, cerrar, create, puedeCorregir, corregir };
