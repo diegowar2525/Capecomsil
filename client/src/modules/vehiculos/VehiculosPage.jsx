@@ -11,8 +11,10 @@ import { prepararVehiculo } from './domain/vehiculo.js';
 
 const definition = {
     page, columns, fields, filters, api, rowKey: 'id_vehiculo', prepare: prepararVehiculo,
-    actions: [...crudActions, { ...relatedAction, query: true,
-        message: 'Deja la fecha vacía para consultar el kilometraje hasta el momento actual.' }],
+    actions: [...crudActions, {
+        ...relatedAction, parent: 'detail', query: true,
+        message: 'Deja la fecha vacía para consultar el kilometraje hasta el momento actual.'
+    }],
     formMessage: 'Indica juntos el kilometraje base y la fecha de inicio del control, o deja ambos vacíos.'
 };
 

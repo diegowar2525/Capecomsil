@@ -36,7 +36,7 @@ export function CatalogoConectado({ definition, controller }) {
             label: 'Acciones',
             render: (row) => (
                 <div className="record-actions">
-                    {actions.map((action) => {
+                    {actions.filter((action) => ['detail', 'edit', 'delete'].includes(action.id)).map((action) => {
                         const Icon = actionIcons[action.icon];
 
                         return (

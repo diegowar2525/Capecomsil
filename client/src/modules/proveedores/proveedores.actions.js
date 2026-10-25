@@ -1,5 +1,6 @@
 export const relatedAction = {
     "id": "cuentas",
+    "parent": "detail",
     "label": "Cuentas por pagar",
     "readOnly": true,
     "columns": [],

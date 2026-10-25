@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Modal } from '../Modal/Modal.jsx';
 import { DataTable } from '../DataTable/DataTable.jsx';
 import { useRegistroCatalogo } from '../../hooks/useRegistroCatalogo.js';
@@ -8,22 +8,25 @@ import { CatalogoForm } from './CatalogoForm.jsx';
 import { CatalogoDetalle } from './CatalogoDetalle.jsx';
 
 export function CatalogoModal(props) {
-    const { definition, id, action, onClose } = props;
+    const { definition, id, action, onClose, embedded } = props;
     const state = useRegistroCatalogo(definition.api, id, action.id);
     if (state.loading || state.error) {
-        return <Modal isOpen title={action.label} onClose={onClose}>
+        const content = <>
             {state.loading ? <p role="status">Cargando…</p> : <>
                 <p role="alert">{state.error}</p>
                 <button type="button" className="btn btn-outline" onClick={state.reintentar}>Reintentar</button>
             </>}
-        </Modal>;
+        </>;
+        return embedded ? content : <Modal isOpen title={action.label} onClose={onClose}>{content}</Modal>;
     }
     return <AccionCatalogo {...props} {...state} />;
 }
 
-function AccionCatalogo({ definition, id, action, registro, catalogos, extra, guardar, eliminar, ejecutar, onClose, onSaved }) {
+function AccionCatalogo({ definition, id, action, registro, catalogos, extra, guardar, eliminar, ejecutar, onClose, onSaved, embedded = false, onBusy }) {
     const formId = useId();
     const [resultado, setResultado] = useState(null);
+    const [childBusy, setChildBusy] = useState(false);
+    const [expanded, setExpanded] = useState(null);
     const editable = action.id === 'create' || action.id === 'edit';
     const source = definition.initial ? definition.initial(registro ?? {}) : registro ?? {};
     const fields = editable ? definition.fields : action.fields ?? [];
@@ -36,14 +39,17 @@ function AccionCatalogo({ definition, id, action, registro, catalogos, extra, gu
         },
         onSuccess: (data) => action.query ? setResultado(data) : onSaved(action.id)
     });
+    useEffect(() => { onBusy?.(form.saving); }, [form.saving, onBusy]);
+    const busy = form.saving || childBusy;
     const displayFields = editable && definition.formFields ? definition.formFields(form.values, catalogos) : fields;
-    const close = () => form.closeWhenIdle(onClose);
-    return <Modal isOpen title={action.label} onClose={close} footer={<>
-        <button type="button" className="btn btn-outline" disabled={form.saving} onClick={close}>Cerrar</button>
-        {(!action.readOnly || action.query) && <button type="submit" form={formId} className="btn btn-primary" disabled={form.saving}>
+    const close = () => { if (!childBusy) form.closeWhenIdle(onClose); };
+    const footer = <>
+        {!embedded && <button type="button" className="btn btn-outline" disabled={busy} onClick={close}>Cerrar</button>}
+        {(!action.readOnly || action.query) && <button type="submit" form={formId} className="btn btn-primary" disabled={busy}>
             {form.saving ? 'Procesando…' : action.query ? 'Consultar' : action.id === 'delete' ? 'Eliminar registro' : 'Guardar cambios'}
         </button>}
-    </>}>
+    </>;
+    const content = <>
         {form.error && <p role="alert">{form.error}</p>}
         {action.message && <p>{action.message}</p>}
         {editable && definition.formMessage && <p>{definition.formMessage}</p>}
@@ -56,8 +62,19 @@ function AccionCatalogo({ definition, id, action, registro, catalogos, extra, gu
         </> : <form id={formId} onSubmit={form.submit} aria-busy={form.saving}>
             {action.id === 'delete'
                 ? <p>¿Eliminar <strong>{registro?.nombre ?? registro?.placa ?? id}</strong>? Esta operación no se puede deshacer.</p>
-                : <CatalogoForm fields={displayFields} values={form.values} change={form.change} saving={form.saving} catalogos={catalogos} />}
+                : <CatalogoForm fields={displayFields} values={form.values} change={form.change} saving={busy} catalogos={catalogos} />}
             {action.query && resultado && <CatalogoDetalle columns={action.columns} fields={[]} registro={resultado} />}
         </form>}
-    </Modal>;
+        {!embedded && definition.actions?.filter((item) => item.parent === action.id).map((item) => <section key={item.id} className="catalogo-related-action">
+            <button type="button" className="btn btn-outline" disabled={busy}
+                aria-expanded={expanded === item.id} aria-controls={`${formId}-${item.id}`}
+                onClick={() => setExpanded(expanded === item.id ? null : item.id)}>{item.label}</button>
+            <div id={`${formId}-${item.id}`}>
+                {expanded === item.id && <CatalogoModal embedded definition={definition} id={id} action={item}
+                    guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} onSaved={onSaved} onBusy={setChildBusy} />}
+            </div>
+        </section>)}
+    </>;
+    return embedded ? <>{content}<div className="record-actions">{footer}</div></>
+        : <Modal isOpen title={action.label} onClose={close} footer={footer}>{content}</Modal>;
 }
