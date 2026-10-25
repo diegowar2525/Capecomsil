@@ -102,7 +102,9 @@ test("Autenticación HTTP: instalación, cookies, CSRF, sesiones y cambio atómi
         const cookie3 = cookieOf(await login());
         const cookie4 = cookieOf(await login());
         const change = { method: "PATCH", cookie: cookie3, body: { password_actual: password, password_nueva: nueva } };
-        assert.equal((await request("/password", { ...change, body: { ...change.body, password_actual: "incorrecta" } })).status, 401);
+        const wrongPassword = await request("/password", { ...change, body: { ...change.body, password_actual: "incorrecta" } });
+        assert.equal(wrongPassword.status, 400);
+        assert.equal((await request("/me", { cookie: cookie3 })).status, 200);
         const originalRevoke = sesionModel.revocarByUsuario;
         sesionModel.revocarByUsuario = async () => { throw new Error("Fallo simulado de revocación"); };
         try {
@@ -128,7 +130,10 @@ test("Autenticación HTTP: instalación, cookies, CSRF, sesiones y cambio atómi
         const key = createHash("sha256").update("login:cuenta:bloqueado").digest();
         const counts = await Promise.all(Array.from({ length: 10 }, () => intentoModel.registrar(key)));
         assert.deepEqual(counts.sort((a, b) => a - b), [1,2,3,4,5,6,7,8,9,10]);
-        assert.equal((await request("/login", { method: "POST", body: { nombre_usuario: "bloqueado", password } })).status, 429);
+        const limited = await request("/login", { method: "POST", body: { nombre_usuario: "bloqueado", password } });
+        assert.equal(limited.status, 429);
+        assert.ok(Number(limited.headers.get('Retry-After')) > 0);
+        assert.ok(Number(limited.headers.get('Retry-After')) <= 900);
         await isolated.query("UPDATE autenticacion_intento SET fecha_limite=clock_timestamp()-interval '1 second' WHERE clave_hash=$1", [key]);
         assert.equal(await intentoModel.registrar(key), 1);
     } finally {

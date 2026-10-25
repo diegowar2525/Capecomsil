@@ -69,6 +69,16 @@ test('Capacidad HTTP: migración con historial, terminal independiente, edición
         const rate=cap=>({id_gasolinera:1,capacidad_galones:cap,valor_por_galon:({4000:'.11',6000:'.12',8000:'.13',10000:'.14'})[cap].replace('.','0.'),fecha_inicio:'2026-10-01'});
         const ids={};
         for (const cap of [4000,6000,10000]) { const res=await request('/tarifas-capacidad','POST',rate(cap)); assert.equal(res.status,201,JSON.stringify(res.body)); ids[cap]=res.body.id_tarifa_capacidad; }
+        // Volver inmediatamente a terminal y capacidad conserva el período nuevo,
+        // incluso con tarifas configuradas y operaciones en el período anterior.
+        for (const modalidad of ['POR_TERMINAL', 'POR_CAPACIDAD']) {
+            const corrected = await request('/modalidades-tarifa', 'POST', { ...mode, modalidad });
+            assert.equal(corrected.status, 201, JSON.stringify(corrected.body));
+            assert.equal(corrected.body.id_modalidad_tarifa, history[0].id_modalidad_tarifa);
+            const current = (await request('/modalidades-tarifa?id_gasolinera=1')).body;
+            assert.equal(current.length, 2);
+            assert.deepEqual(current[1], history[1]);
+        }
         assert.equal((await request('/tarifas-capacidad','POST',rate(8000),operador)).status,403);
         assert.equal((await request('/tarifas-capacidad','GET',undefined,operador)).status,200);
         const trip=(veh,day,terminal=1)=>({id_vehiculo:veh,id_chofer:1,fecha_inicio:`2026-10-${day}T08:00:00`,fecha_fin:`2026-10-${day}T09:00:00`,
@@ -114,6 +124,45 @@ test('Capacidad HTTP: migración con historial, terminal independiente, edición
         assert.ok(filtered.body.some(v=>v.id_viaje===secondTerminal.body.id_viaje));
         await isolated.query("INSERT INTO gasolinera(nombre) VALUES ('Nueva')");
         assert.equal((await request('/modalidades-tarifa?id_gasolinera=3')).body[0].modalidad,'POR_TERMINAL');
+        const inicial = (await request('/modalidades-tarifa?id_gasolinera=3')).body[0];
+        for (const modalidad of ['POR_CAPACIDAD', 'POR_TERMINAL']) {
+            const corregida = await request('/modalidades-tarifa', 'POST', {
+                id_gasolinera: 3, modalidad, fecha_inicio: inicial.fecha_inicio
+            });
+            assert.equal(corregida.status, 201, JSON.stringify(corregida.body));
+            assert.equal(corregida.body.id_modalidad_tarifa, inicial.id_modalidad_tarifa);
+            assert.equal(corregida.body.fecha_inicio, inicial.fecha_inicio);
+            assert.equal(corregida.body.modalidad, modalidad);
+            assert.equal((await request('/modalidades-tarifa?id_gasolinera=3')).body.length, 1);
+        }
+        await isolated.query("INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (3,1,.10,'2026-01-01')");
+        assert.equal((await request('/modalidades-tarifa', 'POST', {
+            id_gasolinera: 3, modalidad: 'POR_CAPACIDAD', fecha_inicio: inicial.fecha_inicio
+        })).status, 201);
+        await isolated.query("UPDATE modalidad_tarifa_gasolinera SET fecha_fin='2026-09-30' WHERE id_gasolinera=3");
+        await isolated.query("INSERT INTO modalidad_tarifa_gasolinera(id_gasolinera,modalidad,fecha_inicio) VALUES (3,'POR_CAPACIDAD','2026-10-01')");
+        assert.equal((await request('/modalidades-tarifa?id_gasolinera=3')).body.length, 2);
+        await isolated.query("UPDATE tarifa SET fecha_fin='2026-09-30' WHERE id_gasolinera=3");
+        const antes = (await request('/modalidades-tarifa?id_gasolinera=3')).body;
+        const reemplazo = await request('/modalidades-tarifa', 'POST', {
+            id_gasolinera: 3, modalidad: 'POR_TERMINAL', fecha_inicio: '2026-10-15'
+        });
+        assert.equal(reemplazo.status, 201, JSON.stringify(reemplazo.body));
+        assert.equal(reemplazo.body.id_modalidad_tarifa, antes[0].id_modalidad_tarifa);
+        assert.equal(reemplazo.body.fecha_inicio, antes[0].fecha_inicio);
+        assert.equal(reemplazo.body.fecha_fin, antes[0].fecha_fin);
+        const despues = (await request('/modalidades-tarifa?id_gasolinera=3')).body;
+        assert.equal(despues.length, 2);
+        assert.deepEqual(despues[1], antes[1]);
+        assert.equal(despues[0].modalidad, 'POR_TERMINAL');
+        await isolated.query("INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (3,1,.10,'2026-10-01')");
+        await isolated.query("INSERT INTO liquidacion(id_gasolinera,periodo_inicio,periodo_fin) VALUES (3,'2026-10-01','2026-10-31')");
+        assert.equal((await request('/modalidades-tarifa', 'POST', {
+            id_gasolinera: 3, modalidad: 'POR_CAPACIDAD', fecha_inicio: '2026-10-01'
+        })).status, 409);
+        assert.deepEqual((await request('/modalidades-tarifa?id_gasolinera=3')).body, despues);
+        await isolated.query('DELETE FROM liquidacion WHERE id_gasolinera=3');
+        await isolated.query('DELETE FROM tarifa WHERE id_gasolinera=3');
         await isolated.query('DELETE FROM gasolinera WHERE id_gasolinera=3');
     } finally {
         if(server) await new Promise(resolve=>server.close(resolve));
