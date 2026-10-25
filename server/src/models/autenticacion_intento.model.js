@@ -21,7 +21,15 @@ const limpiarVencidos = async () => {
     return result.rowCount;
 };
 
+const consultarEspera = async (claveHash) => {
+    const result = await pool.query(`SELECT GREATEST(1, CEIL(EXTRACT(EPOCH FROM
+        (fecha_limite - clock_timestamp()))))::integer AS segundos
+        FROM autenticacion_intento WHERE clave_hash=$1`, [claveHash]);
+    return result.rows[0]?.segundos ?? 1;
+};
+
 module.exports = {
+    consultarEspera,
     registrar,
     limpiarVencidos
 };

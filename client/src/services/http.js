@@ -14,10 +14,16 @@ export async function requestJson(path, { method = 'GET', data, signal } = {}) {
     }
     const result = await response.json().catch(() => null);
     if (!response.ok) {
+        if (response.status === 401 && path !== '/api/auth/login' && typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('sesion-expirada'));
+        }
         const error = new Error(response.status === 401
-            ? 'Tu sesión no está activa. Inicia sesión para continuar.'
+            ? (path === '/api/auth/login' ? 'Usuario o contraseña incorrectos.' : 'Tu sesión no está activa. Inicia sesión para continuar.')
             : result?.message ?? 'No se pudo completar la operación. Inténtalo de nuevo.');
         error.status = response.status;
+        if (response.status === 429 && Number.isFinite(result?.retry_after) && result.retry_after > 0) {
+            error.retryAfter = result.retry_after;
+        }
         throw error;
     }
     if (result === null) throw new Error('El servidor no devolvió una respuesta válida.');

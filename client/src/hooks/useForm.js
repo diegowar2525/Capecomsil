@@ -5,6 +5,7 @@ export function useForm({ initialValues, prepare = (values) => values, onSubmit,
     const [values, setValues] = useState(initialValues);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [failure, setFailure] = useState(null);
     const busy = useRef(false);
     const change = (event) => {
         const { name, type, checked, value } = event.target;
@@ -16,16 +17,19 @@ export function useForm({ initialValues, prepare = (values) => values, onSubmit,
         busy.current = true;
         setSaving(true);
         setError('');
+        setFailure(null);
         try {
             const result = await onSubmit(prepare(values));
             onSuccess?.(result);
         } catch (failure) {
             setError(failure.message);
+            setFailure(failure);
         } finally {
             busy.current = false;
             setSaving(false);
         }
     };
     const closeWhenIdle = (onClose) => { if (!busy.current) onClose(); };
-    return { values, change, saving, error, submit, closeWhenIdle };
+    const clearError = () => { setError(''); setFailure(null); };
+    return { values, change, saving, error, failure, clearError, submit, closeWhenIdle };
 }

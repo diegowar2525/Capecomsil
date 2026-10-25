@@ -18,11 +18,15 @@ const limitarIntentos = async (ip, cuenta, operacion) => {
     await intentoModel.limpiarVencidos();
     const ipIntentos = await intentoModel.registrar(digest(`${operacion}:ip:${ip}`));
     if (ipIntentos > 30) {
-        throw createHttpError("Demasiados intentos; espere 15 minutos", 429);
+        const error = createHttpError("Se alcanzó el límite de intentos. Espera antes de volver a intentar.", 429);
+        error.retryAfter = await intentoModel.consultarEspera(digest(`${operacion}:ip:${ip}`));
+        throw error;
     }
     const cuentaIntentos = await intentoModel.registrar(digest(`${operacion}:cuenta:${cuenta}`));
     if (cuentaIntentos > 10) {
-        throw createHttpError("Demasiados intentos; espere 15 minutos", 429);
+        const error = createHttpError("Se alcanzó el límite de intentos. Espera antes de volver a intentar.", 429);
+        error.retryAfter = await intentoModel.consultarEspera(digest(`${operacion}:cuenta:${cuenta}`));
+        throw error;
     }
 };
 
@@ -95,7 +99,7 @@ const cambiarPassword = async (token, data, ip) => {
             throw createHttpError("Sesión inválida o vencida", 401);
         }
         if (!(await verifyPassword(datosValidados.actual, usuario.password_hash))) {
-            throw createHttpError("Contraseña actual incorrecta", 401);
+            throw createHttpError("Contraseña actual incorrecta", 400);
         }
         await authModel.updatePassword(client, usuario.id_usuario, await hashPassword(datosValidados.nueva));
         await sesionModel.revocarByUsuario(client, usuario.id_usuario);

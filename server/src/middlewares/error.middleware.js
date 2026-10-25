@@ -23,7 +23,11 @@ const errorHandler = (error, req, res, next) => {
         message = translatedError.message;
     }
 
+    const retryAfter = status === 429 && Number.isInteger(error.retryAfter) && error.retryAfter > 0
+        ? error.retryAfter : undefined;
+    if (retryAfter) res.set('Retry-After', String(retryAfter));
     res.status(status).json({
+        ...(retryAfter ? { retry_after: retryAfter } : {}),
         message
     });
 };

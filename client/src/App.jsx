@@ -1,3 +1,4 @@
+import { SesionGate } from './modules/login/components/SesionGate.jsx';
 import { PerfilProvider } from './modules/perfil/context/PerfilProvider.jsx';
 import { AppLayout } from './layouts/AppLayout.jsx';
 import { AppRoutes } from './app/AppRoutes.jsx';
@@ -10,12 +11,15 @@ const navigation = getNavigation(routes);
 export function App() {
     const path = useLocation();
     return (
-        <PerfilProvider>
-        <AppLayout navigation={navigation} activePath={path}>
-            <AppRoutes path={path} />
-        </AppLayout>
-        </PerfilProvider>
+        <PerfilProvider><SesionGate>
+            <AppLayout navigation={navigation} activePath={path}>
+                <AppRoutes path={path} />
+            </AppLayout>
+        </SesionGate></PerfilProvider>
     );
 }
 
 export default App;
+
+
+
