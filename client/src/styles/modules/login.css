@@ -278,14 +278,14 @@
 
 .lock-field-error {
     margin: 2px 0 0;
-    color: #dc2626;
+    color: var(--status-danger-text);
     font-size: .8rem;
     line-height: 1.5;
     overflow-wrap: anywhere;
 }
 
 .lock-input[aria-invalid="true"] {
-    border-color: #dc2626;
+    border-color: var(--status-danger-text);
 }
 
 .lock-input[aria-invalid="true"]:focus {

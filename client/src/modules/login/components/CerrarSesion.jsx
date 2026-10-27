@@ -1,9 +1,9 @@
 import { useForm } from '../../../hooks/useForm.js';
-import { usePerfil } from '../../perfil/hooks/usePerfil.js';
+import { useAuth } from '../../auth/hooks/useAuth.js';
 import { cerrarSesion } from '../services/login.api.js';
 
 export function CerrarSesion() {
-    const { establecerSesion } = usePerfil();
+    const { establecerSesion } = useAuth();
     const form = useForm({ initialValues: {}, onSubmit: cerrarSesion, onSuccess: () => establecerSesion(null) });
     return <form onSubmit={form.submit}>
         {form.error && <p role="alert">{form.error}</p>}

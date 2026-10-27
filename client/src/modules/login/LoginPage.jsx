@@ -5,9 +5,9 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
     const form = useLogin(onLoginSuccess);
     const isLoading = form.saving;
     if (form.failure?.status === 429) return <LimiteIntentos segundos={form.failure.retryAfter} onRetry={form.clearError} />;
-    const invalidCredentials = form.error === 'Usuario o contraseña incorrectos.';
-    const userError = /nombre de usuario/i.test(form.error) ? form.error : '';
-    const passwordError = !userError && /contraseña/i.test(form.error) ? form.error : '';
+    const invalidCredentials = form.failure?.code === 'INVALID_CREDENTIALS';
+    const userError = form.failure?.field === 'nombre_usuario' ? form.error : '';
+    const passwordError = form.failure?.field === 'password' ? form.error : '';
     return (
         <div className="lock-screen">
             <div className="lock-card">

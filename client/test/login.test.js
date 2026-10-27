@@ -33,8 +33,8 @@ test('Sesión: el panel permanece oculto hasta autenticar y cambiar contraseña 
     const server = await createServer({ server: { middlewareMode: true } });
     try {
         const { SesionGate } = await server.ssrLoadModule('/src/modules/login/components/SesionGate.jsx');
-        const { PerfilContext } = await server.ssrLoadModule('/src/modules/perfil/context/perfil.context.js');
-        const render = (state) => renderToStaticMarkup(createElement(PerfilContext.Provider, { value: state },
+        const { AuthContext } = await server.ssrLoadModule('/src/modules/auth/context/auth.context.js');
+        const render = (state) => renderToStaticMarkup(createElement(AuthContext.Provider, { value: state },
             createElement(SesionGate, null, createElement('div', null, 'PANEL PRIVADO'))));
         assert.doesNotMatch(render({ loading: true }), /PANEL PRIVADO|name="password"/);
         assert.match(render({ error: 'Sin conexión' }), /Reintentar/);

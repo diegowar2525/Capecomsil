@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { usePerfil } from '../../perfil/hooks/usePerfil.js';
+import { useAuth } from '../../auth/hooks/useAuth.js';
 import { LoginPage } from '../LoginPage.jsx';
 import { CambioPassword } from './CambioPassword.jsx';
 
 export function SesionGate({ children }) {
-    const { usuario, loading, error, recargar, establecerSesion } = usePerfil();
+    const { usuario, loading, error, recargar, establecerSesion } = useAuth();
     const [message, setMessage] = useState('');
     if (loading || error) return <div className="lock-screen"><div className="lock-card">
         <h1 className="lock-company-name">CAPECOMSIL S.A.</h1>

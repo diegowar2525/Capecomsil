@@ -21,6 +21,12 @@ export async function requestJson(path, { method = 'GET', data, signal } = {}) {
             ? (path === '/api/auth/login' ? 'Usuario o contraseña incorrectos.' : 'Tu sesión no está activa. Inicia sesión para continuar.')
             : result?.message ?? 'No se pudo completar la operación. Inténtalo de nuevo.');
         error.status = response.status;
+        error.field = result?.field;
+        error.code = result?.code;
+        if (response.status === 401 && path === '/api/auth/login') {
+            error.code = 'INVALID_CREDENTIALS';
+            error.field = 'password';
+        }
         if (response.status === 429 && Number.isFinite(result?.retry_after) && result.retry_after > 0) {
             error.retryAfter = result.retry_after;
         }

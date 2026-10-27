@@ -8,8 +8,9 @@ export function useForm({ initialValues, prepare = (values) => values, onSubmit,
     const [failure, setFailure] = useState(null);
     const busy = useRef(false);
     const change = (event) => {
-        const { name, type, checked, value } = event.target;
-        setValues((previous) => ({ ...previous, [name]: type === 'checkbox' ? checked : value }));
+        const { name, type, checked, value, multiple, selectedOptions } = event.target;
+        setValues((previous) => ({ ...previous, [name]: type === 'checkbox' ? checked : multiple ? Array.from(selectedOptions, option => option.value) : value }));
+        if (failure?.field === name) { setError(''); setFailure(null); }
     };
     const submit = async (event) => {
         event.preventDefault();

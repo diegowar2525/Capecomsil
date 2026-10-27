@@ -1,25 +1,11 @@
-import { useForm } from '../../../hooks/useForm.js';
-import { cambiarPassword } from '../services/login.api.js';
+import { useCambioPassword } from '../hooks/useCambioPassword.js';
+
 import { LimiteIntentos } from './LimiteIntentos.jsx';
 
 export function CambioPassword({ onSuccess }) {
-    const form = useForm({
-        initialValues: { password_actual: '', password_nueva: '', confirmacion: '' },
-        prepare: ({ password_actual, password_nueva, confirmacion }) => {
-            if (!password_actual) throw new Error('Introduce tu contraseña actual.');
-            if ([...password_nueva].length < 10 || [...password_nueva].length > 128) {
-                throw new Error('La contraseña nueva debe tener entre 10 y 128 caracteres.');
-            }
-            if (password_actual === password_nueva) throw new Error('La contraseña nueva debe ser diferente.');
-            if (password_nueva !== confirmacion) throw new Error('Las contraseñas nuevas no coinciden.');
-            return { password_actual, password_nueva };
-        },
-        onSubmit: cambiarPassword, onSuccess
-    });
+    const form = useCambioPassword(onSuccess);
     if (form.failure?.status === 429) return <LimiteIntentos segundos={form.failure.retryAfter} onRetry={form.clearError} />;
-    const errorField = /no coinciden/i.test(form.error) ? 'confirmacion'
-        : /contraseña actual/i.test(form.error) ? 'password_actual'
-        : /contraseña nueva/i.test(form.error) ? 'password_nueva' : null;
+    const errorField = form.failure?.field;
     return <div className="lock-screen"><div className="lock-card">
         <div className="lock-password-intro">
             <h1>Actualizar contraseña</h1>
