@@ -122,10 +122,11 @@ export const actions = [
         "fields": [
             {
                 "name": "id_movimiento",
-                "label": "Ajuste",
-                "type": "select",
+                "label": "Código del ajuste (consultar en Movimientos)",
+                "type": "number",
+                "min": 1,
                 "required": true,
-                "source": "id_movimiento"
+                "step": 1
             },
             {
                 "name": "motivo",
