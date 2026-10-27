@@ -123,6 +123,7 @@ export const fields = [
             {
                 "name": "detalles",
                 "label": "Líneas de producto recibidas",
+                "minRows": 1,
                 "type": "rows",
                 "fields": [
                     {
