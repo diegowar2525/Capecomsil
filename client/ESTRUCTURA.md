@@ -1,236 +1,156 @@
 # Organización del frontend
 
-La aplicación conserva el diseño inicial. Mi perfil y toda la sección Catálogos
-se conectan a la API de la sesión actual. Configuración y las demás pantallas
-operativas conservan sus plantillas. Ver COBERTURA_API.md.
+## Composición y sesión
 
-- `App.jsx`: compone layout, navegación y pantalla activa.
-- `app/routes.jsx`: registro de rutas con componente, etiqueta y grupo del menú.
-- `app/navigation.js`: deriva el menú del registro, sin repetir destinos.
-- `app/useLocation.js`: escucha la URL hash mediante la API del navegador.
-- `app/AppRoutes.jsx`: resuelve pantallas y muestra página no encontrada.
-- `layouts/AppLayout.jsx`: estructura visual compartida.
-- `modules/<modulo>/`: página, columnas y configuración propias del módulo.
-- `components/`: elementos reutilizables. `CatalogoPage` comparte listado, búsqueda local, acciones y modales entre
-  catálogos y operaciones. Los campos, filtros y acciones se declaran aparte de las columnas.
-- `styles/`: conserva variables, estilos base, componentes y vistas.
+`App.jsx` compone `AuthProvider`, `PerfilProvider`, `SesionGate` y el panel. El estado
+de sesión y permisos pertenece a `modules/auth`; el perfil adapta ese estado y
+actualiza los datos personales sin realizar una segunda carga de sesión.
 
-## Agregar una pantalla
+- `app/routes.jsx`: registro único de pantallas, etiquetas y grupos.
+- `app/navigation.js`: menú derivado del registro.
+- `app/routePermissions.js`: permisos de consulta de cada ruta.
+- `app/AppRoutes.jsx`: resolución de rutas y bloqueo de pantallas sin permiso.
+- `app/useLocation.js`: navegación mediante hash, con atrás/adelante.
+- `layouts/AppLayout.jsx`: sidebar, panel y comportamiento móvil.
+- `modules/login`: acceso, cambio obligatorio de contraseña provisional y límite
+  de intentos. Separa componentes, hooks, dominio y servicios.
 
-1. Crear su componente en `modules/<modulo>/`.
-2. Declarar las columnas fuera del componente cuando sean constantes.
-3. Declarar campos editables explícitamente; no derivarlos de las columnas.
-4. Registrar componente, ruta, etiqueta y sección en `app/routes.jsx`.
-   El menú se actualiza automáticamente. Omitir sección para rutas sin menú.
+Las credenciales no se almacenan en localStorage. `services/http.js` comparte
+cookies, encabezado CSRF, JSON, cancelación y errores. Un 401 fuera del login
+invalida la sesión. La visibilidad del menú nunca sustituye los permisos del servidor.
 
-Las rutas actuales usan `#/viajes`, `#/liquidaciones`, etc. Recargar conserva
-la pantalla y atrás/adelante recorre el historial. No se necesita configuración
-de reescritura del servidor. Solo están implementadas rutas de listado.
+## Componentes compartidos
 
-## Próxima integración
+`CatalogoPage` y `TemplateForm` fueron retirados. Las páginas conectadas usan:
 
-El módulo `viajes` separa responsabilidades así:
+- `Listado`: presentación de tabla, espacio para filtros y paginación; no conoce APIs.
+- `CatalogoConectado`: coordinación del listado, acciones, permisos, filtros, mensajes y modales.
+- `CatalogoModal`: carga de registro, opciones y datos relacionados; error y reintento.
+- `AccionCatalogo`: formulario y ejecución de una acción; resultados de consultas y tablas de detalle.
+- `CatalogoForm`: campos controlados, condiciones, múltiples, grupos y filas anidadas.
+- `CatalogoDetalle`: ficha de campos de consulta, sin convertir cálculos en campos editables.
+- `ConsultaCatalogo`: selección previa de criterios para recepciones por factura,
+  remuneraciones por chofer/período y costos por viaje.
+- `RowActions`: presenta las acciones que recibe; `domain/acciones.js` comprueba estado y permisos.
+- `Modal`: foco, Escape, scroll y adaptación a pantallas pequeñas.
 
-- `ViajesPage.jsx`: pantalla y apertura del modal.
-- `components/ViajeForm.jsx`: composición del formulario.
-- `components/ViajeCabecera.jsx`, `EntregaForm.jsx` y `RecorridoPreview.jsx`:
-  presentación y eventos, sin administrar el estado del viaje.
-- `hooks/useViajeForm.js`: estado, catálogos para selectores y acciones del formulario.
-- `domain/recorrido.js`: funciones puras para construir tramos y preparar el payload,
-  independientes de React.
-- `viajes.columns.js`: columnas del listado.
+Una definición declara `page`, `columns`, `fields`, `rowKey`, `api`, `prepare`,
+`actions`, `filters` y `permissionResource`. `createPermission` permite acciones de
+cabecera como generar remuneraciones o ajustar inventario. Las acciones especiales
+declaran su permiso explícito. `parent` coloca una acción dentro de detalle/edición;
+`global` la presenta en la cabecera; `query` conserva el modal abierto al consultar.
+`states`, `requiresOpen` y `requiresFinished` restringen acciones según el registro.
 
-`services/viajes.api.js` se creará cuando se conecte la API; no contiene lógica
-de recorrido ni se añade un servicio vacío en esta etapa.
+`renderForm` sustituye los campos de un formulario compartido, como en liquidaciones,
+gastos y recepciones. `Form` permite un formulario completo, como viajes, evitando
+formularios HTML anidados. `mode: 'single'`, `Card` y `canEdit` mantienen la ficha del
+perfil con sus extras, sin tabla ni paginación.
 
-La visibilidad del menú no sustituye los permisos del backend. Al conectar las
-operaciones restantes, reutilizar `services/http.js` para cookies, CSRF y errores
-comunes, y declarar sus endpoints en `<modulo>.api.js` dentro de cada módulo.
+## Responsabilidades por módulo
 
-Viajes conserva un formulario visual provisional con cabecera, entregas múltiples
-y tramos; cargar catálogos y enviar datos está pendiente. Liquidaciones incluye borradores, selección de entregas y modales de transición de estado.
-Facturación y cobros continúan pendientes también en el backend.
+- `*.fields.js`: campos editables explícitos, no derivados de las columnas.
+- `*.columns.js`: nombres del esquema o alias reales de las consultas.
+- `*.actions.js`: acciones, campos, estados y tablas secundarias.
+- `*.filters.js`: filtros locales del listado.
+- `services/`: endpoints y adaptación de respuestas, sin estado de React.
+- `domain/`: preparación y validación pura, sin HTTP.
+- `hooks/`: estado y coordinación de consultas y escrituras.
+- `components/`: formularios y presentación específicos.
+- `context/`: solo estado compartido entre zonas, como sesión y perfil.
 
-`DataTable` admite `rowKey` (nombre de campo o función), `loading` y `error`.
-Al conectar datos usar, por ejemplo, `rowKey="id_viaje"`.
+Los CRUD usan `useCatalogo`; las consultas previas reutilizan `ConsultaCatalogo`.
+`useRegistroCatalogo` cancela lecturas al desmontar. `useOpcionesDependientes`
+cancela consultas obsoletas cuando cambia el período, gasolinera o factura.
+`useForm` conserva valores ante errores, bloquea envíos duplicados y expone el
+error estructurado en `failure` (`field`, `code`, `status`, `retryAfter`).
 
-Verificar con `npm run build` y `npm run lint` desde `client`.
+Los formularios se montan después de cargar el registro y cambian de identidad
+mediante `key`. Los campos ocultos no se envían; los decimales permanecen como texto;
+las filas y selecciones múltiples permanecen como arrays. Las escrituras recargan
+el listado para recuperar nombres y cálculos normalizados por el servidor.
 
-## Campos alineados con el backend
+## Flujos específicos
 
-El formulario de viajes recibe `catalogos` con arrays `terminales`, `gasolineras`,
-`vehiculos`, `choferes`, `productos` (productos transportados) y `trayectos`.
-No usa datos ficticios ni realiza peticiones. Esta plantilla parte de un solo
-terminal de carga; una futura operación con recargas en otros terminales requerirá
+### Viajes
+
+`ViajeForm`, `ViajeCabecera`, `EntregaForm` y `RecorridoPreview` presentan cabecera,
+entregas y recorrido. `useViajeForm` administra el estado; `domain/recorrido.js`
+encadena los tramos. El origen es un terminal de carga, cada parada tiene uno o
+varios productos, y el destino posterior a la última entrega es opcional. Un
+trayecto único se selecciona automáticamente; varias rutas requieren elección.
+Una conexión inexistente bloquea el envío. Recargas en varios terminales requerirían
 ampliar la interfaz.
 
-Las entregas son paradas ordenadas con uno o varios productos. Se pueden mover o
-quitar; los tramos se reconstruyen automáticamente. El destino posterior a la
-última entrega es opcional. Un trayecto único se selecciona automáticamente;
-varias alternativas requieren elección y una conexión inexistente bloquea la
-preparación. `domain/recorrido.js` genera `{ detalles, tramos, ...cabecera }` para
-el contrato actual de creación. `ViajeForm` admite `onPrepare(payload)` para la
-integración futura; el guardado actual sigue deshabilitado. Los controles de
-tarifas, peajes, capacidad y permisos siguen correspondiendo al backend.
+`domain/edicion.js` reconstruye el viaje consultado. `ViajeOperacionForm` envía
+versión y motivo al editar; conserva IDs de entregas y de tramos que mantienen su
+trayecto/orden. El backend calcula tarifas, kilómetros y costos y valida dependencias.
 
-Pruebas del recorrido: `node --test test/viajes.recorrido.test.js` desde `client`.
+### Liquidaciones
 
-Las columnas usan los nombres de `database/schema.sql` o los alias explícitos
-de los modelos de consulta (por ejemplo, `nombre_chofer`, `placa`,
-`total_galones`, `saldo_pendiente`). Los formularios siguen los validadores de
-la API cuando son más restrictivos que el esquema, como el RUC obligatorio.
+Creación automática por gasolinera/período o selección manual de entregas disponibles.
+La edición carga entregas seleccionadas y consulta disponibilidad incluyendo el
+borrador actual. Cambiar gasolinera/período limpia la selección previa. Todas las
+mutaciones de registros existentes envían su versión. BORRADOR permite editar,
+enviar y eliminar; ENVIADA permite confirmar o anular; CONFIRMADA permite anular.
+No se anula BORRADOR. Retención y recargo permanecen en cero por decisión de negocio.
 
-- Choferes: cédula y tipo de remuneración (`DIARIO_FIJO` / `DIA_TRABAJADO`),
-  sin campo de licencia.
-- Vehículos: marca y modelo separados, año, capacidad en galones y par de
-  valores de inicio del control de kilómetros. No hay compartimentos.
-- Gasolineras: dirección, correo, representante legal y agente de retención.
-- Proveedores: nombre, RUC, dirección, teléfono, correo y estado.
-- Productos de esta pantalla corresponden a `producto_transportado`, no al
-  inventario `producto`; no contienen una tarifa base.
-- Viajes: inicio y fin con hora, entregas y tramos. Tarifa, importes y kilómetros
-  son calculados; no se capturan manualmente. No existe número de guía.
-- Facturación y cobros muestran campos del esquema; sus APIs siguen pendientes.
+### Compras, mantenimiento e inventario
 
-Los booleanos se muestran como Activo/Inactivo o Sí/No. Los campos calculados
-no se convierten automáticamente en entradas editables. Los indicadores del
-dashboard son un contrato visual provisional y no tienen endpoint de agregación.
+Facturas admiten conceptos PRODUCTO/SERVICIO y recepción inicial opcional. Las
+recepciones consultan los detalles pendientes de la factura seleccionada. Pagos a
+proveedores conservan las condiciones de cheque y transferencia. Mantenimientos
+admiten materiales de inventario/externos, finalización y planes cumplidos. Gastos
+carga viáticos por fecha. Inventario consulta existencias, bajo stock y movimientos;
+registra ajustes y permite revertirlos indicando el código original consultado en
+Movimientos. Los conflictos y dependencias se validan en el servidor.
 
-## Plantillas y acciones de los módulos
+### Consultas y dashboard
 
-- `<modulo>.fields.js`: campos editables; `<modulo>.columns.js`: datos de consulta.
-- `<modulo>.actions.js`: acciones, estados permitidos, campos y tablas de los modales.
-- `<modulo>.filters.js`: filtros del contrato de consulta; no ejecutan peticiones todavía.
-- `CatalogoPage/TemplateForm.jsx`: campos condicionales, selección múltiple, grupos y filas dinámicas.
-- `CatalogoPage/catalogo.actions.js`: acciones comunes de los catálogos.
-- `Modal`: cierre con Escape, manejo de foco, bloqueo de scroll y disposición adaptable.
+Informes consulta viajes, resumen económico, viáticos y consumo por período.
+Remuneraciones exige chofer y período antes de consultar; generar es una acción
+separada. El dashboard consulta viajes válidos del mes actual (America/Guayaquil)
+y borradores según permisos; no inventa facturación de clientes.
 
-`CatalogoPage` admite `data` y `catalogos`. Los catálogos genéricos son un mapa por
-`source` con opciones `{ value, label }`; el formulario especializado de viajes
-conserva sus arrays de entidades. Los selectores permanecen vacíos sin datos.
-Las acciones por fila respetan estados declarados; con listas vacías hay una
-sección explícita de vista previa para examinar los modales sin inventar registros.
-Los filtros remotos y el guardado permanecen deshabilitados; el buscador solo
-filtra los datos recibidos por props.
+## Orden, filtros y paginación
 
-La edición de viajes reconstruye la vista con `domain/edicion.js`. La integración
-futura debe conservar IDs de entregas/tramos y enviar versión y motivo en PUT;
-el preparador de creación no es todavía un adaptador de edición.
+Se aplica búsqueda/filtros, orden por ID ascendente y luego paginación local de
+10/25/50 filas. El ícono alterna el orden. Más filtros agrupa campos adicionales;
+las opciones se derivan del listado completo. Limpiar restablece filtros/orden y
+conserva el tamaño de página. Los nulos no cumplen rangos; cero sí es válido.
 
-La administración de usuarios, roles, permisos y el formulario de inicio de sesión siguen fuera del alcance; el perfil propio ya está conectado.
-Verificación: `node --test test/plantillas.test.js test/viajes.recorrido.test.js`.
+`services/consultas.api.js` omite parámetros vacíos y recorre páginas de 200 cuando
+el endpoint pagina (viajes, liquidaciones, gastos, abastecimientos, pagos,
+movimientos e informes). Así los filtros locales no se limitan a las primeras
+50 filas. Esto descarga el conjunto consultado: para volúmenes grandes conviene
+migrar orden/filtros/paginación a la API de forma conjunta.
 
-## Perfil del usuario autenticado
+## Perfil y límites del alcance
 
-- `modules/perfil/context/PerfilProvider.jsx`: consulta compartida de sesión y actualización del perfil; no guarda credenciales en localStorage.
-- `hooks/usePerfil.js`: acceso al perfil compartido por sidebar y página.
-- `services/perfil.api.js`: GET/PATCH `/api/auth/me`, cookies y encabezado CSRF.
-- `domain/perfil.js`: preparación de los tres campos editables; vacíos opcionales se envían como null.
-- `components/SidebarPerfil.jsx` y `Avatar.jsx`: foto, nombre y rol con iniciales si falta/falla la foto.
-- `PerfilPage.jsx` configura CatalogoConectado en modo single; `components/PerfilFicha.jsx` conserva la presentación del perfil y CatalogoModal realiza la edición.
+Perfil usa `CatalogoConectado` en modo ficha y conserva avatar, nombre, rol, edición
+propia y cierre de sesión. La foto es una URL; no hay subida de archivos. Los
+catálogos conservan sus extras: kilometraje en detalle de vehículo, modalidades en
+gasolinera y cuentas por pagar en proveedor.
 
-La ruta `#/perfil` no crea otra categoría: se abre desde el avatar del sidebar.
-No se muestra identidad ficticia cuando no hay sesión. Todavía no hay formulario
-de login, administración del jefe ni subida de archivos. La foto usa una URL.
+Facturación y cobros a clientes muestran expresamente que falta su API. La
+administración de usuarios del jefe, cierre operativo e importación histórica
+continúan fuera de esta implementación.
 
-Requisitos: backend funcionando, sesión válida y migración 023 aplicada a la base.
-En desarrollo, Vite reenvía `/api` a `http://127.0.0.1:3000`; se puede cambiar con
-la variable de entorno `API_PROXY_TARGET` al arrancar Vite. En producción, servir
-`/api` mediante el backend/proxy del mismo origen. Mantener los orígenes permitidos
-por el backend y la configuración de cookies. Esta tarea no aplica migraciones.
+## Ejecución y verificación
 
-Pruebas: `node --test test/perfil.test.js test/plantillas.test.js test/viajes.recorrido.test.js`.
+Desde `client`: `npm run dev`, `npm run build`, `npm run lint` y
+`node --test --test-concurrency=1 test/*.test.js`.
 
-## Convenciones para módulos conectados
+Vite reenvía `/api` a `http://127.0.0.1:3000`; `API_PROXY_TARGET` permite cambiarlo.
+En producción se requiere un proxy del mismo origen y las migraciones del servidor
+aplicadas. Esta reorganización no modifica el esquema ni aplica migraciones.
 
-Los nueve catálogos conectados, incluido vehículos, reutilizan
-`components/CatalogoConectado/`: página, modal, formulario controlado y detalle.
-Cada módulo conserva `services/`, `domain/` y `hooks/`, además de sus campos,
-columnas y configuración. Los hooks del módulo usan `useCatalogo` para el CRUD;
-`useRegistroCatalogo` carga el registro completo, selectores y consultas
-relacionadas antes de abrir una acción. Ambos cancelan las lecturas al desmontar.
+`test/interacciones.html` es un escenario manual exclusivo de desarrollo: intercepta
+todas las peticiones API y usa datos simulados; no inicia sesión real ni modifica
+la base de datos. Permite cambiar de pantalla, simular un error de escritura y abrir
+una vista de 390 px. No forma parte de la compilación de producción.
 
-Los servicios usan `crearCatalogoApi` y añaden solo endpoints particulares:
-opciones de trayectos/categorías, cuentas por pagar e historial/cambio de modalidad.
-Las escrituras recargan el listado para recuperar nombres de referencias y valores
-normalizados. Los errores conservan el formulario; las confirmaciones de eliminación
-identifican el registro. Las operaciones siguen sujetas a permisos del servidor.
-
-Trayectos deriva los tipos de extremos para editar y descarta IDs de opciones
-ocultas al enviar. Productos de inventario exige condición para categorías de
-llantas y la limpia al seleccionar otra categoría. No se limita el CRUD a datos
-activos: los registros inactivos existentes permanecen consultables/editables.
-
-Perfil y vehículos usan `src/services/http.js` para transporte HTTP (cookies, CSRF,
-JSON, errores y cancelación) y `src/hooks/useForm.js` para valores controlados,
-preparación, envío, errores y bloqueo de envíos duplicados.
-
-- `services/`: endpoints y adaptación de respuestas; sin estado de React.
-- `domain/`: preparación y validación pura de objetos de valores; sin peticiones.
-- `hooks/`: consultas y coordinación de operaciones; mantienen los datos actualizados.
-- `components/`: presentación con Modal y FormField compartidos; reciben operaciones por props.
-- `context/`: solo cuando el estado se comparte entre distintas zonas, como el perfil del sidebar.
-- La página coordina navegación, búsqueda y mensajes de éxito.
-
-Montar el formulario cuando termine la carga del registro y cambiar su key al
-cambiar de identidad. Los valores iniciales se leen al montar para no sobrescribir
-la edición del usuario. TemplateForm sigue disponible para módulos sin conectar;
-los formularios de perfil y vehículos usan campos controlados con useForm.
-
-## Orden y filtros de catálogos conectados
-
-Los nueve catálogos muestran ID ascendente por defecto y permiten elegir
-descendente. El orden se aplica en el frontend sin modificar el listado original
-ni depender del ORDER BY de cada endpoint.
-
-- `domain/catalogoFiltros.js`: orden numérico, combinación de filtros y opciones únicas.
-- `hooks/useCatalogoFiltros.js`: búsqueda, selección, orden y limpieza.
-- `components/CatalogoConectado/CatalogoFiltros.jsx`: controles etiquetados, contador y distribución adaptable.
-- `<modulo>.filters.js`: campos específicos; todos reutilizan `filtroEstado`.
-
-Vehículos filtra marca, capacidad y año; choferes, remuneración; gasolineras,
-agente de retención; terminales, ubicación; productos transportados, unidad;
-proveedores, RUC/dirección; trayectos, origen/destino; categorías, llantas;
-productos de inventario, categoría/marca/condición. Los filtros se combinan y
-la búsqueda ignora mayúsculas y acentos. Las opciones se obtienen del listado
-completo para que un filtro no oculte las opciones de los demás.
-
-Son filtros locales sobre el listado completo devuelto por los endpoints actuales.
-Si se incorpora paginación del servidor, trasladar filtrado y orden a la API antes
-de paginar. Actualizar conserva la selección; Limpiar filtros también restablece
-el orden ascendente. Si una escritura deja el registro fuera del filtro actual,
-no se muestra en la tabla hasta cambiar o limpiar ese filtro.
-
-## Ficha individual y acciones de consulta
-
-CatalogoConectado admite mode: single para perfil: muestra la ficha personalizada
-Card, carga, error, reintento y edición. No muestra tabla, filtros ni controles de
-orden. canEdit conserva el bloqueo por contraseña temporal. El guardado se delega
-al PerfilProvider, que actualiza la identidad compartida con el sidebar; no se
-recarga el contexto después de guardar.
-
-Las acciones query de CatalogoModal muestran campos de consulta y resultados en
-el mismo modal. Se usan para kilometraje con fecha opcional y no disparan el flujo
-de guardado ni cierre. Las acciones especiales de proveedores y gasolineras
-siguen disponibles. Los listados comparten paginación y un ícono accesible para alternar el orden; perfil conserva su ficha sin estos controles.
-
-## Paginación y filtros avanzados
-
-CatalogoConectado aplica búsqueda y filtros al listado completo, después ordena
-por ID y finalmente divide el resultado en páginas de 10, 25 o 50 registros.
-El orden inicial sigue siendo ascendente. Cambiar filtros, orden o tamaño vuelve
-a la primera página; una reducción del listado limita la página a la última válida.
-La paginación es local: no reduce los registros descargados desde la API.
-
-CatalogoFiltros mantiene búsqueda y estado visibles. Un botón con SVG, etiqueta
-accesible y tooltip alterna el orden. Los demás campos están en Más filtros, con
-contador de filtros activos aunque la sección esté cerrada. CatalogoPaginacion
-muestra el rango, página, tamaño y navegación. Los controles se redistribuyen en
-móvil y los botones de navegación tienen un área mínima de 44 px.
-
-Cada módulo declara textos, selecciones, rangos inclusivos (min/max) y presencia
-de foto donde aplique. Los valores nulos no cumplen rangos numéricos; cero sí es
-válido. Un rango invertido devuelve cero coincidencias, sin corregir la entrada
-silenciosamente. Limpiar filtros conserva el tamaño elegido y vuelve al orden
-ascendente y a la primera página. Las opciones siguen derivándose de todos los
-registros cargados, no solo de la página visible.
+Las pruebas de contratos importan validadores reales del backend para compras y
+liquidaciones. Las pruebas de navegador verificaron estados, versión, conservación
+de formularios tras error, filas anidadas, selectores dependientes, edición de viajes
+con IDs y modal móvil sin desbordamiento horizontal. No sustituyen una prueba de
+aceptación contra una base de datos real con las migraciones aplicadas.
