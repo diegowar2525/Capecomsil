@@ -99,7 +99,9 @@ const cambiarPassword = async (token, data, ip) => {
             throw createHttpError("Sesión inválida o vencida", 401);
         }
         if (!(await verifyPassword(datosValidados.actual, usuario.password_hash))) {
-            throw createHttpError("Contraseña actual incorrecta", 400);
+            throw Object.assign(createHttpError("Contraseña actual incorrecta", 400), {
+                field: 'password_actual', publicCode: 'INVALID_CURRENT_PASSWORD'
+            });
         }
         await authModel.updatePassword(client, usuario.id_usuario, await hashPassword(datosValidados.nueva));
         await sesionModel.revocarByUsuario(client, usuario.id_usuario);

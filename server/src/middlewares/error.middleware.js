@@ -27,6 +27,7 @@ const errorHandler = (error, req, res, next) => {
         ? error.retryAfter : undefined;
     if (retryAfter) res.set('Retry-After', String(retryAfter));
     res.status(status).json({
+        ...(status < 500 && error.publicCode ? { code: error.publicCode, field: error.field } : {}),
         ...(retryAfter ? { retry_after: retryAfter } : {}),
         message
     });
