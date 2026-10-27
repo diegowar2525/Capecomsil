@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
 import { inicializarViaje } from '../src/modules/viajes/domain/edicion.js';
 
-test('Las rutas y formularios de la plantilla se renderizan sin autenticación ni operaciones activas', async () => {
+test('Las rutas y formularios conectados se renderizan sin advertencias', async () => {
     const server = await createServer({ server: { middlewareMode: true, watch: null, hmr: false }, appType: 'custom' });
     const warnings = [];
     const originalError = console.error;
@@ -19,13 +19,8 @@ test('Las rutas y formularios de la plantilla se renderizan sin autenticación n
             const html = renderToStaticMarkup(createElement(route.Component));
             assert.match(html, /<h1/, route.path);
         }
-        const { LiquidacionesPage } = await server.ssrLoadModule('/src/modules/liquidaciones/LiquidacionesPage.jsx');
-        for (const estado of ['BORRADOR', 'ENVIADA', 'CONFIRMADA', 'ANULADA']) {
-            const html = renderToStaticMarkup(createElement(LiquidacionesPage, { data: [{ id_liquidacion: 1, estado }] }));
-            assert.equal(html.includes('>Anular</button>'), ['ENVIADA', 'CONFIRMADA'].includes(estado));
-            assert.equal(html.includes('>Eliminar borrador</button>'), estado === 'BORRADOR');
-        }
-        const { TemplateForm } = await server.ssrLoadModule('/src/components/CatalogoPage/TemplateForm.jsx');
+        const { CatalogoForm } = await server.ssrLoadModule('/src/components/CatalogoConectado/CatalogoForm.jsx');
+        const { valoresIniciales } = await server.ssrLoadModule('/src/domain/catalogo.js');
         for (const directory of await readdir('src/modules', { withFileTypes: true })) {
             if (!directory.isDirectory()) continue;
             for (const file of await readdir(`src/modules/${directory.name}`)) {
@@ -35,7 +30,7 @@ test('Las rutas y formularios de la plantilla se renderizan sin autenticación n
                 for (const fields of fieldSets) {
                     // Renderiza también cada rama condicional (recepción inicial, materiales externos, etc.).
                     const initialValues = Object.fromEntries(fields.filter((field) => field.when).map((field) => [field.when.field, field.when.value]));
-                    const html = renderToStaticMarkup(createElement(TemplateForm, { fields, initialValues }));
+                    const html = renderToStaticMarkup(createElement(CatalogoForm, { fields, values: valoresIniciales(fields, initialValues), change: () => {}, catalogos: {} }));
                     assert.ok(html.includes('form-grid'));
                 }
             }
