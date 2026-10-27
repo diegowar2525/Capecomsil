@@ -1,5 +1,5 @@
 import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
-import { crudActions } from '../../components/CatalogoPage/catalogo.actions.js';
+import { crudActions } from '../../components/CatalogoConectado/catalogo.actions.js';
 import { useVehiculos } from './hooks/useVehiculos.js';
 import { columns } from './vehiculos.columns.js';
 import { fields } from './vehiculos.fields.js';

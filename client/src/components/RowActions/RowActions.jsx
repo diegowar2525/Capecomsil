@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Eye, Pencil, Trash2, EllipsisVertical } from 'lucide-react';
 
@@ -16,9 +16,7 @@ export function RowActions({ actions, onAction }) {
     const menuRef = useRef(null);
     const menuId = `row-actions-${useIdSafe()}`;
 
-    const availableActions = actions.filter(
-        (action) => ['detail', 'edit', 'delete'].includes(action.id)
-    );
+    const availableActions = actions;
 
     const closeMenu = (restoreFocus = false) => {
         setOpen(false);

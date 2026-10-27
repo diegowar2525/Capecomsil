@@ -1,5 +1,6 @@
 export const relatedAction = {
     "id": "cuentas",
+    "permission": "pagos_proveedor.consultar",
     "parent": "detail",
     "label": "Cuentas por pagar",
     "readOnly": true,

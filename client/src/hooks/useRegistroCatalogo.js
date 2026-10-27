@@ -5,10 +5,9 @@ export function useRegistroCatalogo(api, id, action) {
     const [revision, setRevision] = useState(0);
     useEffect(() => {
         const controller = new AbortController();
-        const editable = action === 'create' || action === 'edit';
         Promise.all([
             id ? api.consultar(id, controller.signal) : null,
-            editable && api.opciones ? api.opciones(controller.signal) : {},
+            api.opciones ? api.opciones(controller.signal, action, id) : {},
             api.relacionados ? api.relacionados(action, id, controller.signal) : null
         ]).then(([registro, catalogos, extra]) => {
             if (!controller.signal.aborted) setState({ registro, catalogos, extra, loading: false, error: '' });

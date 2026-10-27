@@ -1,4 +1,4 @@
-import { crudActions } from '../../components/CatalogoPage/catalogo.actions.js';
+import { crudActions } from '../../components/CatalogoConectado/catalogo.actions.js';
 import { fields } from '../modalidades-tarifa/modalidades-tarifa.fields.js';
 import { columns } from '../modalidades-tarifa/modalidades-tarifa.columns.js';
 
@@ -6,6 +6,7 @@ export const actions = [
     ...crudActions,
     {
         id: 'modalities',
+        permission: 'tarifas.consultar',
         parent: 'detail',
         label: 'Historial de modalidades',
         readOnly: true,
@@ -13,6 +14,7 @@ export const actions = [
     },
     {
         id: 'change-modality',
+        permission: 'tarifas.editar',
         parent: 'edit',
         label: 'Cambiar modalidad',
         fields: fields.filter((field) => field.name !== 'id_gasolinera'),

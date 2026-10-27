@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 50;
+  z-index: 200;
 }
 
 .modal-container {
@@ -15,8 +15,8 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
+  max-width: 760px;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -58,14 +58,9 @@
   background-color: var(--bg-primary);
 }
 
-.modal-overlay {
-  z-index: 200;
-}
 
-.modal-container {
-  max-width: 760px;
-  max-height: 90dvh;
-}
+
+
 
 .modal-body {
   min-height: 0;
@@ -95,18 +90,32 @@
     overflow-wrap: anywhere;
   }
 }
+
 .catalogo-related-action {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border-color);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
 }
 
-.catalogo-related-action > .btn {
-    max-width: 100%;
-    white-space: normal;
+.catalogo-related-action>.btn {
+  max-width: 100%;
+  white-space: normal;
 }
 
-.catalogo-related-action > div:not(:empty) {
-    margin-top: 16px;
+.catalogo-related-action>div:not(:empty) {
+  margin-top: 16px;
 }
-
+.form-section {
+  grid-column: 1 / -1;
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+.form-section > fieldset { min-width: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+.viaje-form > fieldset { min-width: 0; border: 0; padding: 0; }
+.consulta-form { margin-block: 16px; }
+.consulta-form > button { margin-top: 12px; }
+.form-field-wrapper { min-width: 0; }
+.form-select[multiple] { min-height: 120px; }
+.modal-body [role="alert"] { color: var(--status-danger-text); margin-block: 12px; }

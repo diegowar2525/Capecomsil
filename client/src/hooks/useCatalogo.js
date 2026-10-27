@@ -24,8 +24,8 @@ export function useCatalogo(api, rowKey) {
             : [registro, ...previous.data] }));
         return registro;
     };
-    const eliminar = async (id) => {
-        await api.eliminar(id);
+    const eliminar = async (id, registro) => {
+        await api.eliminar(id, registro);
         setState((previous) => ({ ...previous, data: previous.data.filter((item) => item[rowKey] !== id) }));
     };
     const ejecutar = (accion, id, values) => api.ejecutar(accion, id, values);

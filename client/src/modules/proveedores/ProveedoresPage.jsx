@@ -6,7 +6,7 @@ import { page } from './proveedores.config.js';
 import { api } from './services/proveedores.api.js';
 import { prepare } from './domain/proveedores.js';
 import { useProveedores } from './hooks/useProveedores.js';
-import { crudActions } from '../../components/CatalogoPage/catalogo.actions.js';
+import { crudActions } from '../../components/CatalogoConectado/catalogo.actions.js';
 import { relatedAction } from './proveedores.actions.js';
 const actions = [...crudActions, relatedAction];
 
