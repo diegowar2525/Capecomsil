@@ -4,6 +4,9 @@ import { punto } from './recorrido.js';
 export function inicializarViaje(viaje) {
     const cabecera = Object.fromEntries(['fecha_inicio', 'fecha_fin', 'id_vehiculo', 'id_chofer']
         .map((key) => [key, viaje?.[key] ?? '']));
+    for (const key of ['fecha_inicio', 'fecha_fin']) {
+        if (cabecera[key]) { const date = new Date(cabecera[key]); cabecera[key] = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
+    }
     const tramos = [...(viaje?.tramos ?? [])].sort((a, b) => a.orden - b.orden);
     const entregas = viaje?.detalles ?? [];
     const paradas = [];

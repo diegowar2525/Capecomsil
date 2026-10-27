@@ -40,6 +40,7 @@ export function prepararViaje({ cabecera, origen, paradas, recorrido }) {
             if (combinaciones.has(clave)) throw new Error('Agrupe los galones del mismo producto y gasolinera en una sola entrega.');
             combinaciones.add(clave);
             return {
+                ...(producto.id_detalle_viaje ? { id_detalle_viaje: producto.id_detalle_viaje } : {}),
                 id_terminal: Number(origen.split(':')[1]), id_gasolinera: Number(parada.id_gasolinera),
                 id_producto_transportado: Number(producto.id_producto_transportado), galones: producto.galones
             };

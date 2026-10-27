@@ -1,17 +1,10 @@
-import { CatalogoPage } from '../../components/CatalogoPage/CatalogoPage.jsx';
-import { FormField } from '../../components/FormField/FormField.jsx';
-import { ViajeForm } from './components/ViajeForm.jsx';
+import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
+import { ViajeOperacionForm } from './components/ViajeOperacionForm.jsx';
 import { columns } from './viajes.columns.js';
-import { actions } from './viajes.actions.js';
-
-export function Viajes({ viajes = [], catalogos = {} }) {
-    return <CatalogoPage title="Gestión de viajes" subtitle="Despachos, entregas y recorrido automático"
-        actionLabel="Registrar viaje" columns={columns} rowKey="id_viaje" data={viajes} actions={actions}
-        filters={[{ name: 'estado', label: 'Estado', type: 'select', options: [
-            { value: 'REGISTRADO', label: 'Registrado' }, { value: 'ANULADO', label: 'Anulado' }
-        ] }]}
-        renderForm={(row, action) => <>
-            <ViajeForm catalogos={catalogos} initialViaje={row} />
-            {action.id === 'edit' && <FormField name="motivo" label="Motivo de modificación" type="textarea" required maxLength={150} />}
-        </>} />;
-}
+import { actions as declaredActions } from './viajes.actions.js';
+import { api } from './services/viajes.api.js';
+import { useViajes } from './hooks/useViajes.js';
+const actions = declaredActions.map(action => ({ ...action, permission: `viajes.${({ edit: 'editar', annul: 'anular' })[action.id] ?? 'consultar'}` }));
+const definition = { page: { title: 'Gestión de viajes', subtitle: 'Despachos, entregas y recorrido automático', actionLabel: 'Registrar viaje' },
+ columns, actions, api, fields: [], rowKey: 'id_viaje', permissionResource: 'viajes', Form: ViajeOperacionForm };
+export function Viajes() { return <CatalogoConectado definition={definition} controller={useViajes()} />; }

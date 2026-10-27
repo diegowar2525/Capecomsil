@@ -21,7 +21,7 @@ export const actions = [
                         "label": "Galones"
                     },
                     {
-                        "key": "valor_por_galon",
+                        "key": "tarifa_aplicada",
                         "label": "Tarifa"
                     },
                     {

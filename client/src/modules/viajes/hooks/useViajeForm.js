@@ -48,11 +48,11 @@ export function useViajeForm(catalogos = {}, onPrepare, initialViaje) {
     });
     const cambiarCabecera = (campo, value) => setCabecera((actual) => ({ ...actual, [campo]: value }));
     const seleccionarTrayecto = (clave, value) => setSeleccion((actual) => ({ ...actual, [clave]: value }));
-    const preparar = () => {
+    const preparar = async () => {
         try {
             const data = prepararViaje({ cabecera, origen, paradas, recorrido });
             setError('');
-            onPrepare?.(data);
+            await onPrepare?.(data);
         } catch (failure) { setError(failure.message); }
     };
     return {

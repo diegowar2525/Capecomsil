@@ -4,18 +4,18 @@ import { ViajeCabecera } from './ViajeCabecera.jsx';
 import { EntregaForm } from './EntregaForm.jsx';
 import { RecorridoPreview } from './RecorridoPreview.jsx';
 
-export function ViajeForm({ catalogos = {}, onPrepare, initialViaje }) {
+export function ViajeForm({ catalogos = {}, onPrepare, initialViaje, id, saving, children, externalSubmit = false }) {
     const form = useViajeForm(catalogos, onPrepare, initialViaje);
     const submit = (event) => {
         event.preventDefault();
         form.preparar();
     };
     return (
-        <form className="viaje-form" onSubmit={submit}>
+        <form id={id} className="viaje-form" onSubmit={submit}><fieldset disabled={saving}>
             <ViajeCabecera cabecera={form.cabecera} origen={form.origen} lugares={form.lugares}
                 opcionesVehiculos={form.opcionesVehiculos} opcionesChoferes={form.opcionesChoferes}
                 onCabecera={form.cambiarCabecera} onOrigen={form.setOrigen} />
-            {form.sinTerminales && <p role="status">Los catálogos aún no están conectados. El guardado permanece deshabilitado.</p>}
+            {form.sinTerminales && <p role="status">Registre un terminal de carga antes de crear viajes.</p>}
             {form.paradas.map((parada, index) => (
                 <EntregaForm key={parada.key} parada={parada} index={index} totalEntregas={form.paradas.length}
                     origenTramo={form.nombre(form.recorrido[index].origen)} terminalCarga={form.nombre(form.origen)}
@@ -35,7 +35,8 @@ export function ViajeForm({ catalogos = {}, onPrepare, initialViaje }) {
                 : <p>El viaje termina en la última entrega.</p>}
             <RecorridoPreview recorrido={form.recorrido} nombre={form.nombre} onSeleccionar={form.seleccionarTrayecto} />
             {form.error && <p role="alert">{form.error}</p>}
-            {onPrepare && <button type="submit" className="btn btn-primary">Validar recorrido</button>}
-        </form>
+            {children}
+            {onPrepare && !externalSubmit && <button type="submit" className="btn btn-primary">Validar recorrido</button>}
+        </fieldset></form>
     );
 }
