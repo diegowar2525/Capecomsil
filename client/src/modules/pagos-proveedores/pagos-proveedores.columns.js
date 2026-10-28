@@ -8,8 +8,8 @@ export const columns = [
         "label": "N° Factura"
     },
     {
-        "key": "id_proveedor",
-        "label": "Proveedor (ID)"
+        "key": "nombre_proveedor",
+        "label": "Proveedor"
     },
     {
         "key": "fecha_pago",

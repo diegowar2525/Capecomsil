@@ -1,1 +1,2 @@
-export const filters = [];
+import { seleccion, rangoFechas, rangoImporte, estadoOperacion } from '../../domain/filtrosOperativos.js';
+export const filters = [estadoOperacion(), ...rangoFechas('fecha_inicio'), seleccion('id_vehiculo','Vehículo','placa'), seleccion('id_proveedor','Proveedor','nombre_proveedor'), seleccion('tipo','Tipo de mantenimiento'), {name:'finalizado',field:'fecha_fin',label:'Finalización',type:'select',operator:'presence',options:[{value:'true',label:'Finalizado'},{value:'false',label:'En curso'}]}, ...rangoImporte('monto')];

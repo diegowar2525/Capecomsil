@@ -3,6 +3,6 @@ import { cargarOpciones } from '../../../services/consultas.api.js';
 const path = '/api/configuraciones-peaje-trayecto';
 export const api = {
     ...crearCatalogoApi(path),
-    opciones: (signal) => cargarOpciones({"id_trayecto": ["/api/trayectos", "id_trayecto", "descripcion"]}, signal)
+    opciones: (signal) => cargarOpciones({"id_trayecto": ["/api/trayectos", "id_trayecto", "nombre"]}, signal)
 
 };

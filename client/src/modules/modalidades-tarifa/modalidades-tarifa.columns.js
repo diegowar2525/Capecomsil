@@ -4,7 +4,7 @@ export const columns = [
         "label": "Código"
     },
     {
-        "key": "id_gasolinera",
+        "key": "nombre_gasolinera",
         "label": "Gasolinera"
     },
     {

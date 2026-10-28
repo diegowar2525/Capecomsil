@@ -4,16 +4,16 @@ export const filters = [
         "label": "Gasolinera",
         "type": "select",
         "required": false,
-        "source": "id_gasolinera"
+        "labelKey": "nombre_gasolinera"
     },
     {
-        "name": "periodo_desde",
+        "name": "periodo_desde", "field": "periodo_fin", "operator": "from",
         "label": "Desde",
         "type": "date",
         "required": false
     },
     {
-        "name": "periodo_hasta",
+        "name": "periodo_hasta", "field": "periodo_inicio", "operator": "to",
         "label": "Hasta",
         "type": "date",
         "required": false

@@ -4,7 +4,7 @@ export const columns = [
         "label": "Código"
     },
     {
-        "key": "id_trayecto",
+        "key": "nombre_trayecto",
         "label": "Trayecto"
     },
     {

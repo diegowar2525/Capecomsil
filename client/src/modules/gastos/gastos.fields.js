@@ -8,7 +8,8 @@ export const fields = [
     {
         "name": "tipo_gasto",
         "label": "Tipo de gasto",
-        "type": "text",
+        "type": "select",
+        "source": "tipo_gasto",
         "required": true,
         "maxLength": 100
     },
@@ -43,6 +44,7 @@ export const fields = [
     },
     {
         "name": "id_viatico_chofer",
+        "when": {"field":"tipo_gasto","value":"VIATICO"},
         "label": "Viático diario",
         "type": "select",
         "required": false,

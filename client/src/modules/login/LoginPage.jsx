@@ -90,7 +90,7 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                         className="lock-submit-btn"
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Verificando acceso...' : 'Desbloquear e Ingresar'}
+                        {isLoading ? 'Verificando acceso...' : 'Desbloquear'}
                     </button>
                 </form>
 

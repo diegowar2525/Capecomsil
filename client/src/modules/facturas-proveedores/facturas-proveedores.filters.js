@@ -1,1 +1,2 @@
-export const filters = [];
+import { seleccion, rangoFechas, rangoImporte, estadoOperacion } from '../../domain/filtrosOperativos.js';
+export const filters = [estadoOperacion(true), ...rangoFechas('fecha_emision'), seleccion('id_proveedor','Proveedor','nombre_proveedor'), seleccion('numero_factura','Número de factura'), seleccion('estado_pago','Estado de pago'), {name:'vencida',label:'Vencida',type:'select',options:[{value:'true',label:'Sí'},{value:'false',label:'No'}]}, ...rangoImporte('total'), ...rangoImporte('saldo_pendiente','Saldo pendiente')];

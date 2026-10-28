@@ -1,9 +1,3 @@
-export const filters = [
-    {
-        "name": "id_factura_proveedor",
-        "label": "Factura",
-        "type": "select",
-        "required": true,
-        "source": "id_factura_proveedor"
-    }
-];
+import { seleccion, rangoFechas, estadoOperacion } from '../../domain/filtrosOperativos.js';
+
+export const filters = [estadoOperacion(true), seleccion('numero_comprobante','Comprobante'), ...rangoFechas('fecha_recepcion')];

@@ -5,18 +5,18 @@ export const columns = [
     },
     {
         "key": "id_viaje",
-        "label": "Viaje (ID)"
+        "label": "Viaje"
     },
     {
-        "key": "id_vehiculo",
-        "label": "Vehículo (ID)"
+        "key": "placa",
+        "label": "Vehículo"
     },
     {
-        "key": "id_proveedor",
-        "label": "Proveedor (ID)"
+        "key": "nombre_proveedor",
+        "label": "Proveedor"
     },
     {
-        "key": "tipo_gasto",
+        "key": "nombre_tipo_gasto",
         "label": "Tipo de gasto"
     },
     {

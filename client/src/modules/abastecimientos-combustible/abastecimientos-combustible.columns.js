@@ -4,7 +4,7 @@ export const columns = [
         "label": "Código"
     },
     {
-        "key": "id_vehiculo",
+        "key": "placa",
         "label": "Vehículo"
     },
     {
