@@ -1,3 +1,4 @@
+import { TiposGastoPage } from '../modules/tipos-gasto/TiposGastoPage.jsx';
 import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
 import { TarifasCapacidadPage } from '../modules/tarifas-capacidad/TarifasCapacidadPage.jsx';
 import { ModalidadesTarifaPage } from '../modules/modalidades-tarifa/ModalidadesTarifaPage.jsx';
@@ -34,6 +35,7 @@ import { ProductosPage } from '../modules/productos/ProductosPage.jsx';
 import { ProveedoresPage } from '../modules/proveedores/ProveedoresPage.jsx';
 
 export const routes = [
+    {path:'/tipos-gasto',label:'Tipos de gasto',section:'Catálogos',Component:TiposGastoPage},
     { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
     { path: '/dashboard', label: "Dashboard", Component: Dashboard },
     { path: '/viajes', label: "Viajes", section: "Operaciones", Component: Viajes },

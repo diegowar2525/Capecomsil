@@ -1,5 +1,5 @@
 const groups = {
-    catalogos: ['vehiculos', 'choferes', 'gasolineras', 'terminales', 'productos', 'proveedores', 'trayectos', 'categorias-producto', 'productos-inventario'],
+    catalogos: ['tipos-gasto', 'vehiculos', 'choferes', 'gasolineras', 'terminales', 'productos', 'proveedores', 'trayectos', 'categorias-producto', 'productos-inventario'],
     tarifas: ['tarifas', 'tarifas-capacidad', 'modalidades-tarifa'],
     configuraciones: ['configuraciones-viatico', 'configuraciones-remuneracion', 'configuraciones-combustible', 'configuraciones-peaje-trayecto', 'feriados'],
     viajes: ['viajes', 'costos-viaje'], inventario: ['inventario'], informes: ['informes'],
