@@ -9,7 +9,7 @@ export function opcionesFiltro(filter, data) {
     if (filter.options) return filter.options;
     const opciones = new Map();
     for (const row of data) {
-        const value = row[filter.name];
+        const value = row[filter.field ?? filter.name];
         if (value === null || value === undefined || value === '') continue;
         opciones.set(String(value), String(row[filter.labelKey] ?? value));
     }
@@ -26,6 +26,13 @@ export function filtrarOrdenarCatalogo(data, { columns, rowKey, filters = [], se
             if (selected === '' || selected === undefined) return true;
             const actual = row[filter.field ?? filter.name];
             if (filter.operator === 'presence') return String(actual !== null && actual !== undefined && String(actual).trim() !== '') === String(selected);
+            if (filter.type === 'date') {
+                const date = String(actual ?? '').slice(0, 10);
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+                if (filter.operator === 'from') return date >= selected;
+                if (filter.operator === 'to') return date <= selected;
+                return date === selected;
+            }
             if (filter.operator === 'min' || filter.operator === 'max') {
                 if (actual === null || actual === undefined || actual === '') return false;
                 if (!Number.isFinite(Number(actual)) || !Number.isFinite(Number(selected))) return false;
