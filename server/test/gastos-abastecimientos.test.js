@@ -17,6 +17,7 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
         await admin.query("CREATE SCHEMA " + schema);
         await admin.query("SET LOCAL search_path TO " + schema + ",public");
         await admin.query(fs.readFileSync(path.join(__dirname,"../../database/schema.sql"),"utf8"));
+        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;");
         await admin.query(`INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('G1',100),('G2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('C','C','DIARIO_FIJO');
             INSERT INTO configuracion_viatico(importe_diario,fecha_inicio) VALUES (12,'2026-01-01');
@@ -40,12 +41,31 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
             });
             return {status:r.status,body:await r.json()};
         };
+        const tipo = await req('/tipos-gasto','POST',{codigo:'oficina',nombre:'Oficina'});
+        assert.equal(tipo.status,201,JSON.stringify(tipo));
+        assert.equal(tipo.body.codigo,'OFICINA');
+        const tipoPath = '/tipos-gasto/'+tipo.body.id_tipo_gasto;
+        assert.equal((await req(tipoPath,'PUT',{...tipo.body,codigo:'CAMBIO'})).status,409);
+        assert.equal((await req(tipoPath,'PUT',{...tipo.body,estado:false})).status,200);
+        assert.equal((await req('/gastos','POST',{tipo_gasto:'OFICINA',monto:10,fecha:'2026-10-01'})).status,409);
+        assert.equal((await req('/gastos','POST',{tipo_gasto:'INEXISTENTE',monto:10,fecha:'2026-10-01'})).status,400);
+        assert.equal((await req(tipoPath,'DELETE')).status,200);
+        const tipos = (await req('/tipos-gasto')).body;
+        const reservado = tipos.find(row=>row.codigo==='VIATICO');
+        assert.equal((await req('/tipos-gasto/'+reservado.id_tipo_gasto,'DELETE')).status,409);
+        assert.equal((await req('/tipos-gasto/'+reservado.id_tipo_gasto,'PUT',{...reservado,estado:false})).status,409);
         const gasto = {fecha:"2026-10-01",tipo_gasto:"comida",monto:"12.00",descripcion:"Comida"};
         const g = await req("/gastos","POST",gasto);
         assert.equal(g.status,201,JSON.stringify(g));
         assert.equal(g.body.id_vehiculo,null);
         assert.equal(g.body.tipo_gasto,"COMIDA");
         assert.equal(g.body.fecha,"2026-10-01");
+        assert.equal((await req('/gastos')).body[0].nombre_tipo_gasto,'Comida');
+        const usado = tipos.find(row=>row.codigo==='COMIDA');
+        assert.equal((await req('/tipos-gasto/'+usado.id_tipo_gasto,'DELETE')).status,409);
+        assert.equal((await req('/tarifas')).body[0].nombre_gasolinera,'G');
+        assert.equal((await req('/tarifas')).body[0].nombre_terminal,'T');
+        assert.equal((await req('/configuraciones-peaje-trayecto')).body[0].nombre_trayecto,'T-G');
         for (const patch of [{monto:0},{fecha:"2026-02-30"},{id_vehiculo:999},{id_proveedor:999},
             {id_viaje:999},{tipo_gasto:"COMBUSTIBLE"},{id_viatico_chofer:1},{tipo_gasto:"VIATICO",id_viatico_chofer:999}]) {
             assert.equal((await req("/gastos","POST",{...gasto,...patch})).status,400,JSON.stringify(patch));

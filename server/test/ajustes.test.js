@@ -12,7 +12,8 @@ test("Gastos sin vehículo y ajustes de inventario con signo", async () => {
         await client.query("CREATE SCHEMA ajustes_test_" + process.pid);
         await client.query("SET LOCAL search_path TO ajustes_test_" + process.pid + ", public");
         await client.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
-        await client.query("INSERT INTO gasto(tipo_gasto,monto) VALUES ('Comida',10)");
+        await client.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','COMIDA'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;");
+        await client.query("INSERT INTO gasto(tipo_gasto,monto) VALUES ('COMIDA',10)");
         await client.query("INSERT INTO categoria_producto(nombre) VALUES ('Prueba')");
         await client.query("INSERT INTO producto(id_categoria,nombre,unidad_medida) VALUES (1,'Prueba','unidad')");
 

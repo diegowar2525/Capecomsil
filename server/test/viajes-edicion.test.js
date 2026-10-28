@@ -79,6 +79,8 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         }
         const capacidadMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
         await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/025_tipos_gasto.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('OTRO','Otro') ON CONFLICT DO NOTHING");
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);

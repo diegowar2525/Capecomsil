@@ -17,6 +17,7 @@ test("Informes: agregación sin duplicados, datos pendientes e intervalos de tan
         await admin.query("CREATE SCHEMA " + schema);
         await admin.query("SET LOCAL search_path TO " + schema + ",public");
         await admin.query(fs.readFileSync(path.join(__dirname,"../../database/schema.sql"),"utf8"));
+        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;");
         await admin.query(`INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('I1',100),('I2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('C','C','DIARIO_FIJO');
             INSERT INTO configuracion_viatico(importe_diario,fecha_inicio) VALUES (12,'2026-01-01');
