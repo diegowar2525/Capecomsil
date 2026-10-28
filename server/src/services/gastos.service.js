@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const tipoGastoModel = require("../models/tipo_gasto.model");
 const gastoModel = require("../models/gasto.model");
 const { lock } = require("../utils/transaction.lock");
 const { validateData, validateFiltros } = require("../utils/validators/gasto.validators");
@@ -53,6 +54,13 @@ const createGasto = async (data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
+        const tipo = await tipoGastoModel.findByCodigoForShare(client, datosValidados.tipo_gasto);
+        if (!tipo) {
+            throw createHttpError("Seleccione un tipo de gasto existente", 400);
+        }
+        if (!tipo.estado) {
+            throw createHttpError("El tipo de gasto está inactivo", 409);
+        }
         await validarReferencias(client, datosValidados);
         const nuevo = await gastoModel.create(client, datosValidados);
         const gasto = await gastoModel.findById(nuevo.id_gasto, client);

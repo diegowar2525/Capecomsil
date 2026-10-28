@@ -2,12 +2,15 @@ const pool = require("../config/database");
 
 const select = `
         SELECT
-            g.*,
+            g.*, v.placa, p.nombre AS nombre_proveedor, tg.nombre AS nombre_tipo_gasto,
             to_char(g.fecha, 'YYYY-MM-DD') AS fecha,
             to_char(g.fecha_anulacion, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_anulacion,
             a.id_abastecimiento_combustible
         FROM
             gasto g
+            LEFT JOIN vehiculo v ON v.id_vehiculo = g.id_vehiculo
+            LEFT JOIN proveedor p ON p.id_proveedor = g.id_proveedor
+            JOIN tipo_gasto tg ON tg.codigo = g.tipo_gasto
             LEFT JOIN abastecimiento_combustible a ON a.id_gasto = g.id_gasto
     `;
 

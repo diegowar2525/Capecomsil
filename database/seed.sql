@@ -1199,6 +1199,7 @@ BEGIN
         END IF;
     END LOOP;
 
+    INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;
     INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante) VALUES
         ('2026-10-05','PEAJE',3,vehiculo_id,viajes_ids[1],'SEED: peaje pagado','SEED-PEAJE-001'),
         ('2026-10-06','PEAJE',5,vehiculo_id,viajes_ids[3],'SEED: peaje pagado','SEED-PEAJE-002'),

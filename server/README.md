@@ -241,3 +241,16 @@ Desde `server`, `npm test` ejecuta `node --test test/*.test.js`. La suite incluy
 Desde `client`, `npm run build` compila la interfaz y `npm run lint` ejecuta Oxlint. La existencia de pruebas no garantiza que hayan pasado en un entorno sin verificar.
 
 [PROJECT_CONTEXT.txt](PROJECT_CONTEXT.txt) conserva el alcance inicial y reglas que han cambiado. El esquema consolidado, el código y los documentos por módulo deben contrastarse al desarrollar. Ejemplos antiguos que usan `fecha` para viajes o mantenimientos deben usar `fecha_inicio` y `fecha_fin` según los validadores actuales.
+
+## Tipos de gasto y etiquetas de consultas
+
+El catálogo autenticado /api/tipos-gasto permite consultar, crear, editar y
+eliminar tipos con los permisos existentes de catálogos. Los códigos son
+permanentes; los tipos utilizados se desactivan en lugar de eliminarse.
+VIATICO y COMBUSTIBLE son reservados y conservan sus reglas de negocio.
+Los listados operativos incluyen las placas y nombres relacionados necesarios
+para los filtros y tablas del frontend.
+
+Aplicar database/migrations/025_tipos_gasto.sql en bases existentes antes de
+utilizar esta versión. El esquema nuevo ya lo incluye. Véase
+[notas de la migración](../database/migrations/025_tipos_gasto.md).

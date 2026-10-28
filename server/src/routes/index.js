@@ -62,6 +62,7 @@ router.use("/configuraciones-combustible", require("./configuracion_combustible.
 router.use("/configuraciones-viatico", require("./configuracion_viatico.routes"));
 router.use("/configuraciones-peaje-trayecto", require("./configuracion_peaje_trayecto.routes"));
 router.use("/planes-mantenimiento", require("./planes_mantenimiento.routes"));
+router.use("/tipos-gasto", require("./tipos_gasto.routes"));
 router.use("/gastos", require("./gastos.routes"));
 router.use("/abastecimientos-combustible", require("./abastecimientos_combustible.routes"));
 router.use("/informes", require("./informes.routes"));
