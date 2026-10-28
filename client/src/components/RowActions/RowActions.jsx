@@ -1,12 +1,13 @@
 
 import { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Eye, Pencil, Trash2, EllipsisVertical } from 'lucide-react';
+import { Eye, Pencil, Trash2, Ban, EllipsisVertical } from 'lucide-react';
 
 const actionIcons = {
     eye: Eye,
     pencil: Pencil,
-    trash: Trash2
+    trash: Trash2,
+    ban: Ban
 };
 
 export function RowActions({ actions, onAction }) {

@@ -7,14 +7,16 @@ import { CatalogoFiltros } from './CatalogoFiltros.jsx';
 import { CatalogoPaginacion } from './CatalogoPaginacion.jsx';
 import { useCatalogoFiltros } from '../../hooks/useCatalogoFiltros.js';
 import { RowActions } from '../RowActions/RowActions.jsx';
-import { accionDisponible } from '../../domain/acciones.js';
+import { accionDisponible, organizarAcciones, accionesDeFila } from '../../domain/acciones.js';
 import { useAuth } from '../../modules/auth/hooks/useAuth.js';
 
 
 export function CatalogoConectado({ definition, controller }) {
-    const { page, columns = [], rowKey, filters = [], actions = crudActions, mode = 'list', Card } = definition;
+    const { page, columns = [], rowKey, filters = [], actions: declaredActions = crudActions, mode = 'list', Card } = definition;
     const { data = [], registro, loading, error, recargar, guardar, eliminar, ejecutar } = controller;
     const single = mode === 'single';
+    const actions = organizarAcciones(declaredActions, definition.permissionResource, single);
+    const modalDefinition = { ...definition, actions };
     const { permisos } = useAuth();
     const permissionFor = (action) => action.permission ?? (single ? undefined :
         `${definition.permissionResource ?? 'catalogos'}.${({ detail: 'consultar', edit: 'editar', delete: 'eliminar', create: 'crear' })[action.id] ?? 'consultar'}`);
@@ -38,7 +40,7 @@ export function CatalogoConectado({ definition, controller }) {
             label: 'Acciones',
             render: (row) => (
                 <RowActions
-                    actions={actions.filter(action => !action.parent && !action.global && allowed(action, row))}
+                    actions={accionesDeFila(actions, row, permisos)}
                     onAction={(action) => open(action, row[rowKey])}
                 />
             )
@@ -63,7 +65,7 @@ export function CatalogoConectado({ definition, controller }) {
                     loading={loading} error={error} refreshDisabled={Boolean(dialog)} onRefresh={recargar} />}
                 pagination={<CatalogoPaginacion state={filterState} disabled={Boolean(dialog)} />} />
         </>}
-        {dialog && (!single || canEdit) && <CatalogoModal key={`${dialog.action.id}-${dialog.id ?? 'nuevo'}`} {...dialog} definition={definition}
+        {dialog && (!single || canEdit) && <CatalogoModal key={`${dialog.action.id}-${dialog.id ?? 'nuevo'}`} {...dialog} definition={modalDefinition}
             guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} onClose={() => setDialog(null)} onSaved={saved} />}
     </section>;
 }

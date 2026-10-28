@@ -186,7 +186,8 @@
   background: var(--bg-primary);
 }
 
-.record-actions-menu-item.record-action-delete {
+.record-actions-menu-item.record-action-delete,
+.record-actions-menu-item.record-action-annul {
   color: #dc2626;
 }
 

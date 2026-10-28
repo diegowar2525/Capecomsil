@@ -34,7 +34,7 @@ export function AccionCatalogo({ definition, id, action, registro, catalogos, ex
     const footer = <>
         {!embedded && <button type="button" className="btn btn-outline" disabled={busy} onClick={close}>Cerrar</button>}
         {(!action.readOnly || action.query) && <button type="submit" form={formId} className="btn btn-primary" disabled={busy}>
-            {form.saving ? 'Procesando…' : action.query ? 'Consultar' : action.id === 'delete' ? 'Eliminar registro' : 'Guardar cambios'}
+            {form.saving ? 'Procesando…' : action.query ? 'Consultar' : action.id === 'delete' ? 'Eliminar registro' : action.id === 'annul' ? 'Anular registro' : !editable ? action.label : 'Guardar cambios'}
         </button>}
     </>;
     const content = <>

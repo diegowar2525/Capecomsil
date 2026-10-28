@@ -154,3 +154,16 @@ liquidaciones. Las pruebas de navegador verificaron estados, versión, conservac
 de formularios tras error, filas anidadas, selectores dependientes, edición de viajes
 con IDs y modal móvil sin desbordamiento horizontal. No sustituyen una prueba de
 aceptación contra una base de datos real con las migraciones aplicadas.
+
+## Acciones de cada registro
+
+`domain/acciones.js` organiza las acciones de todos los módulos: detalle (ojo),
+edición (lápiz) y una operación de retiro según el estado: eliminar (papelera) o
+anular (prohibición). Solo se muestran operaciones admitidas por la API, el estado
+y los permisos; no se inventa edición para módulos que no la soportan.
+
+Las consultas, historiales y operaciones secundarias por registro aparecen como
+botones dentro de Ver detalle. Se conserva `parent: 'edit'` para operaciones como
+el cambio de modalidad de gasolinera. En liquidaciones, enviar/confirmar están en
+detalle y conservan sus estados y permisos. Las acciones globales siguen fuera de
+la columna Acciones. El menú móvil conserva los mismos íconos y etiquetas.

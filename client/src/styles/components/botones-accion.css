@@ -31,11 +31,13 @@
     outline-offset: 2px;
 }
 
-.record-action-delete {
+.record-action-delete,
+.record-action-annul {
     color: #dc2626;
 }
 
-.record-action-delete:hover {
+.record-action-delete:hover,
+.record-action-annul:hover {
     background: #fef2f2;
     color: #b91c1c;
 }
