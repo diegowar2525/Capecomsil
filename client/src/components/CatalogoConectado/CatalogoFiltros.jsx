@@ -4,8 +4,8 @@ import { opcionesFiltro } from '../../domain/catalogoFiltros.js';
 function FilterField({ filter, data, state, id }) {
     return <label className="form-group" htmlFor={id}>
         <span className="form-label">{filter.label}</span>
-        {filter.type === 'text' || filter.type === 'number'
-            ? <input id={id} type={filter.type} min={filter.type === 'number' ? 0 : undefined} step={filter.type === 'number' ? 'any' : undefined}
+        {['text', 'number', 'date'].includes(filter.type)
+            ? <input id={id} type={filter.type} min={filter.min} step={filter.type === 'number' ? 'any' : undefined}
                 className="form-control" value={state.values[filter.name] ?? ''}
                 onChange={(event) => state.change(filter.name, event.target.value)} />
             : <select id={id} className="form-select" value={state.values[filter.name] ?? ''}

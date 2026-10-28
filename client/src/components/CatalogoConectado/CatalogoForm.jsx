@@ -19,10 +19,10 @@ export function CatalogoForm({ fields, values, change, saving, catalogos = {} })
                     <button type="button" className="btn btn-outline" disabled={saving || values[field.name].length <= (field.minRows ?? 0)} onClick={() => set(field.name, values[field.name].filter((_, i) => i !== index))}>Quitar</button>
                 </fieldset>)}<button type="button" className="btn btn-outline" disabled={saving} onClick={() => set(field.name, [...(values[field.name] ?? []), valoresIniciales(field.fields)])}>Agregar {field.label.toLowerCase()}</button></>}
         </fieldset>;
-        const { when: _when, source, defaultChecked, defaultValue, requiredWhen, ...props } = field;
+        const { when: _when, source, defaultChecked, defaultValue, requiredWhen, labelKey: _labelKey, field: _field, operator: _operator, ...props } = field;
         return <div key={field.name} className={field.type === 'checkbox' ? 'form-checkbox-wrapper' : 'form-field-wrapper'}><FormField {...props}
             required={field.required || Boolean(requiredWhen && values[requiredWhen.field] === requiredWhen.value)}
-            disabled={saving} onChange={change} options={source ? catalogos[source] ?? [] : field.options}
+            disabled={saving || field.disabled} onChange={change} options={source ? catalogos[source] ?? [] : field.options}
             {...(field.type === 'checkbox' ? { checked: values[field.name] ?? defaultChecked ?? false } : { value: values[field.name] ?? defaultValue ?? (field.multiple ? [] : '') })} /></div>;
     })}</div>;
 }

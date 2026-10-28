@@ -58,7 +58,7 @@ export function CatalogoConectado({ definition, controller }) {
             {loading && <p role="status">Cargando…</p>}
             {error && <div><p role="alert">{error}</p><button type="button" className="btn btn-outline" onClick={recargar}>Volver a consultar</button></div>}
             {registro && Card && <Card registro={registro} />}
-        </> : <>
+        </> : definition.showList === false ? null : <>
             <Listado columns={tableColumns} data={filterState.pagination.rows} rowKey={rowKey} loading={loading} error={error}
                 emptyMessage={filterState.active ? 'No hay coincidencias con los filtros.' : 'No hay registros disponibles.'}
                 toolbar={<CatalogoFiltros title={page.title} data={data} filters={filters} state={filterState}

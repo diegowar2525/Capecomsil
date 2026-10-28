@@ -29,7 +29,7 @@ export function AccionCatalogo({ definition, id, action, registro, catalogos, ex
     });
     useEffect(() => { onBusy?.(form.saving); }, [form.saving, onBusy]);
     const busy = form.saving || childBusy;
-    const displayFields = editable && definition.formFields ? definition.formFields(form.values, catalogos) : fields;
+    const displayFields = editable && definition.formFields ? definition.formFields(form.values, catalogos, registro) : fields;
     const close = () => { if (!childBusy) form.closeWhenIdle(onClose); };
     const footer = <>
         {!embedded && <button type="button" className="btn btn-outline" disabled={busy} onClick={close}>Cerrar</button>}
