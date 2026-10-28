@@ -4,9 +4,11 @@ const findById = async (id, client = pool) => {
     const result = await client.query(
         `
         SELECT
-            *
+            p.*, f.id_proveedor, f.numero_factura, pr.nombre AS nombre_proveedor
         FROM
-            pago_proveedor
+            pago_proveedor p
+            JOIN factura_proveedor f USING (id_factura_proveedor)
+            JOIN proveedor pr ON pr.id_proveedor = f.id_proveedor
         WHERE
             id_pago_proveedor = $1
     `,
@@ -22,10 +24,11 @@ const findAll = async (filtros, client = pool) => {
         SELECT
             p.*,
             f.id_proveedor,
-            f.numero_factura
+            f.numero_factura, pr.nombre AS nombre_proveedor
         FROM
             pago_proveedor p
             JOIN factura_proveedor f USING (id_factura_proveedor)
+            JOIN proveedor pr ON pr.id_proveedor = f.id_proveedor
         WHERE
             (
                 $1::integer IS NULL

@@ -7,7 +7,7 @@ const fields = `
 
 const findAll = async (idGasolinera, client = pool) => {
     const result = await client.query(`
-        SELECT ${fields}
+        SELECT ${fields}, (SELECT nombre FROM gasolinera g WHERE g.id_gasolinera=modalidad_tarifa_gasolinera.id_gasolinera) AS nombre_gasolinera
         FROM modalidad_tarifa_gasolinera
         WHERE ($1::integer IS NULL OR id_gasolinera = $1)
         ORDER BY id_gasolinera, fecha_inicio DESC

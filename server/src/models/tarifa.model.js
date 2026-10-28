@@ -9,7 +9,9 @@ const findAll = async (client = pool) => {
             valor_por_galon,
             fecha_inicio::text,
             fecha_fin::text,
-            estado
+            estado,
+            (SELECT nombre FROM gasolinera g WHERE g.id_gasolinera=tarifa.id_gasolinera) AS nombre_gasolinera,
+            (SELECT nombre FROM terminal t WHERE t.id_terminal=tarifa.id_terminal) AS nombre_terminal
         FROM
             tarifa
         ORDER BY
@@ -29,7 +31,9 @@ const findById = async (id, client = pool) => {
             valor_por_galon,
             fecha_inicio::text,
             fecha_fin::text,
-            estado
+            estado,
+            (SELECT nombre FROM gasolinera g WHERE g.id_gasolinera=tarifa.id_gasolinera) AS nombre_gasolinera,
+            (SELECT nombre FROM terminal t WHERE t.id_terminal=tarifa.id_terminal) AS nombre_terminal
         FROM
             tarifa
         WHERE

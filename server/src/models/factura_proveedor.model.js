@@ -17,7 +17,7 @@ const camposPago = `pagos.total_pagado::text AS total_pagado,
 
 const findAll = async (client = pool) => {
     const result = await client.query(
-        `SELECT f.*, ${camposPago} FROM factura_proveedor f ${resumenPagos} ORDER BY f.id_factura_proveedor DESC`
+        `SELECT f.*, pr.nombre AS nombre_proveedor, ${camposPago} FROM factura_proveedor f JOIN proveedor pr ON pr.id_proveedor=f.id_proveedor ${resumenPagos} ORDER BY f.id_factura_proveedor DESC`
     );
 
     return result.rows;
@@ -26,7 +26,7 @@ const findAll = async (client = pool) => {
 const findById = async (id, client = pool) => {
     const result = await client.query(
         `
-        SELECT f.*, ${camposPago}, COALESCE((
+        SELECT f.*, pr.nombre AS nombre_proveedor, ${camposPago}, COALESCE((
             SELECT jsonb_agg(to_jsonb(d) || jsonb_build_object(
                 'cantidad', d.cantidad::text, 'precio_unitario', d.precio_unitario::text,
                 'descuento', d.descuento::text, 'subtotal', d.subtotal::text,
@@ -35,7 +35,7 @@ const findById = async (id, client = pool) => {
                 ORDER BY d.id_detalle_factura_proveedor)
             FROM detalle_factura_proveedor d WHERE d.id_factura_proveedor = f.id_factura_proveedor
         ), '[]'::jsonb) AS detalles
-        FROM factura_proveedor f ${resumenPagos} WHERE f.id_factura_proveedor = $1
+        FROM factura_proveedor f JOIN proveedor pr ON pr.id_proveedor=f.id_proveedor ${resumenPagos} WHERE f.id_factura_proveedor = $1
     `,
         [id]
     );
@@ -118,8 +118,8 @@ const findByIdForUpdate = async (client, id) => {
 
 const findCuentasPorPagar = async (id, client = pool) => {
     const result = await client.query(
-        `SELECT f.*, ${camposPago}
-        FROM factura_proveedor f ${resumenPagos}
+        `SELECT f.*, pr.nombre AS nombre_proveedor, ${camposPago}
+        FROM factura_proveedor f JOIN proveedor pr ON pr.id_proveedor=f.id_proveedor ${resumenPagos}
         WHERE f.id_proveedor=$1 AND f.estado <> 'ANULADA' AND f.total>pagos.total_pagado
         ORDER BY f.fecha_vencimiento NULLS LAST, f.id_factura_proveedor`,
         [id]

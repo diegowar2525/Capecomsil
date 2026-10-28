@@ -7,7 +7,7 @@ const fields = `
 
 const findAll = async (client = pool) => {
     const result = await client.query(`
-        SELECT ${fields}
+        SELECT ${fields}, (SELECT nombre FROM gasolinera g WHERE g.id_gasolinera=tarifa_capacidad.id_gasolinera) AS nombre_gasolinera
         FROM tarifa_capacidad
         ORDER BY id_tarifa_capacidad DESC
     `);
@@ -16,7 +16,7 @@ const findAll = async (client = pool) => {
 
 const findById = async (id, client = pool) => {
     const result = await client.query(`
-        SELECT ${fields}
+        SELECT ${fields}, (SELECT nombre FROM gasolinera g WHERE g.id_gasolinera=tarifa_capacidad.id_gasolinera) AS nombre_gasolinera
         FROM tarifa_capacidad
         WHERE id_tarifa_capacidad = $1
     `, [id]);

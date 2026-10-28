@@ -4,6 +4,7 @@ const findAll = async (client = pool) => {
     const result = await client.query(`
         SELECT
             *,
+            (SELECT nombre FROM trayecto t WHERE t.id_trayecto=configuracion_peaje_trayecto.id_trayecto) AS nombre_trayecto,
             fecha_inicio::text AS fecha_inicio,
             fecha_fin::text AS fecha_fin
         FROM
@@ -21,6 +22,7 @@ const findById = async (id, client = pool) => {
         `
         SELECT
             *,
+            (SELECT nombre FROM trayecto t WHERE t.id_trayecto=configuracion_peaje_trayecto.id_trayecto) AS nombre_trayecto,
             fecha_inicio::text AS fecha_inicio,
             fecha_fin::text AS fecha_fin
         FROM

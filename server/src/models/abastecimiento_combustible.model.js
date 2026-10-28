@@ -2,7 +2,7 @@ const pool = require("../config/database");
 
 const select = `
         SELECT
-            a.*,
+            a.*, v.placa, p.nombre AS nombre_proveedor,
             to_char(a.fecha_hora, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_hora,
             g.monto,
             g.id_proveedor,
@@ -13,6 +13,8 @@ const select = `
         FROM
             abastecimiento_combustible a
             JOIN gasto g ON g.id_gasto = a.id_gasto
+            JOIN vehiculo v ON v.id_vehiculo = a.id_vehiculo
+            LEFT JOIN proveedor p ON p.id_proveedor = g.id_proveedor
     `;
 
 const findAll = async (filtros, client = pool) => {
