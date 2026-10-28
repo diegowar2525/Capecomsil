@@ -20,3 +20,16 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the Oxlint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+
+## Filtros de los listados
+
+Los listados conectados comparten búsqueda, orden y paginación. Los filtros
+adicionales se despliegan en «Más filtros», usando la cuadrícula responsiva
+existente. Los selectores conservan el ID como valor y muestran nombres, placas
+o números de factura mediante labelKey; las fechas incluyen el día completo.
+Informes usa sus consultas específicas y no muestra un listado vacío con filtros.
+
+Tipos de gasto tiene CRUD propio. Gastos consulta sus tipos activos y permite
+elegir la fecha del viático cuando se registra un desembolso posterior al viaje.
+Esta versión requiere la migración database/migrations/025_tipos_gasto.sql
+en bases existentes.
