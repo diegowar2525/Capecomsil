@@ -13,7 +13,7 @@ export function CatalogoForm({ fields, values, change, saving, catalogos = {} })
         if (field.type === 'rows' || field.type === 'group') return <fieldset key={field.name} className="form-section" disabled={saving}>
             <legend>{field.label}</legend>
             {field.type === 'group' ? <CatalogoForm fields={field.fields} values={values[field.name] ?? {}} change={event => updateChild(field, null, event)} saving={saving} catalogos={catalogos} />
-                : <>{(values[field.name] ?? []).map((row, index) => <fieldset key={index}>
+                : <>{(values[field.name] ?? []).map((row, index) => <fieldset key={index} className="form-item-card">
                     <legend>{field.label} {index + 1}</legend>
                     <CatalogoForm fields={field.fields} values={row} change={event => updateChild(field, index, event)} saving={saving} catalogos={catalogos} />
                     <button type="button" className="btn btn-outline" disabled={saving || values[field.name].length <= (field.minRows ?? 0)} onClick={() => set(field.name, values[field.name].filter((_, i) => i !== index))}>Quitar</button>

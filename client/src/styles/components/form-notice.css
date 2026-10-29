@@ -1,0 +1,22 @@
+.form-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--status-info-border);
+  border-radius: var(--radius-md);
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.form-notice svg {
+  flex-shrink: 0;
+}
+
+.form-notice-error {
+  border-color: var(--status-danger-border);
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+}

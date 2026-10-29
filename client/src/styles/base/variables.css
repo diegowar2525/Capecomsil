@@ -15,6 +15,10 @@
   --accent-hover: #5b21b6;
   --accent-light: #ede9fe;
 
+  --accent-border: #c4b5fd;
+  --status-danger-border: #fecaca;
+  --status-info-border: #bae6fd;
+
   --border-color: #e2e8f0;
 
   /* Variables adicionales para Login / Bloqueo (Tonos Azules Ejecutivos) */

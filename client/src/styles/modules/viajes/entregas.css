@@ -1,0 +1,82 @@
+.viaje-form .viaje-entrega {
+  padding: 18px 20px 20px;
+}
+
+.viaje-entrega-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.viaje-info svg {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+}
+
+.viaje-productos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.viaje-productos-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.viaje-productos-heading svg {
+  color: var(--accent-primary);
+}
+
+.viaje-producto-fields {
+  min-width: 0;
+}
+
+.viaje-producto-fields>* {
+  min-width: 0;
+}
+
+.viaje-entrega-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.viaje-entrega-order {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viaje-footer-label {
+  margin-right: 4px;
+  color: var(--text-secondary);
+  font-size: 0.825rem;
+  font-weight: 500;
+}
+
+.viaje-agregar-entrega {
+  display:flex;
+}
+@media (max-width:640px) {
+  .viaje-form .viaje-entrega {
+    padding:14px;
+  }
+  .viaje-entrega-footer {
+    align-items:stretch;
+    flex-direction:column;
+  }
+  .viaje-entrega-order {
+    justify-content:flex-start;
+  }
+  .viaje-productos-section > .btn-add {
+    align-self:stretch;
+  }
+}

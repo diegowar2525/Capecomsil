@@ -30,3 +30,115 @@
 .btn-outline:hover {
   background-color: var(--bg-primary);
 }
+
+/* Acciones reutilizables en formularios. */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--accent-light);
+  color: var(--accent-primary);
+}
+
+.btn-icon-danger:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
+  border-color: var(--status-danger-border);
+}
+
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-icon:focus-visible,
+.btn-add:focus-visible,
+
+.btn-remove:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.btn-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px dashed var(--accent-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--accent-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-add:hover:not(:disabled) {
+  background: var(--accent-light);
+  border-color: var(--accent-primary);
+}
+
+.btn-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--status-danger-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+}
+
+.btn-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-add-block {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  font-size: .9rem;
+}
+
+.btn-add:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .btn-icon,
+  .btn-add {
+    transition: none;
+  }
+}

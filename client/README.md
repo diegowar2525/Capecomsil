@@ -33,3 +33,17 @@ Tipos de gasto tiene CRUD propio. Gastos consulta sus tipos activos y permite
 elegir la fecha del viático cuando se registra un desembolso posterior al viaje.
 Esta versión requiere la migración database/migrations/025_tipos_gasto.sql
 en bases existentes.
+
+## Piezas visuales reutilizables
+
+- SwitchField: interruptor controlado, etiqueta y descripción; genera IDs únicos.
+- FormNotice: avisos informativos y errores accesibles.
+- FormItemCard: tarjeta de una fila repetible con título y acciones. Su clase
+  form-item-card también se usa en las filas del formulario genérico.
+- button.css contiene btn-icon, btn-icon-danger, btn-add, btn-add-block y
+  btn-remove para acciones de formularios.
+
+Los estilos compartidos viven en styles/components. styles/modules/viajes.css
+solo importa viajes/formulario.css, viajes/entregas.css y viajes/recorrido.css;
+cada archivo conserva sus ajustes de móvil. DestinoFinalForm encapsula la
+presentación del destino opcional; el estado sigue en useViajeForm.

@@ -14,6 +14,10 @@
 @import './styles/components/catalogo-filtros.css';
 @import './styles/components/botones-accion.css';
 
+@import './styles/components/switch-field.css';
+@import './styles/components/form-notice.css';
+@import './styles/components/form-item.css';
+
 /* Modules */
 @import './styles/modules/dashboard.css';
 @import './styles/modules/viajes.css';

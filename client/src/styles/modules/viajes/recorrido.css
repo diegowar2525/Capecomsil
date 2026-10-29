@@ -1,0 +1,36 @@
+.viaje-recorrido {
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+}
+
+.viaje-recorrido-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.viaje-recorrido ol {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.viaje-recorrido li {
+  padding: 8px 0;
+  line-height: 1.6;
+}
+
+.viaje-recorrido li::marker {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+@media (max-width:640px) {
+  .viaje-recorrido {
+    padding:14px;
+  }
+}
