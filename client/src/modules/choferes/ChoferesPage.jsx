@@ -6,8 +6,9 @@ import { page } from './choferes.config.js';
 import { api } from './services/choferes.api.js';
 import { prepare } from './domain/choferes.js';
 import { useChoferes } from './hooks/useChoferes.js';
+import { fotoChoferApi } from '../../services/fotos.api.js';
 
-const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_chofer' };
+const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_chofer', foto: fotoChoferApi };
 
 export function ChoferesPage() {
     const controller = useChoferes();

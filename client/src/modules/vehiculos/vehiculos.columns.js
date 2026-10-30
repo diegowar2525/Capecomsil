@@ -7,6 +7,7 @@ export const columns = [
         "key": "placa",
         "label": "Placa"
     },
+    { "key": "imagen_url", "label": "Foto", "type": "image", "labelKey": "placa" },
     {
         "key": "marca",
         "label": "Marca"

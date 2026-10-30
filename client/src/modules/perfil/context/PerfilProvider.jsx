@@ -9,5 +9,5 @@ export function PerfilProvider({ children }) {
         actualizarUsuario(actualizado);
         return actualizado;
     };
-    return <PerfilContext.Provider value={{ usuario, loading, error, recargar, guardar }}>{children}</PerfilContext.Provider>;
+    return <PerfilContext.Provider value={{ usuario, loading, error, recargar, guardar, actualizarRegistro: actualizarUsuario }}>{children}</PerfilContext.Provider>;
 }

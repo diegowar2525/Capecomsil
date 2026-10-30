@@ -4,13 +4,11 @@ export const columns = [
         "label": "ID"
     },
     {
-        "key": "cedula",
-        "label": "Cédula"
-    },
-    {
         "key": "nombre",
         "label": "Nombre"
     },
+    { "key": "imagen_url", "label": "Foto", "type": "image", "labelKey": "nombre", "rostro": true },
+    { "key": "cedula", "label": "Cédula" },
     {
         "key": "telefono",
         "label": "Teléfono"

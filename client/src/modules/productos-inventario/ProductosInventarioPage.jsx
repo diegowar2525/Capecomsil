@@ -6,8 +6,9 @@ import { page } from './productos-inventario.config.js';
 import { api } from './services/productos-inventario.api.js';
 import { prepare, formFields } from './domain/productos-inventario.js';
 import { useProductosInventario } from './hooks/useProductosInventario.js';
+import { fotoProductoApi } from '../../services/fotos.api.js';
 
-const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_producto', formFields };
+const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_producto', formFields, foto: fotoProductoApi };
 
 export function ProductosInventarioPage() {
     const controller = useProductosInventario();

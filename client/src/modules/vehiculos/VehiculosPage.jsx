@@ -8,9 +8,10 @@ import { relatedAction } from './vehiculos.actions.js';
 import { filters } from './vehiculos.filters.js';
 import { api } from './services/vehiculos.api.js';
 import { prepararVehiculo } from './domain/vehiculo.js';
+import { fotoVehiculoApi } from '../../services/fotos.api.js';
 
 const definition = {
-    page, columns, fields, filters, api, rowKey: 'id_vehiculo', prepare: prepararVehiculo,
+    page, columns, fields, filters, api, rowKey: 'id_vehiculo', prepare: prepararVehiculo, foto: fotoVehiculoApi,
     actions: [...crudActions, {
         ...relatedAction, parent: 'detail', query: true,
         message: 'Deja la fecha vacía para consultar el kilometraje hasta el momento actual.'
