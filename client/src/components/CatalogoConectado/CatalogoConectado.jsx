@@ -49,7 +49,7 @@ export function CatalogoConectado({ definition, controller }) {
 
 
     return <section>
-        <PageHeader {...page} actionLabel={!loading && !error && (!single || canEdit) && allowed({ id: single ? 'edit' : 'create', permission: definition.createPermission }, registro) ? page.actionLabel : undefined}
+        <PageHeader {...page} actionLabel={!definition.editInCard && !loading && !error && (!single || canEdit) && allowed({ id: single ? 'edit' : 'create', permission: definition.createPermission }, registro) ? page.actionLabel : undefined}
             onAction={() => open({ id: single ? 'edit' : 'create', label: page.actionLabel }, single ? registro[rowKey] : undefined)} />
         {controller.toolbar}
         <div className="record-actions">{actions.filter(action => action.global && allowed(action)).map(action => <button key={action.id} type="button" className="btn btn-outline" onClick={() => open(action)}>{action.label}</button>)}</div>
@@ -57,7 +57,8 @@ export function CatalogoConectado({ definition, controller }) {
         {single ? <>
             {loading && <p role="status">Cargando…</p>}
             {error && <div><p role="alert">{error}</p><button type="button" className="btn btn-outline" onClick={recargar}>Volver a consultar</button></div>}
-            {registro && Card && <Card registro={registro} />}
+            {registro && Card && <Card registro={registro} onEdit={definition.editInCard && canEdit && allowed({ id: 'edit', permission: definition.createPermission }, registro)
+                ? () => open({ id: 'edit', label: page.actionLabel }, registro[rowKey]) : undefined} />}
         </> : definition.showList === false ? null : <>
             <Listado columns={tableColumns} data={filterState.pagination.rows} rowKey={rowKey} loading={loading} error={error}
                 emptyMessage={filterState.active ? 'No hay coincidencias con los filtros.' : 'No hay registros disponibles.'}
@@ -66,6 +67,6 @@ export function CatalogoConectado({ definition, controller }) {
                 pagination={<CatalogoPaginacion state={filterState} disabled={Boolean(dialog)} />} />
         </>}
         {dialog && (!single || canEdit) && <CatalogoModal key={`${dialog.action.id}-${dialog.id ?? 'nuevo'}`} {...dialog} definition={modalDefinition}
-            guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} onClose={() => setDialog(null)} onSaved={saved} />}
+            guardar={guardar} eliminar={eliminar} ejecutar={ejecutar} actualizarRegistro={controller.actualizarRegistro} onClose={() => setDialog(null)} onSaved={saved} />}
     </section>;
 }

@@ -1,6 +1,7 @@
 
 import { useState, useRef, useLayoutEffect } from 'react';
 import { Check, X, EllipsisVertical } from 'lucide-react';
+import { FotoMiniatura } from '../FotoMiniatura/FotoMiniatura.jsx';
 
 
 export function DataTable({
@@ -102,6 +103,7 @@ export function DataTable({
         if (col.render) return col.render(row);
 
         const value = row[col.key];
+        if (col.type === 'image') return <FotoMiniatura url={value} nombre={row[col.labelKey]} rostro={col.rostro} />;
 
         // Mostrar iconos para el campo Estado
         if (col.key === 'estado' && typeof value === 'boolean') {
@@ -167,7 +169,7 @@ export function DataTable({
                                                     </span>
                                                 </>
                                             ) : (
-                                                renderCell(col, row)
+                                                col.type === 'image' ? <span className="foto-miniatura" /> : renderCell(col, row)
                                             )}
                                         </td>
                                     ))}

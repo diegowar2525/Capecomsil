@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 
-export function Modal({ isOpen, title, onClose, children, footer }) {
+export function Modal({ isOpen, title, onClose, children, footer, className = '' }) {
     const titleId = useId();
     const ref = useRef(null);
     const closeRef = useRef(onClose);
@@ -34,7 +34,7 @@ export function Modal({ isOpen, title, onClose, children, footer }) {
     }, [isOpen]);
     if (!isOpen) return null;
     return <div className="modal-overlay" onClick={onClose}>
-        <div ref={ref} className="modal-container" role="dialog" aria-modal="true" aria-labelledby={titleId}
+        <div ref={ref} className={`modal-container ${className}`} role="dialog" aria-modal="true" aria-labelledby={titleId}
             tabIndex={-1} onClick={(event) => event.stopPropagation()}>
             <div className="modal-header"><h2 id={titleId} className="modal-title">{title}</h2>
                 <button type="button" className="modal-close-btn" onClick={onClose} aria-label="Cerrar modal">✕</button>
