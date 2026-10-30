@@ -23,6 +23,8 @@ const productosTransportadosRoutes = require(
 const router = express.Router();
 
 router.use("/auth", require("./auth.routes"));
+// Esta ruta valida multipart y CSRF antes de leer el archivo.
+router.use("/fotos", require("./fotos.routes"));
 
 router.get("/health", (req, res) => {
     res.json({
