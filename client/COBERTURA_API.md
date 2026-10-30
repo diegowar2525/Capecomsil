@@ -3,6 +3,7 @@
 | Área | Estado y operaciones |
 |---|---|
 | Sesión y perfil | Login por usuario, cambio de contraseña provisional, límite de intentos, sesión compartida, edición propia y cierre de sesión. |
+| Fotos | Perfil, choferes, vehículos y productos de inventario: carga, reemplazo y retirada con selector compartido, vista previa local y actualización al guardar. Requiere migraciones 026 y 027 y R2 configurado. |
 | Catálogos | Vehículos, choferes, gasolineras, terminales, productos transportados, proveedores, trayectos, categorías y productos de inventario: CRUD conectado, filtros, orden y paginación. |
 | Tarifas | Tarifas por terminal/capacidad conectadas; consulta y cambio de modalidad por gasolinera. El servidor decide si reemplaza un período sin uso o conserva historial. |
 | Configuración | Feriados, viáticos, remuneración, combustible y peajes conectados. |

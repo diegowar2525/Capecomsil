@@ -47,3 +47,28 @@ Los estilos compartidos viven en styles/components. styles/modules/viajes.css
 solo importa viajes/formulario.css, viajes/entregas.css y viajes/recorrido.css;
 cada archivo conserva sus ajustes de móvil. DestinoFinalForm encapsula la
 presentación del destino opcional; el estado sigue en useViajeForm.
+
+## Fotos de perfil y catálogos
+
+`CatalogoConectado` admite la propiedad `foto` con las operaciones `guardar` y
+`eliminar` del servicio compartido `services/fotos.api.js`. `AccionCatalogo`
+integra `FotoSelector` sin sustituir el modal ni los campos específicos de cada
+catálogo. Los estilos están en `styles/components/foto-selector.css`.
+
+El archivo se previsualiza localmente y se libera su URL temporal al reemplazarlo
+o cerrar el modal. Se sube al guardar; cancelar o deshacer la selección no escribe
+en el servidor. `guardar-con-foto.js` separa el guardado del registro y el archivo,
+informa los fallos parciales y conserva el ID creado para evitar duplicados en un
+reintento. Los cuatro módulos usan este mismo flujo. Las fotos también se muestran
+en el detalle; el perfil actualiza su ficha y el avatar del sidebar.
+
+La configuración de R2 y las migraciones **026 y 027** se explican en
+[FOTOS_PERFIL.md](../server/FOTOS_PERFIL.md). Si la 026 ya está aplicada, ejecutar
+solo la 027. Productos se refiere aquí al catálogo de inventario.
+
+Pruebas unitarias: `node --test --test-concurrency=1 test/*.test.js`.
+Prueba de navegador: `node test/fotos.browser.cjs`, con Playwright disponible y
+Edge instalado. `PLAYWRIGHT_MODULE` puede indicar una instalación externa de
+Playwright. El script inicia y cierra su propio servidor Vite, intercepta todas
+las peticiones API y verifica los cuatro módulos, cancelación, retirada,
+reintentos y un viewport de 390 px. No usa la sesión ni los datos reales.
