@@ -1,11 +1,12 @@
 export async function requestJson(path, { method = 'GET', data, signal } = {}) {
+    const multipart = typeof FormData !== 'undefined' && data instanceof FormData;
     let response;
     try {
         response = await fetch(path, {
             method, credentials: 'include', cache: 'no-store', signal,
             ...(!['GET', 'HEAD'].includes(method) ? {
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Protection': '1' },
-                ...(data !== undefined ? { body: JSON.stringify(data) } : {})
+                headers: { ...(!multipart ? { 'Content-Type': 'application/json' } : {}), 'X-CSRF-Protection': '1' },
+                ...(data !== undefined ? { body: multipart ? data : JSON.stringify(data) } : {})
             } : {})
         });
     } catch (error) {

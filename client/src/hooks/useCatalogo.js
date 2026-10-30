@@ -29,5 +29,8 @@ export function useCatalogo(api, rowKey) {
         setState((previous) => ({ ...previous, data: previous.data.filter((item) => item[rowKey] !== id) }));
     };
     const ejecutar = (accion, id, values) => api.ejecutar(accion, id, values);
-    return { ...state, recargar, guardar, eliminar, ejecutar };
+    const actualizarRegistro = (registro) => setState(previous => ({ ...previous,
+        data: previous.data.map(item => item[rowKey] === registro[rowKey] ? { ...item, ...registro } : item)
+    }));
+    return { ...state, recargar, guardar, eliminar, ejecutar, actualizarRegistro };
 }
