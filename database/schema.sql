@@ -2126,3 +2126,77 @@ SELECT DISTINCT tipo_gasto,tipo_gasto FROM gasto
 ON CONFLICT(codigo) DO NOTHING;
 ALTER TABLE gasto ADD CONSTRAINT gasto_tipo_gasto_fkey
     FOREIGN KEY(tipo_gasto) REFERENCES tipo_gasto(codigo) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+-- Fotos de perfil: almacenamiento privado y limpieza diferida.
+CREATE TABLE usuario_foto (
+    id_usuario INTEGER PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    clave TEXT NOT NULL UNIQUE,
+    url TEXT NOT NULL,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT clock_timestamp()
+);
+
+-- Cola durable: reintenta borrar archivos antiguos y cargas que no llegaron a guardarse.
+CREATE TABLE archivo_borrado_pendiente (
+    clave TEXT PRIMARY KEY,
+    disponible_desde TIMESTAMP NOT NULL DEFAULT clock_timestamp()
+);
+
+CREATE FUNCTION desvincular_foto_usuario() RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+    IF TG_OP = 'DELETE' OR NEW.imagen_url IS DISTINCT FROM OLD.imagen_url THEN
+        INSERT INTO archivo_borrado_pendiente(clave)
+        SELECT clave FROM usuario_foto WHERE id_usuario = OLD.id_usuario
+        ON CONFLICT (clave) DO UPDATE SET disponible_desde = clock_timestamp();
+        DELETE FROM usuario_foto WHERE id_usuario = OLD.id_usuario;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER usuario_foto_desvincular
+BEFORE UPDATE OF imagen_url OR DELETE ON usuario
+FOR EACH ROW EXECUTE FUNCTION desvincular_foto_usuario();
+
+-- Fotos de catálogos: choferes, vehículos y productos de inventario.
+CREATE TABLE catalogo_foto (
+    id_foto SERIAL PRIMARY KEY,
+    id_chofer INTEGER UNIQUE REFERENCES chofer(id_chofer) ON DELETE CASCADE,
+    id_vehiculo INTEGER UNIQUE REFERENCES vehiculo(id_vehiculo) ON DELETE CASCADE,
+    id_producto INTEGER UNIQUE REFERENCES producto(id_producto) ON DELETE CASCADE,
+    clave TEXT NOT NULL UNIQUE,
+    url TEXT NOT NULL,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT clock_timestamp(),
+    CHECK (num_nonnulls(id_chofer, id_vehiculo, id_producto) = 1)
+);
+
+CREATE FUNCTION desvincular_foto_catalogo() RETURNS TRIGGER LANGUAGE plpgsql AS $$
+DECLARE
+    columna TEXT;
+    identificador INTEGER;
+BEGIN
+    CASE TG_TABLE_NAME
+        WHEN 'chofer' THEN columna := 'id_chofer'; identificador := OLD.id_chofer;
+        WHEN 'vehiculo' THEN columna := 'id_vehiculo'; identificador := OLD.id_vehiculo;
+        WHEN 'producto' THEN columna := 'id_producto'; identificador := OLD.id_producto;
+        ELSE RAISE EXCEPTION 'Catálogo de fotos no admitido';
+    END CASE;
+    IF TG_OP = 'DELETE' OR NEW.imagen_url IS DISTINCT FROM OLD.imagen_url THEN
+        EXECUTE format(
+            'INSERT INTO archivo_borrado_pendiente(clave)
+             SELECT clave FROM catalogo_foto WHERE %I = $1
+             ON CONFLICT (clave) DO UPDATE SET disponible_desde = clock_timestamp()', columna)
+        USING identificador;
+        EXECUTE format('DELETE FROM catalogo_foto WHERE %I = $1', columna) USING identificador;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER chofer_foto_desvincular BEFORE UPDATE OF imagen_url OR DELETE ON chofer
+FOR EACH ROW EXECUTE FUNCTION desvincular_foto_catalogo();
+CREATE TRIGGER vehiculo_foto_desvincular BEFORE UPDATE OF imagen_url OR DELETE ON vehiculo
+FOR EACH ROW EXECUTE FUNCTION desvincular_foto_catalogo();
+CREATE TRIGGER producto_foto_desvincular BEFORE UPDATE OF imagen_url OR DELETE ON producto
+FOR EACH ROW EXECUTE FUNCTION desvincular_foto_catalogo();
