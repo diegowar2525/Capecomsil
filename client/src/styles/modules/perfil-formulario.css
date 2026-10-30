@@ -1,0 +1,51 @@
+.perfil-modal { max-width: 540px; }
+.perfil-modal .modal-header { padding: 18px 24px; }
+.perfil-modal .modal-body { padding: 0 28px 28px; }
+.perfil-modal .modal-body > [role="alert"] { color: var(--status-danger-text); background: var(--status-danger-bg); padding: 12px; border-radius: var(--radius-md); margin-top: 16px; }
+.perfil-formulario .foto-selector--perfil {
+    margin: 0;
+    border: 0;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 24px 0;
+    text-align: center;
+}
+.foto-selector--perfil legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.foto-selector--perfil input[type="file"][hidden] { display: none; }
+.foto-selector--perfil .perfil-foto-label { font-weight: 600; margin: 14px 0 6px; }
+.perfil-foto-cambiar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    height: 112px;
+    border: 1px solid var(--accent-border);
+    border-radius: 24px;
+    padding: 4px;
+    background: var(--accent-light);
+    color: var(--accent-primary);
+    cursor: pointer;
+    transition: box-shadow .15s, border-color .15s;
+}
+.perfil-foto-cambiar img { width: 100%; height: 100%; object-fit: cover; border-radius: 19px; }
+.perfil-foto-cambiar:hover { border-color: var(--accent-primary); box-shadow: 0 0 0 4px var(--accent-light); }
+.perfil-foto-cambiar:focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 4px; }
+.perfil-foto-cambiar:disabled { cursor: wait; }
+.perfil-foto-cambiar__icon { position: absolute; right: -7px; bottom: -6px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 3px solid var(--bg-surface); border-radius: 10px; background: var(--accent-primary); color: white; }
+.foto-selector--perfil .foto-selector__ayuda { max-width: 320px; margin: 6px auto; font-size: .8rem; line-height: 1.6; }
+.foto-selector--perfil .foto-selector__acciones { justify-content: center; gap: 14px; }
+.foto-selector--perfil .foto-selector__acciones .btn { padding: 6px 10px; font-size: .8rem; }
+.foto-selector--perfil .foto-selector__quitar { font-size: .8rem; }
+.foto-selector--perfil [role="status"] { font-size: .8rem; margin: 10px 0; color: var(--text-secondary); }
+.perfil-formulario__datos { padding-top: 24px; }
+.perfil-formulario__datos h3 { margin: 0 0 6px; font-size: .95rem; }
+.perfil-formulario__datos > p { margin: 0 0 20px; font-size: .8rem; color: var(--text-secondary); }
+.perfil-formulario__datos .form-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.perfil-formulario__datos .form-control { min-height: 44px; }
+@media (max-width: 480px) {
+    .perfil-modal .modal-body { padding-inline: 20px; }
+    .perfil-modal .modal-header, .perfil-modal .modal-footer { padding: 16px 20px; }
+    .foto-selector--perfil .foto-selector__acciones .btn { width: auto; }
+    .profile-actions > * { flex: 1 1 auto; }
+}

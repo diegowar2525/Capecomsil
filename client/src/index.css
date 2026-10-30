@@ -17,9 +17,13 @@
 @import './styles/components/switch-field.css';
 @import './styles/components/form-notice.css';
 @import './styles/components/form-item.css';
+@import './styles/components/foto-selector.css';
+@import './styles/components/foto-miniatura.css';
+@import './styles/components/catalogo-detalle.css';
 
 /* Modules */
 @import './styles/modules/dashboard.css';
 @import './styles/modules/viajes.css';
 @import './styles/modules/perfil.css';
+@import './styles/modules/perfil-formulario.css';
 @import './styles/modules/login.css';

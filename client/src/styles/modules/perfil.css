@@ -58,27 +58,29 @@
 
 .profile-card {
     width: 100%;
-    max-width: 420px;
-    min-height: 480px;
+    max-width: 640px;
     margin: 24px auto;
-    padding: 28px;
+    padding: 0;
+    overflow: hidden;
 
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 0;
 
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
     box-sizing: border-box;
 }
 
 /* Información del perfil en una sola columna */
 .profile-card > .record-detail {
     display: grid;
-    text-align: center;
+    text-align: left;
     grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
+    gap: 0;
+    padding: 12px 32px 24px;
 }
 
 /* Evitar desbordamiento del texto */
@@ -87,17 +89,38 @@
 }
 
 /* Avatar del perfil */
-.profile-card > .profile-avatar {
-    width: 80px;
-    height: 80px;
-    font-size: 1.5rem;
-    align-self: center;
+.profile-banner {
+    height: 112px;
+    padding: 22px 28px;
+    color: #ede9fe;
+    background: radial-gradient(ellipse at 90% 10%, #8b5cf6 0, transparent 65%), linear-gradient(120deg, #312e81, #6d28d9);
+    text-align: right;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    font-weight: 600;
+}
+.profile-identity { position: relative; padding: 0 32px; margin-top: -44px; }
+.profile-identity .profile-avatar { width: 88px; height: 88px; border: 5px solid var(--bg-surface); box-sizing: border-box; font-size: 1.6rem; }
+.profile-identity h2 { margin: 12px 0 8px; font-size: 1.35rem; overflow-wrap: anywhere; }
+.profile-role { display: inline-flex; gap: 6px; align-items: center; border-radius: 999px; padding: 5px 10px; color: var(--accent-primary); background: var(--accent-light); font-size: .8rem; }
+.profile-card > .record-detail > div { padding: 14px 0; border-bottom: 1px solid var(--border-color); }
+.profile-card > .record-detail > div:last-child { border-bottom: 0; }
+.profile-card > .record-detail dt { font-size: .8rem; color: var(--text-secondary); margin-bottom: 6px; }
+.profile-card > .record-detail dd { margin: 0; font-size: .95rem; }
+.profile-card > [role="status"] { padding: 0 32px 20px; }
+.profile-actions .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--bg-primary);
 }
 
 /* Acciones al final de la tarjeta */
 .profile-actions {
     margin-top: auto;
-    padding-top: 16px;
+    padding: 20px 32px;
     text-align: center;
     border-top: 1px solid var(--border-color);
 }
@@ -107,7 +130,10 @@
         max-width: 100%;
         min-height: auto;
         margin: 16px auto;
-        padding: 20px;
-        gap: 16px;
+        padding: 0;
+        gap: 0;
     }
+    .profile-identity { padding-inline: 20px; }
+    .profile-card > .record-detail { padding-inline: 20px; }
+    .profile-actions { padding: 16px 20px; }
 }
