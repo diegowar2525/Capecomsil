@@ -1,5 +1,6 @@
 .viaje-form .viaje-entrega {
   padding: 18px 20px 20px;
+  background-color: var(--bg-box);
 }
 
 .viaje-entrega-content {
