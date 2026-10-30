@@ -47,7 +47,7 @@ test('El modal de detalle ofrece historial y respeta el permiso de la acción se
   const {AuthContext}=await server.ssrLoadModule('/src/modules/auth/context/auth.context.js');
   const actions=organizarAcciones(viajes,'viajes');
   const render=permisos=>renderToStaticMarkup(createElement(AuthContext.Provider,{value:{permisos}},createElement(AccionCatalogo,{definition:{columns:[],fields:[],actions},id:1,action:actions[0],registro:{id_viaje:1,estado:'REGISTRADO'},catalogos:{},onClose:()=>{}})));
-  assert.match(render(['viajes.consultar']),/>Historial<\/button>/);
-  assert.doesNotMatch(render([]),/>Historial<\/button>/);
+  assert.match(render(['viajes.consultar']),/>Historial<\/span>/);
+  assert.doesNotMatch(render([]),/>Historial<\/span>/);
  } finally {await server.close();}
 });

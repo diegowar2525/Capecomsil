@@ -8,6 +8,7 @@ const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { exigirPermiso } = require("../src/middlewares/auth.middleware");
 
 const mounts = {
+    fotos: "fotos",
     tipos_gasto: "tipos-gasto",
     tarifas_capacidad: "tarifas-capacidad", modalidades_tarifa: "modalidades-tarifa",
     abastecimientos_combustible: "abastecimientos-combustible", categorias_producto: "categorias-producto",
@@ -66,7 +67,7 @@ test("Permisos HTTP: sesiones reales, jefe/operador, CSRF y revocación inmediat
         for (const [file, mount] of Object.entries(mounts)) {
             for (const layer of require(`../src/routes/${file}.routes`).stack.filter((item) => item.route)) {
                 for (const method of Object.keys(layer.route.methods)) {
-                    const route = `/${mount}${layer.route.path.replace(":id", "2147483647")}`;
+                    const route = `/${mount}${layer.route.path.replace(":id", "2147483647").replace(":recurso", "choferes")}`;
                     assert.equal((await request(fetch, route, method.toUpperCase())).status, 401, `${method} ${route}`);
                 }
             }
