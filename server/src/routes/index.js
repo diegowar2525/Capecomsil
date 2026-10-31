@@ -71,4 +71,6 @@ router.use("/informes", require("./informes.routes"));
 router.use("/liquidaciones", require("./liquidaciones.routes"));
 router.use("/tarifas-capacidad", require("./tarifas_capacidad.routes"));
 router.use("/modalidades-tarifa", require("./modalidades_tarifa.routes"));
+router.use("/facturas-cliente", require("./facturas_cliente.routes"));
+router.use("/cobros-cliente", require("./cobros_cliente.routes"));
 module.exports = router;

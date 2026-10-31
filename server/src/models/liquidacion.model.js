@@ -71,7 +71,7 @@ const cambiarEstado = async (client, id, estado, motivo) => {
 };
 
 const tieneFactura = async (client, id) => {
-    const result = await client.query("SELECT EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=$1) AS existe", [id]);
+    const result = await client.query("SELECT EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=$1 AND estado<>'ANULADA') AS existe", [id]);
     return result.rows[0].existe;
 };
 
