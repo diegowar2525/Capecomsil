@@ -26,11 +26,22 @@ Las URLs HTTP/HTTPS anteriores siguen siendo compatibles.
    y API bajo ese mismo origen permite que el navegador envíe la cookie de sesión
    al mostrar las fotos. No cambiar a cookies de terceros para resolverlo.
    Configurar también `AUTH_ORIGINS`, HTTPS y las cookies según la guía de sesión.
-6. Programar `npm run limpiar-fotos` cada hora en un job del proveedor, con las
-   mismas variables y acceso a PostgreSQL/R2. Cada ejecución procesa hasta 100
-   objetos; ajustar la frecuencia al volumen. Si falla, la cola se conserva para
-   el siguiente intento. Supervisar el código de salida del job. No ejecutar dos
-   entornos sobre el mismo bucket y base de datos de producción.
+6. El backend inicia automáticamente la limpieza **cada 24 horas**, sin instalar
+   un cron externo. También revisa pendientes un minuto después de cada arranque.
+   Cada ejecución procesa hasta 100 objetos y el siguiente ciclo se programa al
+   terminar el anterior, para evitar solapamientos. Si falla, la cola se conserva
+   y se reintenta en el siguiente ciclo; la API continúa funcionando.
+   `FOTOS_LIMPIEZA_HORAS` permite intervalos enteros de 1 a 168 horas (por defecto 24).
+   `FOTOS_LIMPIEZA_AUTOMATICA=false` desactiva el programador interno. Sin configurar
+   R2, o con una configuración de limpieza inválida, se informa en consola y no
+   se inicia la limpieza. Reiniciar el backend para aplicar cambios de configuración.
+
+La programación interna funciona mientras el proceso del backend está activo.
+Si el hosting lo suspende, la revisión al arrancar recupera pendientes; no existe
+una hora fija de calendario. Si se utiliza un job externo del proveedor, desactivar
+el programador interno y ejecutar `npm run limpiar-fotos` con las mismas variables
+y acceso a PostgreSQL/R2. Ese comando también sigue disponible manualmente.
+No ejecutar desarrollo y producción sobre el mismo bucket y base de datos.
 
 No requiere discos persistentes en el proveedor. Sin configuración R2 las rutas
 de carga/lectura de fotos devuelven 503 y el resto del sistema sigue funcionando.

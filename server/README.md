@@ -32,7 +32,8 @@ Desde `client`, ejecutar `npm install` y `npm run dev` para iniciar Vite. La pan
 
 Fotos de perfil, choferes, vehículos y productos de inventario: almacenamiento
 privado en Cloudflare R2, API y frontend de carga/reemplazo/eliminación y limpieza
-diferida. Configuración y migraciones 026/027: [FOTOS_PERFIL.md](FOTOS_PERFIL.md).
+diferida automática cada 24 horas, con revisión un minuto después de iniciar el
+backend. Configuración y migraciones 026/027: [FOTOS_PERFIL.md](FOTOS_PERFIL.md).
 
 Tarifas por capacidad e historial de modalidades por gasolinera: [guía de API y migración 024](TARIFAS_CAPACIDAD.md). El servidor selecciona la modalidad según la fecha del viaje; las pantallas correspondientes ya tienen plantillas de catálogo y modal.
 

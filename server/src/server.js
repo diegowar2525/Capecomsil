@@ -1,6 +1,7 @@
 const app = require("./app");
 const config = require("./config/env");
 const pool = require("./config/database");
+const { iniciarLimpiezaFotos } = require("./jobs/limpieza_fotos.job");
 
 const PORT = config.port;
 
@@ -10,7 +11,9 @@ const startServer = async () => {
 
     console.log("Conexión a PostgreSQL exitosa");
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
+      const detenerLimpieza = iniciarLimpiezaFotos();
+      server.once("close", detenerLimpieza);
       console.log(
         `Servidor disponible en http://localhost:${PORT}`
       );
