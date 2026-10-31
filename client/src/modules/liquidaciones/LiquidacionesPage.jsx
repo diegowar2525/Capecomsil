@@ -9,7 +9,7 @@ import { api } from './services/liquidaciones.api.js';
 import { prepare, prepareAction } from './domain/liquidaciones.js';
 import { useLiquidaciones } from './hooks/useLiquidaciones.js';
 const names = { send: 'enviar', confirm: 'confirmar', annul: 'anular', delete: 'eliminar', edit: 'editar' };
-const actions = declaredActions.map(action => ({ ...action, query: action.id === 'available', permission: `liquidaciones.${names[action.id] ?? 'consultar'}` }));
+const actions = declaredActions.map(action => ({ ...action, query: action.id === 'available', permission: action.permission ?? `liquidaciones.${names[action.id] ?? 'consultar'}` }));
 const definition = { filters, fields, columns, page, actions, api, prepare, prepareAction, rowKey: page.rowKey, permissionResource: 'liquidaciones',
  initial: registro => ({ ...registro, id_detalles_viaje: registro.detalles?.map(row => row.id_detalle_viaje) ?? [] }),
  renderForm: props => <LiquidacionForm {...props} /> };

@@ -4,31 +4,27 @@ export const columns = [
         "label": "ID"
     },
     {
-        "key": "id_factura",
-        "label": "N° Factura (ID)"
+        "key": "numero_factura",
+        "label": "Factura"
+    },
+    {
+        "key": "nombre_gasolinera",
+        "label": "Gasolinera"
     },
     {
         "key": "fecha_pago",
-        "label": "Fecha de pago"
-    },
-    {
-        "key": "forma_pago",
-        "label": "Forma de pago"
-    },
-    {
-        "key": "banco",
-        "label": "Banco"
-    },
-    {
-        "key": "numero_comprobante",
-        "label": "Comprobante"
+        "label": "Fecha"
     },
     {
         "key": "monto",
         "label": "Monto"
     },
     {
-        "key": "observacion",
-        "label": "Observación"
+        "key": "forma_pago",
+        "label": "Forma de pago"
+    },
+    {
+        "key": "estado",
+        "label": "Estado"
     }
 ];

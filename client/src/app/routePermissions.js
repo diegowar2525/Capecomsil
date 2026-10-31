@@ -1,4 +1,5 @@
 const groups = {
+    facturas_cliente: ['facturacion'], cobros_cliente: ['pagos'],
     catalogos: ['tipos-gasto', 'vehiculos', 'choferes', 'gasolineras', 'terminales', 'productos', 'proveedores', 'trayectos', 'categorias-producto', 'productos-inventario'],
     tarifas: ['tarifas', 'tarifas-capacidad', 'modalidades-tarifa'],
     configuraciones: ['configuraciones-viatico', 'configuraciones-remuneracion', 'configuraciones-combustible', 'configuraciones-peaje-trayecto', 'feriados'],

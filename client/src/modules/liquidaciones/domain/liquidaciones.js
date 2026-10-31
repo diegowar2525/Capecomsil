@@ -7,5 +7,5 @@ export function prepare(values, catalogos, registro, action) {
 }
 export function prepareAction(action, values, registro) {
  const data = prepararCampos(action.fields ?? [], values);
- return registro ? { ...data, version: registro.version } : data;
+ return registro && action.id !== 'invoice' ? { ...data, version: registro.version } : data;
 }

@@ -1,9 +1,12 @@
+import { fields as facturaFields } from '../facturacion/facturacion.fields.js';
 export const actions = [
+    { id: 'invoice', label: 'Registrar factura externa', states: ['CONFIRMADA'], permission: 'facturas_cliente.crear', message: 'Registre el documento emitido por otro medio. Los importes se tomarán de esta liquidación.', fields: facturaFields.filter(field => field.name !== 'id_liquidacion') },
     {
         "id": "detail",
         "label": "Ver detalle",
         "readOnly": true,
         "tables": [
+            { name: "facturas", label: "Facturas asociadas", rowKey: "id_factura", columns: [{key:"numero_factura",label:"Factura"},{key:"valor_neto",label:"Facturado"},{key:"total_cobrado",label:"Cobrado"},{key:"saldo",label:"Saldo"},{key:"estado",label:"Estado"}] },
             {
                 "name": "detalles",
                 "label": "Entregas",

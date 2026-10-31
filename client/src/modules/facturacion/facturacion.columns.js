@@ -5,11 +5,15 @@ export const columns = [
     },
     {
         "key": "numero_factura",
-        "label": "N° Factura"
+        "label": "N.º factura"
+    },
+    {
+        "key": "nombre_gasolinera",
+        "label": "Gasolinera"
     },
     {
         "key": "id_liquidacion",
-        "label": "N° Liquidación"
+        "label": "Liquidación"
     },
     {
         "key": "fecha_emision",
@@ -20,16 +24,20 @@ export const columns = [
         "label": "Vencimiento"
     },
     {
-        "key": "subtotal",
-        "label": "Subtotal"
-    },
-    {
-        "key": "retencion",
-        "label": "Retención"
-    },
-    {
         "key": "valor_neto",
-        "label": "Valor neto"
+        "label": "Facturado"
+    },
+    {
+        "key": "total_cobrado",
+        "label": "Cobrado"
+    },
+    {
+        "key": "saldo",
+        "label": "Saldo"
+    },
+    {
+        "key": "estado_cobro",
+        "label": "Cobranza"
     },
     {
         "key": "estado",

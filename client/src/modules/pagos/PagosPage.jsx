@@ -1,13 +1,12 @@
-import { PageHeader } from '../../components/PageHeader/PageHeader.jsx';
-import { DataTable } from '../../components/DataTable/DataTable.jsx';
-import { columns } from './pagos.columns.js';
+import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
 import { page } from './pagos.config.js';
-
-export function PagosPage() {
-    return (
-        <section>
-            <PageHeader title={page.title} subtitle={page.subtitle} />
-            <DataTable rowKey="id_pago" columns={columns} data={[]} emptyMessage="Pendiente de implementar: el servidor aún no dispone de una API de facturación y cobros a clientes." />
-        </section>
-    );
-}
+import { fields } from './pagos.fields.js';
+import { columns } from './pagos.columns.js';
+import { filters } from './pagos.filters.js';
+import { actions } from './pagos.actions.js';
+import { api } from './services/pagos.api.js';
+import { prepare } from './domain/pagos.js';
+import { usePagos } from './hooks/usePagos.js';
+const detailFields = [...fields,  { name: 'motivo_anulacion', label: 'Motivo de anulación', type: 'textarea' }, { name: 'fecha_anulacion', label: 'Fecha de anulación' }];
+const definition = { detailFields, page, fields, columns, filters, actions, api, prepare, rowKey: page.rowKey, permissionResource: 'cobros_cliente' };
+export function PagosPage() { return <CatalogoConectado definition={definition} controller={usePagos()} />; }

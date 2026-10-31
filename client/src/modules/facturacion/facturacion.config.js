@@ -1,5 +1,7 @@
 export const page = {
-    "title": "Facturación a Clientes",
-    "subtitle": "Emisión y control de facturas por fletes de combustible",
-    "actionLabel": "Nueva Factura"
+    "title": "Facturas a clientes",
+    "subtitle": "Registro de facturas emitidas externamente y seguimiento de cuentas por cobrar.",
+    "rowKey": "id_factura",
+    "actionLabel": "Registrar factura",
+    "api": "/facturas-cliente"
 };
