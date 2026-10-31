@@ -13,7 +13,7 @@ export const actions = [
                         "label": "Entrega"
                     },
                     {
-                        "key": "id_gasolinera",
+                        "key": "nombre_gasolinera",
                         "label": "Gasolinera"
                     },
                     {

@@ -53,7 +53,7 @@ export function AccionCatalogo({ definition, id, action, registro, catalogos, ex
         {action.message && <p>{action.message}</p>}
         {editable && definition.formMessage && <p>{definition.formMessage}</p>}
         {action.readOnly && !action.query ? <>
-            {action.id === 'detail' && <CatalogoDetalle columns={definition.columns} fields={definition.fields} registro={source} rowKey={definition.rowKey} catalogos={catalogos} />}
+            {action.id === 'detail' && <CatalogoDetalle columns={definition.columns} fields={definition.detailFields ?? definition.fields} registro={source} rowKey={definition.rowKey} catalogos={catalogos} />}
             {action.tables?.map((table) => <section key={table.name} className="catalogo-detalle-tabla">
                 <h3>{table.label}</h3>
                 <DataTable columns={table.columns} data={extra?.[table.name] ?? registro?.[table.name] ?? []} rowKey={table.rowKey} />
