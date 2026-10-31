@@ -1,7 +1,6 @@
 # API de liquidaciones
 
-Base: `/api/liquidaciones`. Todas las rutas son exclusivas de JEFE, incluidas
-las consultas. Requieren sesión válida; las escrituras exigen JSON y
+Base: `/api/liquidaciones`. Todas las rutas están disponibles para JEFE y OPERADOR. Requieren sesión válida; las escrituras exigen JSON y
 `X-CSRF-Protection: 1`. En navegador enviar `credentials: "include"`.
 Ver [AUTORIZACION.md](AUTORIZACION.md).
 
@@ -120,7 +119,7 @@ Para anular:
 { "version": 4, "motivo": "Corrección de las entregas" }
 ```
 
-Admite únicamente ENVIADA o CONFIRMADA, siempre que no exista factura asociada.
+Admite únicamente ENVIADA o CONFIRMADA, siempre que no exista factura vigente asociada.
 Un BORRADOR devuelve 409 y se conserva sin cambios; puede eliminarse con DELETE.
 El motivo es obligatorio, se recortan espacios externos y admite hasta 150
 caracteres. Registra ANULADA, `fecha_anulacion` y `motivo_anulacion`, conserva
@@ -174,8 +173,8 @@ al viaje, además de las fechas de envío, confirmación y anulación cuando cor
   entregas, totales inconsistentes o ajustes previos no admitidos.
 
 Generar reemplazos y la auditoría de cambios quedan pospuestos por decisión del
-usuario. Las exportaciones también están pendientes. Facturación y
-cobros a clientes serán módulos posteriores. El cierre operativo sigue pendiente.
+usuario. Las exportaciones y el cierre operativo siguen pendientes. Facturas y
+cobros están implementados: ver [FACTURACION_CLIENTES.md](FACTURACION_CLIENTES.md).
 
 ## Base de datos y pruebas
 
@@ -193,3 +192,5 @@ edición, transiciones, eliminación, bloqueo por factura, rollback, versiones y
 concurrencia entre liquidaciones y viajes.
 
 La migración `022_liquidaciones_no_anular_borrador.sql` actualiza el trigger para rechazar también la anulación directa por SQL de un borrador.
+
+La migración 028 amplía los permisos de liquidaciones a OPERADOR y permite anular una liquidación ENVIADA/CONFIRMADA cuando todas sus facturas estén anuladas. Conserva facturas y entregas históricas.
