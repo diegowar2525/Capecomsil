@@ -34,6 +34,23 @@ test('Liquidaciones: edición y transiciones conservan versión y selección exp
  assert.equal(liquidacionValidator.validateCreacion(auto).id_detalles_viaje,null);
 });
 
+test('Liquidaciones: consultar disponibles entrega a la tabla la lista, no el resumen completo', async () => {
+ const original = globalThis.fetch;
+ const { api } = await import('../src/modules/liquidaciones/services/liquidaciones.api.js');
+ const { actions } = await import('../src/modules/liquidaciones/liquidaciones.actions.js');
+ const table = actions.find(action => action.id === 'available').tables[0];
+ try {
+  for (const entregas of [[], [{ id_detalle_viaje: 7, galones: '100.00', valor_transporte: '12.00' }]]) {
+   const respuesta = { cantidad: entregas.length, total_galones: entregas.length ? '100.00' : '0.00', valor_transporte: entregas.length ? '12.00' : '0.00', entregas };
+   globalThis.fetch = async () => Response.json(respuesta);
+   const resultado = await api.ejecutar('available', undefined, { id_gasolinera: '1', periodo_inicio: '2026-10-30', periodo_fin: '2026-10-30' });
+   assert.ok(Array.isArray(resultado[table.name]));
+   assert.deepEqual(resultado[table.name], entregas);
+   assert.equal(resultado.cantidad, entregas.length);
+  }
+ } finally { globalThis.fetch = original; }
+});
+
 test('Listados paginados: consulta todas las páginas y conserva los filtros', async () => {
  const original=globalThis.fetch; const calls=[];
  globalThis.fetch=async path=>{calls.push(path);const offset=Number(new URL(path,'http://test').searchParams.get('offset'));return Response.json(offset===0?Array.from({length:200},(_,id)=>({id})): [{id:200}]);};

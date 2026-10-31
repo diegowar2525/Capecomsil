@@ -35,7 +35,7 @@ test("Liquidaciones: validadores de período, selección, versión y campos no e
     }
 });
 
-test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y concurrencia", async (t) => {
+test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borradores, reservas, rollback y concurrencia", async (t) => {
     const admin = await pool.connect();
     const originalQuery = pool.query;
     const originalConnect = pool.connect;
@@ -69,6 +69,8 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         await admin.query(restriccionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const capacidadMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
         await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const facturacionMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/028_facturas_cobros_cliente.sql"), "utf8");
+        await admin.query(facturacionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -87,13 +89,10 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
             ["/liquidaciones/entregas-disponibles", "GET"], ["/liquidaciones", "POST", periodo], ["/liquidaciones/1", "PUT", {}],
             ["/liquidaciones/1/enviar", "POST", { version: 1 }], ["/liquidaciones/1/confirmar", "POST", { version: 1 }],
             ["/liquidaciones/1/anular", "POST", { version: 1, motivo: "Prueba" }], ["/liquidaciones/1", "DELETE", { version: 1 }]]) {
-            assert.equal((await request(route, method, data, operador)).status, 403);
+            // Ambos roles tienen ahora acceso; las validaciones de negocio se prueban abajo.
             assert.equal((await request(route, method, data, fetch)).status, 401);
         }
-        // Incluso una asignación errónea directa no concede al operador permisos exclusivos del jefe.
-        await isolated.query(`INSERT INTO rol_permiso SELECT id_rol,id_permiso FROM rol CROSS JOIN permiso
-            WHERE rol.codigo='OPERADOR' AND permiso.modulo='liquidaciones'`);
-        assert.equal((await request("/liquidaciones", "GET", undefined, operador)).status, 403);
+        assert.equal((await request("/liquidaciones", "GET", undefined, operador)).status, 200);
         const badCsrf = await fetch(base + "/liquidaciones", { method: "POST", headers: { Cookie: jefe.cookie, "Content-Type": "application/json" }, body: JSON.stringify(periodo) });
         assert.equal(badCsrf.status, 403);
         const viaje = async (fecha, hora, detalles) => {
@@ -220,16 +219,56 @@ test("Liquidaciones HTTP: jefe, disponibilidad, borradores, reservas, rollback y
         assert.equal((await action("confirmar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         const copia = (await request(route)).body.detalles;
-        await isolated.query("INSERT INTO factura(id_liquidacion,numero_factura,subtotal,valor_neto) VALUES ($1,'LIQ-TEST',1.60,1.60)", [id]);
-        assert.equal((await action("anular", { version: actual.version, motivo: "Prueba" })).status, 409);
-        assert.deepEqual(await get(), actual);
-        await isolated.query("DELETE FROM factura WHERE id_liquidacion=$1", [id]);
+        const datosFactura = { id_liquidacion: id, numero_factura: 'LIQ-TEST', fecha_emision: '2026-10-10', fecha_vencimiento: '2026-11-10' };
+        const facturar = (data = datosFactura) => request('/facturas-cliente', 'POST', data, operador);
+        const facturasSimultaneas = await Promise.all([facturar(), facturar({ ...datosFactura, numero_factura: 'LIQ-DUP' })]);
+        assert.deepEqual(facturasSimultaneas.map(r => r.status).sort(), [201,409]);
+        const factura = facturasSimultaneas.find(r => r.status === 201).body;
+        assert.equal(factura.valor_neto, actual.total_liquidacion);
+        assert.equal(factura.saldo, '1.60');
+        assert.equal(factura.estado_cobro, 'PENDIENTE');
+        assert.equal((await facturar({ ...datosFactura, subtotal: 0 })).status, 400);
+        assert.equal((await action('anular', { version: actual.version, motivo: 'Prueba' })).status, 409);
+        const invoiceRoute = '/facturas-cliente/' + factura.id_factura;
+        const cobrar = monto => request('/cobros-cliente', 'POST', { id_factura: factura.id_factura, fecha_pago:'2026-10-10', monto, forma_pago:'EFECTIVO' }, operador);
+        const parcial = await cobrar('0.60');
+        assert.equal(parcial.status, 201, JSON.stringify(parcial.body));
+        assert.equal(parcial.body.factura.saldo, '1.00');
+        assert.equal(parcial.body.factura.estado_cobro, 'PARCIAL');
+        assert.equal((await request(invoiceRoute+'/anular','POST',{motivo:'Prueba'})).status,409);
+        const concurrenciaCobros = await Promise.all([cobrar('1.00'),cobrar('1.00')]);
+        assert.deepEqual(concurrenciaCobros.map(r=>r.status).sort(),[201,409]);
+        const completo = concurrenciaCobros.find(r=>r.status===201).body;
+        assert.equal(completo.factura.saldo,'0.00');
+        assert.equal(completo.factura.estado_cobro,'COBRADA');
+        assert.equal((await cobrar('0.01')).status,409);
+        const detalleFactura = (await request(invoiceRoute)).body;
+        assert.equal(detalleFactura.cobros.length,2);
+        assert.equal(detalleFactura.entregas.length,1);
+        assert.equal((await request('/facturas-cliente?estado_cobro=COBRADA')).body.length,1);
+        assert.equal((await request('/cobros-cliente?id_factura='+factura.id_factura)).body.length,2);
+        const anularCobro = idPago => request('/cobros-cliente/'+idPago+'/anular','POST',{motivo:'Error de registro'},operador);
+        assert.equal((await anularCobro(completo.id_pago)).body.factura.saldo,'1.00');
+        assert.equal((await anularCobro(completo.id_pago)).status,409);
+        assert.equal((await anularCobro(parcial.body.id_pago)).body.factura.saldo,'1.60');
+        assert.equal((await request(invoiceRoute+'/anular','POST',{motivo:'Corrección'},operador)).status,200);
+        assert.equal((await cobrar('0.01')).status,409);
+        assert.equal((await request(invoiceRoute)).body.saldo,'0.00');
+        assert.equal((await facturar({ ...datosFactura,numero_factura:factura.numero_factura })).status,409);
+        const reemplazo = await facturar({ ...datosFactura,numero_factura:'LIQ-REEMPLAZO' });
+        assert.equal(reemplazo.status,201,JSON.stringify(reemplazo.body));
+        assert.notEqual(reemplazo.body.id_factura,factura.id_factura);
+        assert.equal((await action('anular',{version:actual.version,motivo:'Prueba'})).status,409);
+        assert.equal((await request('/facturas-cliente/'+reemplazo.body.id_factura+'/anular','POST',{motivo:'Corrección'})).status,200);
+        await assert.rejects(isolated.query('DELETE FROM factura WHERE id_factura=$1',[factura.id_factura]),{constraint:'factura_cliente_historial'});
+        await assert.rejects(isolated.query('UPDATE pago SET monto=99 WHERE id_pago=$1',[parcial.body.id_pago]),{constraint:'cobro_cliente_historial'});
         assert.equal((await action("anular", { version: actual.version, motivo: " " })).status, 400);
         const antesAnular = await count();
         const anulada = await action("anular", { version: actual.version, motivo: " Corrección " });
         assert.equal(anulada.status, 200, JSON.stringify(anulada.body));
         actual = anulada.body;
         assert.equal(actual.estado, "ANULADA");
+        assert.equal((await facturar({ ...datosFactura, numero_factura: "NO-ANULADA" })).status,409);
         assert.equal(actual.motivo_anulacion, "Corrección");
         assert.ok(actual.fecha_anulacion);
         assert.equal(await count(), antesAnular);
