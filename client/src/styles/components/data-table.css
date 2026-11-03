@@ -1,10 +1,19 @@
 /* Contenedor de la tabla */
 .table-wrapper {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-color: var(--accent-border) var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   background-color: var(--bg-surface);
+}
+
+.table-wrapper:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* Tabla principal */
@@ -12,6 +21,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: auto;
+  white-space: nowrap;
 }
 
 /* Encabezados */
@@ -78,27 +88,6 @@
   vertical-align: middle;
   padding: 48px 16px !important;
   color: var(--text-secondary);
-}
-
-
-/* Tabla auxiliar para medir el ancho de las columnas */
-.table-measure-container {
-  position: absolute;
-  visibility: hidden;
-  pointer-events: none;
-  width: max-content;
-  height: 0;
-  overflow: hidden;
-}
-
-.table-measure {
-  width: max-content;
-  table-layout: auto;
-}
-
-.table-measure th,
-.table-measure td {
-  white-space: nowrap;
 }
 
 
@@ -195,25 +184,6 @@
 .record-actions-menu-item:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
-}
-
-
-.table-measure-mobile-actions {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  .table-measure-desktop-actions {
-    display: none;
-  }
-
-  .table-measure-mobile-actions {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-  }
 }
 
 

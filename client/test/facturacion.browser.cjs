@@ -91,6 +91,16 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
         await page.getByRole('button', { name: 'Registrar factura externa', exact: true }).last().click();
         await page.getByRole('dialog').waitFor({ state: 'hidden' });
         await page.goto(`${base}/#/facturacion`);
+        await page.getByRole('button', { name: 'Ver detalle', exact: true }).waitFor();
+        await page.setViewportSize({ width: 390, height: 844 });
+        const table = page.locator('.table-wrapper').first();
+        assert.equal(await table.locator('th').count(), 8);
+        const scroll = await table.evaluate(el => {
+            el.scrollLeft = el.scrollWidth;
+            return { moved: el.scrollLeft > 0, fits: el.getBoundingClientRect().right <= window.innerWidth };
+        });
+        assert.ok(scroll.moved && scroll.fits);
+        await page.setViewportSize({ width: 1280, height: 900 });
         await page.getByRole('button', { name: 'Ver detalle', exact: true }).click();
         await page.getByRole('heading', { name: 'Historial de cobros' }).waitFor();
         await page.getByRole('button', { name: 'Registrar cobro', exact: true }).click();
