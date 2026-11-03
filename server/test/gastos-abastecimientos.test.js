@@ -17,7 +17,7 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
         await admin.query("CREATE SCHEMA " + schema);
         await admin.query("SET LOCAL search_path TO " + schema + ",public");
         await admin.query(fs.readFileSync(path.join(__dirname,"../../database/schema.sql"),"utf8"));
-        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;");
+        await admin.query("INSERT INTO tipo_gasto(nombre,concepto_estimado) VALUES ('Comida',NULL),('Peaje','PEAJE'),('Otro',NULL);");
         await admin.query(`INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('G1',100),('G2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('C','C','DIARIO_FIJO');
             INSERT INTO configuracion_viatico(importe_diario,fecha_inicio) VALUES (12,'2026-01-01');
@@ -41,36 +41,34 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
             });
             return {status:r.status,body:await r.json()};
         };
-        const tipo = await req('/tipos-gasto','POST',{codigo:'oficina',nombre:'Oficina'});
+        const tipo = await req('/tipos-gasto','POST',{nombre:'Oficina'});
         assert.equal(tipo.status,201,JSON.stringify(tipo));
-        assert.equal(tipo.body.codigo,'OFICINA');
+        assert.equal(tipo.body.nombre,'Oficina');
         const tipoPath = '/tipos-gasto/'+tipo.body.id_tipo_gasto;
-        assert.equal((await req(tipoPath,'PUT',{...tipo.body,codigo:'CAMBIO'})).status,409);
+        assert.equal((await req(tipoPath,'PUT',{...tipo.body,nombre:'Oficina actualizada'})).status,200);
         assert.equal((await req(tipoPath,'PUT',{...tipo.body,estado:false})).status,200);
-        assert.equal((await req('/gastos','POST',{tipo_gasto:'OFICINA',monto:10,fecha:'2026-10-01'})).status,409);
-        assert.equal((await req('/gastos','POST',{tipo_gasto:'INEXISTENTE',monto:10,fecha:'2026-10-01'})).status,400);
+        assert.equal((await req('/gastos','POST',{id_tipo_gasto:tipo.body.id_tipo_gasto,monto:10,fecha:'2026-10-01'})).status,409);
+        assert.equal((await req('/gastos','POST',{id_tipo_gasto:99999,monto:10,fecha:'2026-10-01'})).status,400);
         assert.equal((await req(tipoPath,'DELETE')).status,200);
         const tipos = (await req('/tipos-gasto')).body;
-        const reservado = tipos.find(row=>row.codigo==='VIATICO');
-        assert.equal((await req('/tipos-gasto/'+reservado.id_tipo_gasto,'DELETE')).status,409);
-        assert.equal((await req('/tipos-gasto/'+reservado.id_tipo_gasto,'PUT',{...reservado,estado:false})).status,409);
-        const gasto = {fecha:"2026-10-01",tipo_gasto:"comida",monto:"12.00",descripcion:"Comida"};
+        assert.ok(tipos.every(row => !('codigo' in row) && !('reservado' in row)));
+        const gasto = {fecha:"2026-10-01",id_tipo_gasto:3,monto:"12.00",descripcion:"Comida"};
         const g = await req("/gastos","POST",gasto);
         assert.equal(g.status,201,JSON.stringify(g));
         assert.equal(g.body.id_vehiculo,null);
-        assert.equal(g.body.tipo_gasto,"COMIDA");
+        assert.equal(g.body.id_tipo_gasto,3);
         assert.equal(g.body.fecha,"2026-10-01");
         assert.equal((await req('/gastos')).body[0].nombre_tipo_gasto,'Comida');
-        const usado = tipos.find(row=>row.codigo==='COMIDA');
+        const usado = tipos.find(row=>row.nombre==='Comida');
         assert.equal((await req('/tipos-gasto/'+usado.id_tipo_gasto,'DELETE')).status,409);
         assert.equal((await req('/tarifas')).body[0].nombre_gasolinera,'G');
         assert.equal((await req('/tarifas')).body[0].nombre_terminal,'T');
         assert.equal((await req('/configuraciones-peaje-trayecto')).body[0].nombre_trayecto,'T-G');
         for (const patch of [{monto:0},{fecha:"2026-02-30"},{id_vehiculo:999},{id_proveedor:999},
-            {id_viaje:999},{tipo_gasto:"COMBUSTIBLE"},{id_viatico_chofer:1},{tipo_gasto:"VIATICO",id_viatico_chofer:999}]) {
+            {id_viaje:999},{tipo_gasto:"COMBUSTIBLE"},{id_viatico_chofer:1},{origen:"VIATICO",id_tipo_gasto:null,id_viatico_chofer:999}]) {
             assert.equal((await req("/gastos","POST",{...gasto,...patch})).status,400,JSON.stringify(patch));
         }
-        const viatico = await req("/gastos","POST",{...gasto,tipo_gasto:"VIATICO",id_viatico_chofer:1});
+        const viatico = await req("/gastos","POST",{...gasto,origen:"VIATICO",id_tipo_gasto:null,id_viatico_chofer:1});
         assert.equal(viatico.status,201,JSON.stringify(viatico));
         const viaje = await req("/viajes","POST",{id_vehiculo:1,id_chofer:1,
             fecha_inicio:"2026-10-03T08:00",fecha_fin:"2026-10-03T09:00",
@@ -78,7 +76,7 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
         assert.equal(viaje.status,201,JSON.stringify(viaje));
         const idViaje = viaje.body.id_viaje;
         assert.equal((await req("/gastos","POST",{...gasto,id_viaje:idViaje,id_vehiculo:2})).status,400);
-        const peaje = await req("/gastos","POST",{...gasto,tipo_gasto:"PEAJE",id_viaje:idViaje});
+        const peaje = await req("/gastos","POST",{...gasto,id_tipo_gasto:4,id_viaje:idViaje});
         assert.equal(peaje.status,201,JSON.stringify(peaje));
         assert.equal(peaje.body.id_vehiculo,1);
         assert.equal((await req(`/gastos?id_viaje=${idViaje}`)).body.length,1);
@@ -121,7 +119,7 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
         const simultaneas = await Promise.all([1,2].map(() => req(ruta,"POST",{...carga,id_vehiculo:2})));
         assert.deepEqual(simultaneas.map(r=>r.status).sort(),[201,409]);
         assert.equal((await req(ruta+"?id_vehiculo=1&fecha_desde=2026-10-02&fecha_hasta=2026-10-02")).body.length,1);
-        assert.equal((await req("/gastos?tipo_gasto=VIATICO&id_viatico_chofer=1")).body.length,1);
+        assert.equal((await req("/gastos?origen=VIATICO&id_viatico_chofer=1")).body.length,1);
         for (const q of ["?limit=201","?offset=-1","?estado=ACTIVO","?fecha_desde=2026-10-03&fecha_hasta=2026-10-01"]) {
             assert.equal((await req(ruta+q)).status,400);
         }

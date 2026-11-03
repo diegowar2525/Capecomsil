@@ -14,18 +14,18 @@ const findById = async (id, client = pool) => {
     return result.rows[0] ?? null;
 };
 
-const findByCodigoForShare = async (client, codigo) => {
+const findByIdForShare = async (client, id) => {
     const result = await client.query(`
-        SELECT * FROM tipo_gasto WHERE codigo = $1 FOR SHARE
-    `, [codigo]);
+        SELECT * FROM tipo_gasto WHERE id_tipo_gasto = $1 FOR SHARE
+    `, [id]);
     return result.rows[0] ?? null;
 };
 
 const create = async (data, client = pool) => {
     const result = await client.query(`
-        INSERT INTO tipo_gasto(codigo, nombre, descripcion, estado)
-        VALUES ($1, $2, $3, $4) RETURNING *
-    `, [data.codigo, data.nombre, data.descripcion, data.estado]);
+        INSERT INTO tipo_gasto(nombre, descripcion, estado)
+        VALUES ($1, $2, $3) RETURNING *
+    `, [data.nombre, data.descripcion, data.estado]);
     return result.rows[0] ?? null;
 };
 
@@ -44,4 +44,4 @@ const remove = async (id, client = pool) => {
     return result.rows[0] ?? null;
 };
 
-module.exports = { findAll, findById, findByCodigoForShare, create, update, remove };
+module.exports = { findAll, findById, findByIdForShare, create, update, remove };

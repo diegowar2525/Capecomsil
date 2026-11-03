@@ -2,15 +2,16 @@ const pool = require("../config/database");
 
 const select = `
         SELECT
-            g.*, v.placa, p.nombre AS nombre_proveedor, tg.nombre AS nombre_tipo_gasto,
+            g.*, m.pago_directo_automatico, v.placa, p.nombre AS nombre_proveedor, CASE WHEN g.origen='OPERATIVO' THEN tg.nombre WHEN g.origen='VIATICO' THEN 'Desembolso de viático' WHEN g.origen='MANTENIMIENTO' THEN 'Mantenimiento / reparación' ELSE 'Combustible' END AS nombre_tipo_gasto,
             to_char(g.fecha, 'YYYY-MM-DD') AS fecha,
             to_char(g.fecha_anulacion, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_anulacion,
             a.id_abastecimiento_combustible
         FROM
             gasto g
+            LEFT JOIN mantenimiento m ON m.id_mantenimiento = g.id_mantenimiento
             LEFT JOIN vehiculo v ON v.id_vehiculo = g.id_vehiculo
             LEFT JOIN proveedor p ON p.id_proveedor = g.id_proveedor
-            JOIN tipo_gasto tg ON tg.codigo = g.tipo_gasto
+            LEFT JOIN tipo_gasto tg ON tg.id_tipo_gasto = g.id_tipo_gasto
             LEFT JOIN abastecimiento_combustible a ON a.id_gasto = g.id_gasto
     `;
 
@@ -20,7 +21,7 @@ const findAll = async (filtros, client = pool) => {
     WHERE ($1::int IS NULL OR g.id_vehiculo=$1) AND ($2::int IS NULL OR g.id_viaje=$2)
     AND ($3::int IS NULL OR g.id_proveedor=$3) AND ($4::int IS NULL OR g.id_viatico_chofer=$4)
     AND ($5::date IS NULL OR g.fecha >= $5) AND ($6::date IS NULL OR g.fecha <= $6)
-    AND ($7::text IS NULL OR g.estado=$7) AND ($8::text IS NULL OR g.tipo_gasto=$8)
+    AND ($7::text IS NULL OR g.estado=$7) AND ($8::int IS NULL OR g.id_tipo_gasto=$8) AND ($11::text IS NULL OR g.origen=$11)
     ORDER BY g.fecha DESC,g.id_gasto DESC LIMIT $9 OFFSET $10`,
         [
             filtros.id_vehiculo,
@@ -30,9 +31,9 @@ const findAll = async (filtros, client = pool) => {
             filtros.fecha_desde,
             filtros.fecha_hasta,
             filtros.estado,
-            filtros.tipo_gasto,
+            filtros.id_tipo_gasto,
             filtros.limit,
-            filtros.offset
+            filtros.offset, filtros.origen
         ]
     );
 
@@ -55,14 +56,14 @@ const create = async (client, data) => {
                 id_proveedor,
                 id_viatico_chofer,
                 fecha,
-                tipo_gasto,
+                origen, id_tipo_gasto, id_mantenimiento,
                 monto,
                 descripcion,
                 numero_comprobante,
                 observacion
             )
         VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ($1, $2, $3, $4, $5, $6, $11, $12, $7, $8, $9, $10)
         RETURNING
             id_gasto
     `,
@@ -72,11 +73,11 @@ const create = async (client, data) => {
             data.id_proveedor,
             data.id_viatico_chofer,
             data.fecha,
-            data.tipo_gasto,
+            data.origen,
             data.monto,
             data.descripcion,
             data.numero_comprobante,
-            data.observacion
+            data.observacion, data.id_tipo_gasto ?? null, data.id_mantenimiento ?? null
         ]
     );
 

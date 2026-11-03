@@ -30,6 +30,10 @@ Desde `client`, ejecutar `npm install` y `npm run dev` para iniciar Vite. La pan
 
 ## Estado actual
 
+Mantenimientos: [factura reutilizada, pago inmediato e historial de edición (030)](../database/migrations/030_edicion_mantenimiento.md). Sustituye el registro posterior del pago directo para nuevos trabajos sin factura. Las ediciones de mantenimientos y viajes conservan historial sin solicitar motivo.
+
+Gastos operativos y pagos del taller: [contrato actualizado y migración 029](../database/migrations/029_origen_gastos_mantenimientos.md). Incluye viáticos desde Gastos operativos, catálogo sin códigos reservados y mantenimientos/reparaciones con pago directo o factura. Este contrato sustituye las referencias anteriores a `tipo_gasto` como código en las peticiones.
+
 Fotos de perfil, choferes, vehículos y productos de inventario: almacenamiento
 privado en Cloudflare R2, API y frontend de carga/reemplazo/eliminación y limpieza
 diferida automática cada 24 horas, con revisión un minuto después de iniciar el

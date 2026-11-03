@@ -48,7 +48,7 @@ const createAbastecimiento = async (data) => {
         const gasto = await gastoModel.create(client, {
             ...datosValidados,
             fecha: datosValidados.fecha_hora.slice(0, 10),
-            tipo_gasto: "COMBUSTIBLE",
+            origen: "COMBUSTIBLE",
             monto,
             descripcion: "Abastecimiento de combustible",
             id_viaje: null,

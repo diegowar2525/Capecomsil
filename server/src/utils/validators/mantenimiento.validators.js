@@ -11,8 +11,14 @@ const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos del mantenimiento son obligatorios", 400);
     }
+    if (!["PREVENTIVO", "CORRECTIVO"].includes(data.clase)) {
+        throw createHttpError("Seleccione preventivo o correctivo / reparación", 400);
+    }
     const id_vehiculo = validateId(data.id_vehiculo);
     const id_proveedor = data.id_proveedor == null ? null : validateId(data.id_proveedor);
+    if (data.id_factura_proveedor != null && id_proveedor === null) {
+        throw createHttpError("Seleccione el proveedor de la factura del taller", 400);
+    }
     if (data.fecha !== undefined) {
         throw createHttpError("Use fecha_inicio y fecha_fin con fecha y hora", 400);
     }
@@ -30,55 +36,21 @@ const validateData = (data) => {
             400
         );
     }
-    if (data.detalles !== undefined && !Array.isArray(data.detalles)) {
-        throw createHttpError("Los detalles deben ser una lista", 400);
+    if (data.detalles !== undefined && (!Array.isArray(data.detalles) || data.detalles.length)) {
+        throw createHttpError("Los materiales se registran mediante movimientos manuales de inventario o en la factura", 400);
     }
-    const productos = new Set();
-    const detalles = (data.detalles ?? []).map((detalle) => {
-        if (!detalle || typeof detalle !== "object" || Array.isArray(detalle)) {
-            throw createHttpError("Cada detalle debe ser un objeto válido", 400);
-        }
-        const origen_producto =
-            detalle.origen_producto === undefined ? "INVENTARIO" : detalle.origen_producto;
-        if (!["INVENTARIO", "EXTERNO"].includes(origen_producto)) {
-            throw createHttpError("Origen de producto inválido", 400);
-        }
-        if (origen_producto === "EXTERNO" && detalle.id_producto != null) {
-            throw createHttpError("Un material externo no debe indicar id_producto", 400);
-        }
-        const id_producto =
-            origen_producto === "INVENTARIO" ? validateId(detalle.id_producto) : null;
-        const descripcion_producto = validateOptionalText(
-            detalle.descripcion_producto,
-            "descripcion_producto",
-            200
-        );
-        if (origen_producto === "EXTERNO" && !descripcion_producto) {
-            throw createHttpError("Describa el material externo", 400);
-        }
-        const cantidad = validateDecimal(detalle.cantidad, "cantidad", 10, 2);
-        if (/^0+(\.0+)?$/.test(cantidad) || (id_producto !== null && productos.has(id_producto))) {
-            throw createHttpError(
-                "Las cantidades deben ser positivas y los productos no pueden repetirse",
-                400
-            );
-        }
-        if (id_producto !== null) {
-            productos.add(id_producto);
-        }
-        return {
-            id_producto,
-            origen_producto,
-            descripcion_producto,
-            cantidad,
-            observacion: validateOptionalText(detalle.observacion, "observacion del detalle")
-        };
-    });
+    const detalles = [];
     const planes_cumplidos = validatePlanesCumplidos(data.planes_cumplidos);
+    if (planes_cumplidos.length && data.clase !== "PREVENTIVO") {
+        throw createHttpError("Solo los trabajos preventivos pueden cumplir planes de mantenimiento", 400);
+    }
     if (planes_cumplidos.length && !fecha_fin) {
         throw createHttpError("Indique los planes cumplidos al finalizar el mantenimiento", 400);
     }
     return {
+        clase: data.clase,
+        numero_comprobante: validateOptionalText(data.numero_comprobante, "numero_comprobante", 100),
+        id_factura_proveedor: data.id_factura_proveedor == null ? null : validateId(data.id_factura_proveedor),
         planes_cumplidos,
         id_vehiculo,
         id_proveedor,

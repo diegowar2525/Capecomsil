@@ -8,6 +8,9 @@ const {
 } = require("../controllers/mantenimientos.controller");
 
 const router = express.Router();
+router.put('/:id', exigirPermiso('mantenimientos.editar'), require('../controllers/mantenimientos_edicion.controller').updateMantenimiento);
+router.get('/:id/historial', exigirPermiso('mantenimientos.historial'), require('../controllers/mantenimientos_edicion.controller').getHistorial);
+router.post("/:id/pagos", exigirPermiso("mantenimientos.pagar"), require("../controllers/pagos_mantenimiento.controller").createPago);
 router.post("/:id/cumplimientos", exigirPermiso("mantenimientos.registrar_cumplimientos"), require("../controllers/mantenimientos.controller").registrarCumplimientos);
 router.post("/:id/finalizar", exigirPermiso("mantenimientos.finalizar"), require("../controllers/mantenimientos.controller").finalizarMantenimiento);
 router.post("/:id/anular", exigirPermiso("mantenimientos.anular"), anularMantenimiento);

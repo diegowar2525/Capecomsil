@@ -56,22 +56,6 @@ const getDisponibilidad = async (client, id, cantidad) => {
     return result.rows[0] ?? null;
 };
 
-const createSalida = async (client, data) => {
-    const result = await client.query(
-        `
-        INSERT INTO
-            movimiento_inventario (id_producto, fecha, tipo_movimiento, cantidad, motivo, id_detalle_mantenimiento)
-        VALUES
-            ($1, $2, 'SALIDA', $3, 'Consumo por mantenimiento', $4)
-        RETURNING
-            *
-    `,
-        [data.id_producto, data.fecha, data.cantidad, data.id_detalle_mantenimiento]
-    );
-
-    return result.rows[0] ?? null;
-};
-
 const findAll = async (filtros, client = pool) => {
     const result = await client.query(
         `
@@ -202,26 +186,6 @@ const findByRecepcion = async (client, id) => {
     return result.rows;
 };
 
-const findByMantenimiento = async (client, id) => {
-    const result = await client.query(
-        `
-        SELECT
-            m.*
-        FROM
-            movimiento_inventario m
-            JOIN detalle_mantenimiento d USING (id_detalle_mantenimiento)
-        WHERE
-            d.id_mantenimiento = $1
-        ORDER BY
-            m.id_producto,
-            m.id_movimiento
-    `,
-        [id]
-    );
-
-    return result.rows;
-};
-
 const hasReversion = async (client, id) => {
     const result = await client.query(
         `
@@ -291,12 +255,10 @@ const createReversion = async (client, id, motivo) => {
 module.exports = {
     findByIdForUpdate,
     findByRecepcion,
-    findByMantenimiento,
     hasReversion,
     createReversion,
     findAll,
     createAjuste,
     createEntrada,
-    getDisponibilidad,
-    createSalida
+    getDisponibilidad
 };

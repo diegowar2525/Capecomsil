@@ -41,23 +41,27 @@ test("Anulaciones: historial, stock, pendientes, rollback y doble reversión con
         });
         assert.equal(invoice.status, 201);
         const receiptRoute = "/recepciones-compra/" + invoice.body.recepcion_inicial.id_recepcion_compra + "/anular";
-        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha_inicio: "2026-10-02T08:00:00", fecha_fin: "2026-10-02T09:00:00", tipo: "Filtros", monto: "1", detalles: [{ id_producto: 1, cantidad: "2" }] });
+        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha_inicio: "2026-10-02T08:00:00", fecha_fin: "2026-10-02T09:00:00", tipo: "Filtros", clase: "PREVENTIVO", monto: "1", detalles: [] });
         assert.equal(maintenance.status, 201);
+        // Simula consumo histórico anterior al flujo manual actual.
+        const legacy = (await isolated.query("INSERT INTO detalle_mantenimiento(id_mantenimiento,id_producto,cantidad,origen_producto) VALUES ($1,1,2,'INVENTARIO') RETURNING id_detalle_mantenimiento",[maintenance.body.id_mantenimiento])).rows[0];
+        await isolated.query("INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo,id_detalle_mantenimiento) VALUES (1,'SALIDA',2,'Consumo histórico',$1)",[legacy.id_detalle_mantenimiento]);
         assert.equal(await stock(), 3);
         assert.equal((await request(receiptRoute, motivo)).status, 409);
         const maintenanceRoute = "/mantenimientos/" + maintenance.body.id_mantenimiento + "/anular";
-        model.createReversion = async (...args) => { await original(...args); throw new Error("Fallo simulado"); };
-        assert.equal((await request(maintenanceRoute, motivo)).status, 500);
-        model.createReversion = original;
-        assert.equal(await stock(), 3);
-        assert.equal((await request("/mantenimientos/" + maintenance.body.id_mantenimiento)).body.estado, "REGISTRADO");
         const cancelled = await request(maintenanceRoute, motivo);
         assert.equal(cancelled.status, 200);
         assert.equal(cancelled.body.estado, "ANULADO");
         assert.ok(cancelled.body.fecha_anulacion);
-        assert.equal(cancelled.body.reversiones[0].tipo_movimiento, "ENTRADA");
+        assert.deepEqual(cancelled.body.reversiones, []);
+        assert.equal(await stock(), 3);
+        await request("/inventario/ajustes", { id_producto: 1, fecha: "2026-10-07", cantidad: "2", motivo: "Corrección manual del consumo histórico" });
         assert.equal(await stock(), 5);
         assert.equal((await request(maintenanceRoute, motivo)).status, 409);
+        model.createReversion = async (...args) => { await original(...args); throw new Error("Fallo simulado"); };
+        assert.equal((await request(receiptRoute, motivo)).status, 500);
+        model.createReversion = original;
+        assert.equal(await stock(), 5);
         const concurrent = await Promise.all([request(receiptRoute, motivo), request(receiptRoute, motivo)]);
         assert.deepEqual(concurrent.map(r => r.status).sort(), [200, 409]);
         assert.equal(await stock(), 0);
@@ -79,7 +83,7 @@ test("Anulaciones: historial, stock, pendientes, rollback y doble reversión con
         assert.equal((await request("/inventario/ajustes/" + positive.body.id_movimiento + "/revertir", motivo)).status, 409);
         assert.equal(await stock(), 3);
         assert.equal((await request("/mantenimientos/999/anular", motivo)).status, 404);
-        assert.equal((await isolated.query("SELECT COUNT(*)::int n FROM movimiento_inventario WHERE id_movimiento_revertido IS NOT NULL")).rows[0].n, 3);
+        assert.equal((await isolated.query("SELECT COUNT(*)::int n FROM movimiento_inventario WHERE id_movimiento_revertido IS NOT NULL")).rows[0].n, 2);
     } finally {
         model.createReversion = original;
         if (server) await new Promise(resolve => server.close(resolve));

@@ -6,7 +6,7 @@ const path = require("node:path");
 const { Pool } = require("pg");
 const { validateData } = require("../src/utils/validators/mantenimiento.validators");
 
-const body = { id_vehiculo: 1, fecha_inicio: "2026-10-05T08:00:00", fecha_fin: "2026-10-05T12:00:00", tipo: "Cambio de filtros", monto: "25.00", detalles: [{ id_producto: 1, cantidad: "2.00" }] };
+const body = { id_vehiculo: 1, fecha_inicio: "2026-10-05T08:00:00", fecha_fin: "2026-10-05T12:00:00", clase: "PREVENTIVO", tipo: "Cambio de filtros", monto: "25.00", detalles: [] };
 
 test("Mantenimiento: cantidades, referencias y datos obligatorios", () => {
     for (const detalle of [
@@ -18,12 +18,12 @@ test("Mantenimiento: cantidades, referencias y datos obligatorios", () => {
     assert.deepEqual(validateData({ ...body, detalles: [] }).detalles, []);
     for (const change of [
         { monto: -1 }, { monto: true }, { fecha: "2026-02-30" }, { tipo: " " },
-        { detalles: null }, { detalles: [null] }, { detalles: [...body.detalles, ...body.detalles] },
+        { detalles: null }, { detalles: [null] },
         { detalles: [{ id_producto: 1, cantidad: 0 }] }
     ]) assert.throws(() => validateData({ ...body, ...change }), { status: 400 });
 });
 
-test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => {
+test("Mantenimiento: gasto, facturas, historial e inventario manual", async () => {
     const pool = require("../src/config/database");
     const originalConnect = pool.connect;
     const originalQuery = pool.query;
@@ -35,8 +35,6 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
         connectionTimeoutMillis: 5000,
         options: "-c search_path=" + schema + ",public"
     });
-    const movimientoModel = require("../src/models/movimiento_inventario.model");
-    const originalSalida = movimientoModel.createSalida;
     let server;
     try {
         await admin.query("BEGIN");
@@ -59,59 +57,106 @@ test("Mantenimiento: API, salidas, rollback y consumo concurrente", async () => 
             return { status: response.status, body: await response.json() };
         };
         const created = await post(body);
-        assert.equal(created.status, 201);
-        assert.equal(created.body.detalles.length, 1);
-        const fetched = await (await authenticatedFetch(url + "/" + created.body.id_mantenimiento)).json();
-        assert.equal(fetched.detalles[0].nombre_producto, "Filtro");
-        assert.equal((await authenticatedFetch(url)).status, 200);
-        assert.equal((await authenticatedFetch(url + "/9999")).status, 404);
-        assert.equal((await authenticatedFetch(url + "/abc")).status, 400);
-        const movement = (await isolated.query("SELECT * FROM movimiento_inventario WHERE tipo_movimiento='SALIDA'")).rows[0];
-        assert.equal(movement.id_detalle_mantenimiento, created.body.detalles[0].id_detalle_mantenimiento);
-        assert.equal(movement.cantidad, "2.00");
-        assert.equal((await post({ ...body, id_vehiculo: 9999 })).status, 400);
-        assert.equal((await post({ ...body, id_proveedor: 9999 })).status, 400);
-        assert.equal((await post({ ...body, detalles: [{ id_producto: 9999, cantidad: 1 }] })).status, 400);
-        assert.equal((await post({ ...body, detalles: [{ id_producto: 1, cantidad: 4 }] })).status, 409);
-        // Fallo después de guardar una salida: no debe persistir ninguna parte.
-        movimientoModel.createSalida = async (...args) => {
-            await originalSalida(...args);
-            throw new Error("Fallo simulado después de salida");
+        assert.equal(created.status,201,JSON.stringify(created.body));
+        assert.deepEqual(created.body.detalles,[]);
+        assert.equal((await post({...body,detalles:[{id_producto:1,cantidad:'2'}]})).status,400);
+        assert.equal((await post({...body,detalles:[{origen_producto:'EXTERNO',descripcion_producto:'Material',cantidad:'1'}]})).status,400);
+        assert.equal((await isolated.query("SELECT count(*) FROM movimiento_inventario WHERE tipo_movimiento='SALIDA'")).rows[0].count,'0');
+        assert.equal((await post({...body,id_vehiculo:9999})).status,400);
+        assert.equal((await post({...body,id_proveedor:9999})).status,400);
+        const request = async (route, method='GET', data) => {
+            const response = await authenticatedFetch(url.replace('/mantenimientos','') + route, {method,
+                ...(data === undefined ? {} : {body:JSON.stringify(data)})});
+            return {status:response.status,body:await response.json()};
         };
-        assert.equal((await post(body)).status, 500);
-        movimientoModel.createSalida = originalSalida;
-        assert.equal((await isolated.query("SELECT COUNT(*)::int AS n FROM mantenimiento")).rows[0].n, 1);
-        assert.equal((await isolated.query("SELECT COUNT(*)::int AS n FROM detalle_mantenimiento")).rows[0].n, 1);
-        assert.equal((await isolated.query("SELECT COUNT(*)::int AS n FROM movimiento_inventario WHERE tipo_movimiento='SALIDA'")).rows[0].n, 1);
-        const simultaneous = await Promise.all([post(body), post(body)]);
-        assert.deepEqual(simultaneous.map(r => r.status).sort(), [201, 409]);
-        const stock = (await isolated.query("SELECT SUM(CASE WHEN tipo_movimiento='SALIDA' THEN -cantidad ELSE cantidad END)::text AS saldo FROM movimiento_inventario WHERE id_producto=1")).rows[0].saldo;
-        assert.equal(stock, "1.00");
-        assert.equal((await post({ ...body, detalles: [] })).status, 201);
-        const removed = await isolated.query("SELECT 1 FROM information_schema.columns WHERE table_schema=$1 AND table_name='factura_proveedor' AND column_name='detalle'", [schema]);
-        assert.equal(removed.rowCount, 0);
-        const externo = { origen_producto: "EXTERNO", descripcion_producto: "Llanta del taller 315/80 R22.5", cantidad: "1" };
-        const mixto = await post({ ...body, detalles: [{ id_producto: 1, cantidad: "1" }, externo, { ...externo, descripcion_producto: "Aceite externo" }] });
-        assert.equal(mixto.status, 201);
-        const mixtoId = mixto.body.id_mantenimiento;
-        const consulta = await (await authenticatedFetch(url + "/" + mixtoId)).json();
-        assert.equal(consulta.detalles.length, 3);
-        assert.equal(consulta.detalles[1].descripcion_producto, externo.descripcion_producto);
-        assert.equal(consulta.detalles[1].id_producto, null);
-        const cancel = await authenticatedFetch(url + "/" + mixtoId + "/anular", {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba mixta" })
+        const trabajo = (await post({...body,clase:'CORRECTIVO',detalles:[]})).body;
+        const pagoRuta = '/mantenimientos/'+trabajo.id_mantenimiento+'/pagos';
+        assert.equal(trabajo.total_pagado,'25.00');
+        assert.equal(trabajo.pagos[0].fecha,trabajo.fecha_inicio.slice(0,10));
+        assert.equal(trabajo.pago_directo_automatico,true);
+        assert.equal((await request(pagoRuta,'POST',{fecha:'2026-10-30',monto:'10'})).status,409);
+        assert.equal((await request('/gastos/'+trabajo.pagos[0].id_gasto+'/anular','POST',{motivo:'Corrección'})).status,409);
+        const editData = {...body,clase:'CORRECTIVO',detalles:[],fecha_inicio:trabajo.fecha_inicio,fecha_fin:trabajo.fecha_fin,version:trabajo.version,monto:'30',descripcion:'Corregido'};
+        const edited = await request('/mantenimientos/'+trabajo.id_mantenimiento,'PUT',editData);
+        assert.equal(edited.status,200,JSON.stringify(edited.body));
+        assert.equal(edited.body.total_pagado,'30.00');
+        assert.equal(edited.body.pagos.filter(p=>p.estado==='REGISTRADO').length,1);
+        assert.equal(edited.body.pagos.filter(p=>p.estado==='ANULADO').length,1);
+        assert.equal((await request('/mantenimientos/'+trabajo.id_mantenimiento,'PUT',editData)).status,409);
+        const history = await request('/mantenimientos/'+trabajo.id_mantenimiento+'/historial');
+        assert.equal(history.body.length,1);
+        assert.equal(history.body[0].anterior.monto,'25.00');
+        assert.equal(history.body[0].posterior.monto,'30.00');
+        assert.ok(history.body[0].id_actor);
+        assert.equal((await request('/mantenimientos/'+trabajo.id_mantenimiento+'/anular','POST',{motivo:'Corrección'})).status,200);
+        const cancelled = await request('/mantenimientos/'+trabajo.id_mantenimiento);
+        assert.ok(cancelled.body.pagos.every(p=>p.estado==='ANULADO'));
+        assert.equal((await request('/mantenimientos/'+trabajo.id_mantenimiento,'PUT',{...editData,version:cancelled.body.version})).status,409);
+        // Factura externa: sus pagos se reflejan una sola vez, también si preceden a la vinculación.
+        const proveedor = (await isolated.query("INSERT INTO proveedor(nombre) VALUES ('Taller') RETURNING id_proveedor")).rows[0].id_proveedor;
+        const factura = await request('/facturas-proveedor','POST',{id_proveedor:proveedor,numero_factura:'TALLER-1',fecha_emision:'2026-10-01',
+            detalles:[{tipo_concepto:'SERVICIO',descripcion:'Reparación',cantidad:'1',precio_unitario:'25',porcentaje_impuesto:'0'}]});
+        assert.equal(factura.status,201,JSON.stringify(factura.body));
+        const idFactura = factura.body.id_factura_proveedor;
+        const pagarFactura = monto => request('/pagos-proveedor','POST',{id_factura_proveedor:idFactura,fecha_pago:'2026-10-30',monto,forma_pago:'EFECTIVO'});
+        assert.equal((await pagarFactura('5')).status,201);
+        const conFactura = await post({...body,detalles:[],id_proveedor:proveedor,id_factura_proveedor:idFactura});
+        assert.equal(conFactura.status,201,JSON.stringify(conFactura.body));
+        const rutaFactura = '/mantenimientos/'+conFactura.body.id_mantenimiento;
+        assert.equal((await request(rutaFactura)).body.total_pagado,'5.00');
+        assert.equal((await request(rutaFactura+'/pagos','POST',{fecha:'2026-10-30',monto:'1'})).status,409);
+        assert.equal((await pagarFactura('20')).status,201);
+        const pagado = (await request(rutaFactura)).body;
+        assert.equal(pagado.pagos.length,2);
+        assert.equal(pagado.total_pagado,'25.00');
+        assert.equal((await post({...body,detalles:[],id_proveedor:proveedor,id_factura_proveedor:idFactura})).status,409);
+        for(const pago of pagado.pagos) {
+            assert.equal((await request('/gastos/'+pago.id_gasto+'/anular','POST',{motivo:'Corrección'})).status,409);
+            assert.equal((await request('/pagos-proveedor/'+pago.id_pago_proveedor+'/anular','POST',{motivo:'Corrección'})).status,200);
+        }
+        assert.equal((await request(rutaFactura)).body.total_pagado,'0');
+        assert.equal((await request(rutaFactura+'/anular','POST',{motivo:'Corrección'})).status,409);
+        assert.equal((await request('/facturas-proveedor/'+idFactura+'/anular','POST',{motivo:'Corrección'})).status,200);
+        assert.equal((await request(rutaFactura+'/anular','POST',{motivo:'Corrección'})).status,200);
+        // Crear una factura y el trabajo juntos: el total viene del cálculo de factura.
+        const facturaNueva = {numero_factura:'TALLER-NUEVA',fecha_emision:'2026-10-01',detalles:[
+            {tipo_concepto:'SERVICIO',descripcion:'Mano de obra y materiales del taller',cantidad:'1',precio_unitario:'100',porcentaje_impuesto:'15'}]};
+        const conNueva = await post({...body,detalles:[],monto:undefined,id_proveedor:proveedor,modalidad_pago:'NUEVA',factura:facturaNueva});
+        assert.equal(conNueva.status,201,JSON.stringify(conNueva.body));
+        assert.equal(conNueva.body.monto,'115.00');
+        assert.equal(conNueva.body.total_pagado,'0');
+        assert.ok(conNueva.body.id_factura_proveedor);
+        const cambiarFactura = await request('/mantenimientos/'+conNueva.body.id_mantenimiento,'PUT',{
+            ...body,detalles:[],id_proveedor:proveedor,monto:'116',version:conNueva.body.version,
+            fecha_inicio:conNueva.body.fecha_inicio,fecha_fin:conNueva.body.fecha_fin
         });
-        assert.equal(cancel.status, 200);
-        assert.equal((await cancel.json()).reversiones.length, 1);
-        const soloExterno = await post({ ...body, detalles: [externo] });
-        assert.equal(soloExterno.status, 201);
-        const cancelExterno = await authenticatedFetch(url + "/" + soloExterno.body.id_mantenimiento + "/anular", {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ motivo: "Prueba externa" })
+        assert.equal(cambiarFactura.status,409);
+        const fallida = await post({...body,id_vehiculo:9999,id_proveedor:proveedor,modalidad_pago:'NUEVA',factura:{...facturaNueva,numero_factura:'ROLLBACK-TALLER'}});
+        assert.equal(fallida.status,400);
+        assert.equal((await isolated.query("SELECT count(*) FROM factura_proveedor WHERE numero_factura='ROLLBACK-TALLER'")).rows[0].count,'0');
+        // Crear, editar y anular trabajos nuevos no alteran movimientos manuales.
+        const movimientosAntes = (await isolated.query('SELECT * FROM movimiento_inventario ORDER BY id_movimiento')).rows;
+        const manual = await post({...body,monto:'10'});
+        assert.equal(manual.status,201);
+        const rutaManual = '/mantenimientos/'+manual.body.id_mantenimiento;
+        const editarManual = {...body,version:manual.body.version,fecha_inicio:manual.body.fecha_inicio,fecha_fin:manual.body.fecha_fin};
+        assert.equal((await request(rutaManual,'PUT',{...editarManual,detalles:[{id_producto:1,cantidad:'1'}]})).status,400);
+        const simultaneas = await Promise.all([1,2].map(()=>request(rutaManual,'PUT',editarManual)));
+        assert.deepEqual(simultaneas.map(r=>r.status).sort(),[200,409]);
+        assert.equal((await request(rutaManual+'/anular','POST',{motivo:'Corrección'})).status,200);
+        assert.deepEqual((await isolated.query('SELECT * FROM movimiento_inventario ORDER BY id_movimiento')).rows,movimientosAntes);
+        // Los materiales de trabajos anteriores permanecen consultables al editar, sin revertir stock.
+        const legacy = await post(body);
+        const detalleLegacy = (await isolated.query("INSERT INTO detalle_mantenimiento(id_mantenimiento,id_producto,cantidad,origen_producto) VALUES ($1,1,1,'INVENTARIO') RETURNING *",[legacy.body.id_mantenimiento])).rows[0];
+        await isolated.query("INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo,id_detalle_mantenimiento) VALUES(1,'SALIDA',1,'Histórico',$1)",[detalleLegacy.id_detalle_mantenimiento]);
+        const movimientosLegacy = (await isolated.query('SELECT * FROM movimiento_inventario ORDER BY id_movimiento')).rows;
+        const legacyEdit = await request('/mantenimientos/'+legacy.body.id_mantenimiento,'PUT',{
+            ...body,version:legacy.body.version,fecha_inicio:legacy.body.fecha_inicio,fecha_fin:legacy.body.fecha_fin,descripcion:'Texto corregido'
         });
-        assert.equal(cancelExterno.status, 200);
-        assert.equal((await cancelExterno.json()).reversiones.length, 0);
+        assert.equal(legacyEdit.status,200,JSON.stringify(legacyEdit.body));
+        assert.equal(legacyEdit.body.detalles.length,1);
+        assert.deepEqual((await isolated.query('SELECT * FROM movimiento_inventario ORDER BY id_movimiento')).rows,movimientosLegacy);
     } finally {
-        movimientoModel.createSalida = originalSalida;
         if (server) await new Promise(resolve => server.close(resolve));
         pool.connect = originalConnect;
         pool.query = originalQuery;

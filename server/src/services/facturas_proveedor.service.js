@@ -22,91 +22,93 @@ const getFacturaProveedorById = async (id) => {
     return factura;
 };
 
-const createFacturaProveedor = async (data) => {
+const createFacturaEnTransaccion = async (client, data) => {
     const datosValidados = validateData(data);
+    const proveedor = await proveedorModel.findByIdForShare(
+        client,
+        datosValidados.id_proveedor
+    );
+    if (!proveedor) {
+        throw createHttpError("El proveedor indicado no existe", 400);
+    }
+    // Bloqueo en orden estable para evitar interbloqueos entre compras.
+    const productos = [
+        ...new Set(
+            datosValidados.detalles
+                .filter((d) => {
+                    return d.id_producto !== null;
+                })
+                .map((d) => {
+                    return d.id_producto;
+                })
+        )
+    ].sort((a, b) => {
+        return a - b;
+    });
+    for (const id of productos) {
+        if (!(await productoModel.findByIdForUpdate(client, id))) {
+            throw createHttpError("El producto indicado no existe", 400);
+        }
+    }
+    const factura = await facturaProveedorModel.create(client, datosValidados);
+    const detalles = [];
+    for (const detalle of datosValidados.detalles) {
+        detalles.push(
+            await detalleFacturaProveedorModel.create(
+                client,
+                factura.id_factura_proveedor,
+                detalle
+            )
+        );
+    }
+    const resultado = await facturaProveedorModel.updateTotales(
+        client,
+        factura.id_factura_proveedor
+    );
+    let recepcion = null;
+    if (datosValidados.recepcion_inicial) {
+        recepcion = await createRecepcionEnTransaccion(client, {
+            id_factura_proveedor: factura.id_factura_proveedor,
+            fecha_recepcion: datosValidados.recepcion_inicial.fecha_recepcion,
+            detalles: datosValidados.recepcion_inicial.detalles.map((recibido) => {
+                return {
+                    id_detalle_factura_proveedor:
+                        detalles[recibido.numero_detalle - 1].id_detalle_factura_proveedor,
+                    cantidad_recibida: recibido.cantidad_recibida
+                };
+            })
+        });
+    }
+    const resumen = await facturaProveedorModel.findById(factura.id_factura_proveedor, client);
+
+    return {
+        ...resultado,
+        total_pagado: resumen.total_pagado,
+        saldo_pendiente: resumen.saldo_pendiente,
+        estado_pago: resumen.estado_pago,
+        vencida: resumen.vencida,
+        detalles,
+        recepcion_inicial: recepcion
+    };
+};
+
+const createFacturaProveedor = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        const proveedor = await proveedorModel.findByIdForShare(
-            client,
-            datosValidados.id_proveedor
-        );
-        if (!proveedor) {
-            throw createHttpError("El proveedor indicado no existe", 400);
-        }
-        // Bloqueo en orden estable para evitar interbloqueos entre compras.
-        const productos = [
-            ...new Set(
-                datosValidados.detalles
-                    .filter((d) => {
-                        return d.id_producto !== null;
-                    })
-                    .map((d) => {
-                        return d.id_producto;
-                    })
-            )
-        ].sort((a, b) => {
-            return a - b;
-        });
-        for (const id of productos) {
-            if (!(await productoModel.findByIdForUpdate(client, id))) {
-                throw createHttpError("El producto indicado no existe", 400);
-            }
-        }
-        const factura = await facturaProveedorModel.create(client, datosValidados);
-        const detalles = [];
-        for (const detalle of datosValidados.detalles) {
-            detalles.push(
-                await detalleFacturaProveedorModel.create(
-                    client,
-                    factura.id_factura_proveedor,
-                    detalle
-                )
-            );
-        }
-        const resultado = await facturaProveedorModel.updateTotales(
-            client,
-            factura.id_factura_proveedor
-        );
-        let recepcion = null;
-        if (datosValidados.recepcion_inicial) {
-            recepcion = await createRecepcionEnTransaccion(client, {
-                id_factura_proveedor: factura.id_factura_proveedor,
-                fecha_recepcion: datosValidados.recepcion_inicial.fecha_recepcion,
-                detalles: datosValidados.recepcion_inicial.detalles.map((recibido) => {
-                    return {
-                        id_detalle_factura_proveedor:
-                            detalles[recibido.numero_detalle - 1].id_detalle_factura_proveedor,
-                        cantidad_recibida: recibido.cantidad_recibida
-                    };
-                })
-            });
-        }
-        const resumen = await facturaProveedorModel.findById(factura.id_factura_proveedor, client);
+        const resultado = await createFacturaEnTransaccion(client, data);
         await client.query("COMMIT");
-        return {
-            ...resultado,
-            total_pagado: resumen.total_pagado,
-            saldo_pendiente: resumen.saldo_pendiente,
-            estado_pago: resumen.estado_pago,
-            vencida: resumen.vencida,
-            detalles,
-            recepcion_inicial: recepcion
-        };
+        return resultado;
     } catch (error) {
         await client.query("ROLLBACK");
         if (error.code === "22003") {
-            throw createHttpError(
-                "Los importes calculados exceden el límite monetario permitido",
-                400
-            );
+            throw createHttpError("Los importes calculados exceden el límite monetario permitido",400);
         }
         throw error;
     } finally {
         client.release();
     }
 };
-
 const getRecepciones = async (id) => {
     const factura = await getFacturaProveedorById(id);
     return await recepcionCompraModel.findByFactura(factura.id_factura_proveedor);
@@ -157,7 +159,7 @@ const anularFacturaProveedor = async (id, data) => {
     }
 };
 
-module.exports = {
+module.exports = { createFacturaEnTransaccion,
     anularFacturaProveedor,
     getRecepciones,
     getPendientesRecepcion,

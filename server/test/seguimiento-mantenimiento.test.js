@@ -45,6 +45,17 @@ test("Seguimiento: kilómetros, planes independientes, historial, cortes y concu
         const id1=p1.body.id_plan_mantenimiento_vehiculo;
         const p2=await req("/planes-mantenimiento","POST",{...datosPlan,nombre:"Servicio 80000",intervalo_km:"80000"});
         const id2=p2.body.id_plan_mantenimiento_vehiculo;
+        const correctivo = {id_vehiculo:1,clase:'CORRECTIVO',tipo:'Reparación',monto:'10',fecha_inicio:'2026-10-20T08:00:00'};
+        assert.equal((await req('/mantenimientos','POST',{...correctivo,fecha_fin:'2026-10-20T09:00:00',planes_cumplidos:[id1]})).status,400);
+        const reparacion = await req('/mantenimientos','POST',correctivo);
+        assert.equal(reparacion.status,201);
+        const rutaReparacion = '/mantenimientos/'+reparacion.body.id_mantenimiento;
+        assert.equal((await req(rutaReparacion+'/finalizar','POST',{fecha_fin:'2026-10-20T09:00:00',planes_cumplidos:[id1]})).status,409);
+        assert.equal((await req(rutaReparacion)).body.fecha_fin,null);
+        assert.equal((await req(rutaReparacion+'/finalizar','POST',{fecha_fin:'2026-10-20T09:00:00'})).status,200);
+        assert.equal((await req(rutaReparacion+'/cumplimientos','POST',{planes_cumplidos:[id1]})).status,409);
+        assert.deepEqual((await req(rutaReparacion)).body.cumplimientos,[]);
+        assert.equal((await req(rutaReparacion+'/anular','POST',{motivo:'Fin de comprobación'})).status,200);
         const corte="?fecha_hasta=2026-10-31T23:59:59";
         const plan = async id => (await req(`/planes-mantenimiento/${id}${corte}`)).body;
         const km = async (id=1,fecha="2026-10-31T23:59:59") => (await req(`/vehiculos/${id}/kilometraje?fecha_hasta=${fecha}`)).body;
@@ -76,7 +87,7 @@ test("Seguimiento: kilómetros, planes independientes, historial, cortes y concu
         assert.equal((await plan(id2)).situacion,"AL_DIA");
         const mantenimiento=async(dia,planes,fin="09:00",extra={}) => req("/mantenimientos","POST",{
             id_vehiculo:1,fecha_inicio:`2026-10-${dia}T08:00:00`,fecha_fin:fin?`2026-10-${dia}T${fin}:00`:null,
-            tipo:"Servicio",monto:"0",detalles:[],planes_cumplidos:planes,...extra
+            clase: "PREVENTIVO", tipo: "Servicio",monto:"0",detalles:[],planes_cumplidos:planes,...extra
         });
         const m1=await mantenimiento("03",[id1]);assert.equal(m1.status,201,JSON.stringify(m1));
         assert.equal(m1.body.cumplimientos[0].kilometraje_aplicado,"9000.00");

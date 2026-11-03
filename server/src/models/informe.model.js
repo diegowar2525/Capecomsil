@@ -35,7 +35,7 @@ const viajes = async (filtros, client = pool) => {
         sum(valor) FILTER (WHERE tipo_costo='VIATICO') viatico,
         sum(valor) FILTER (WHERE tipo_costo='PEAJE') peaje FROM costo_viaje WHERE id_viaje=v.id_viaje) c ON true
     LEFT JOIN LATERAL (SELECT sum(monto) total,sum(monto) FILTER (WHERE tipo_gasto='PEAJE') peaje
-        FROM gasto WHERE id_viaje=v.id_viaje AND estado='REGISTRADO') g ON true
+        FROM gasto_clasificado WHERE id_viaje=v.id_viaje AND estado='REGISTRADO') g ON true
     ORDER BY v.fecha_inicio DESC,v.id_viaje DESC LIMIT $4 OFFSET $5`,
         [
             filtros.fecha_desde,
@@ -52,7 +52,7 @@ const viajes = async (filtros, client = pool) => {
 const resumen = async (filtros, client = pool) => {
     const result = await client.query(
         `WITH ${viajesPeriodo},
-    gastos_periodo AS (SELECT * FROM gasto WHERE estado='REGISTRADO' AND fecha BETWEEN $1 AND $2
+    gastos_periodo AS (SELECT * FROM gasto_clasificado WHERE estado='REGISTRADO' AND fecha BETWEEN $1 AND $2
         AND ($3::int IS NULL OR id_vehiculo=$3)),
     estimados AS (SELECT c.tipo_costo,sum(c.valor) monto FROM costo_viaje c JOIN viajes_periodo v USING(id_viaje) GROUP BY c.tipo_costo),
     reales AS (SELECT tipo_gasto,sum(monto) monto,count(*)::int cantidad FROM gastos_periodo GROUP BY tipo_gasto),

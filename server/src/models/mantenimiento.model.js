@@ -34,9 +34,9 @@ const create = async (client, data) => {
     const result = await client.query(
         `
         INSERT INTO mantenimiento (
-            id_vehiculo, id_proveedor, fecha_inicio, fecha_fin, tipo, monto, descripcion, observacion
+            id_vehiculo, id_proveedor, fecha_inicio, fecha_fin, tipo, monto, descripcion, observacion, clase, id_factura_proveedor
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *, ${fechas}
         `,
         [
@@ -47,7 +47,9 @@ const create = async (client, data) => {
             data.tipo,
             data.monto,
             data.descripcion,
-            data.observacion
+            data.observacion,
+            data.clase,
+            data.id_factura_proveedor
         ]
     );
 

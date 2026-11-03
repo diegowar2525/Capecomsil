@@ -23,7 +23,7 @@ const createTipoGasto = async (data) => {
         return await tipoGastoModel.create(datosValidados);
     } catch (error) {
         if (error.code === "23505") {
-            throw createHttpError("Ya existe un tipo de gasto con ese código", 409);
+            throw createHttpError("Ya existe un tipo de gasto con ese nombre", 409);
         }
         throw error;
     }
@@ -36,13 +36,7 @@ const modificarTipoGasto = async (id, data, eliminar) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const registro = await getTipoGastoById(idNumerico, client);
-        if (registro.reservado && (eliminar || !datosValidados.estado)) {
-            throw createHttpError("El tipo reservado no se puede eliminar ni desactivar", 409);
-        }
-        if (!eliminar && datosValidados.codigo !== registro.codigo) {
-            throw createHttpError("El código del tipo de gasto no se puede cambiar", 409);
-        }
+        await getTipoGastoById(idNumerico, client);
         const resultado = eliminar
             ? await tipoGastoModel.remove(idNumerico, client)
             : await tipoGastoModel.update(idNumerico, datosValidados, client);

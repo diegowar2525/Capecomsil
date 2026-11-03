@@ -1,3 +1,4 @@
+const { lock } = require("../utils/transaction.lock");
 const pool = require("../config/database");
 const pagoModel = require("../models/pago_proveedor.model");
 const facturaModel = require("../models/factura_proveedor.model");
@@ -43,6 +44,7 @@ const createPago = async (data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        await lock(client);
         const factura = await facturaModel.findByIdForUpdate(
             client,
             datosValidados.id_factura_proveedor
@@ -79,6 +81,7 @@ const anularPago = async (id, data) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+        await lock(client);
         const original = await pagoModel.findById(id, client);
         if (!original) {
             throw createHttpError("Pago de proveedor no encontrado", 404);

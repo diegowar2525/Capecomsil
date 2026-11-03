@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const tipoGastoModel = require("../models/tipo_gasto.model");
 const gastoModel = require("../models/gasto.model");
+const mantenimientoModel = require("../models/mantenimiento.model");
 const { lock } = require("../utils/transaction.lock");
 const { validateData, validateFiltros } = require("../utils/validators/gasto.validators");
 const { validateId } = require("../utils/validators/common.validators");
@@ -44,22 +45,18 @@ const getGastoById = async (id) => {
 
 const createGasto = async (data) => {
     const datosValidados = validateData(data);
-    if (datosValidados.tipo_gasto === "COMBUSTIBLE") {
-        throw createHttpError(
-            "Registre el combustible mediante abastecimientos para generar su gasto",
-            400
-        );
-    }
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
         await lock(client);
-        const tipo = await tipoGastoModel.findByCodigoForShare(client, datosValidados.tipo_gasto);
-        if (!tipo) {
-            throw createHttpError("Seleccione un tipo de gasto existente", 400);
-        }
-        if (!tipo.estado) {
-            throw createHttpError("El tipo de gasto está inactivo", 409);
+        if (datosValidados.origen === "OPERATIVO") {
+            const tipo = await tipoGastoModel.findByIdForShare(client, datosValidados.id_tipo_gasto);
+            if (!tipo) {
+                throw createHttpError("Seleccione un tipo de gasto existente", 400);
+            }
+            if (!tipo.estado) {
+                throw createHttpError("El tipo de gasto está inactivo", 409);
+            }
         }
         await validarReferencias(client, datosValidados);
         const nuevo = await gastoModel.create(client, datosValidados);
@@ -81,8 +78,18 @@ const anularGasto = async (id, data) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        if (!(await gastoModel.findById(id, client))) {
+        const actual = await gastoModel.findById(id, client);
+        if (!actual) {
             throw createHttpError("Gasto no encontrado", 404);
+        }
+        if (actual.id_pago_proveedor) {
+            throw createHttpError("Anule el pago desde Pagos a proveedores", 409);
+        }
+        if (actual.id_mantenimiento) {
+            const trabajo = await mantenimientoModel.findByIdForUpdate(client, actual.id_mantenimiento);
+            if (trabajo.pago_directo_automatico) {
+                throw createHttpError("Este gasto se corrige o anula desde el mantenimiento asociado", 409);
+            }
         }
         if (!(await gastoModel.anular(client, id, motivo))) {
             throw createHttpError("El gasto ya está anulado", 409);

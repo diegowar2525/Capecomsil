@@ -1,4 +1,5 @@
 const mantenimientosService = require("../services/mantenimientos.service");
+const { createHttpError } = require('../utils/errors/http.error');
 
 const getMantenimientos = async (req, res, next) => {
     try {
@@ -20,6 +21,9 @@ const getMantenimientoById = async (req, res, next) => {
 
 const createMantenimiento = async (req, res, next) => {
     try {
+        if (req.body?.modalidad_pago === 'NUEVA' && !req.auth.permisos.includes('compras.crear')) {
+            throw createHttpError('No tiene permiso para crear facturas de proveedores',403);
+        }
         const resultado = await mantenimientosService.createMantenimiento(req.body);
         return res.status(201).json(resultado);
     } catch (error) {

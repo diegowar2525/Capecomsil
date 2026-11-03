@@ -6,6 +6,8 @@ const mantenimientoModel = require("../models/mantenimiento.model");
 const movimientoModel = require("../models/movimiento_inventario.model");
 const productoModel = require("../models/producto.model");
 const facturaModel = require("../models/factura_proveedor.model");
+const pagoMantenimientoModel = require("../models/pago_mantenimiento.model");
+const gastoModel = require("../models/gasto.model");
 const { validateId } = require("../utils/validators/common.validators");
 const { validateMotivo } = require("../utils/validators/anulacion.validators");
 
@@ -41,7 +43,15 @@ const ejecutar = async (tipo, id, data) => {
             await facturaModel.findByIdForUpdate(client, original.id_factura_proveedor);
             movimientos = await movimientoModel.findByRecepcion(client, id);
         } else if (tipo === "mantenimiento") {
-            movimientos = await movimientoModel.findByMantenimiento(client, id);
+            // El inventario se administra manualmente; se conserva el historial anterior.
+            movimientos = [];
+            if (original.pago_directo_automatico) {
+                for (const gasto of await pagoMantenimientoModel.findByMantenimiento(id, client)) {
+                    if (gasto.estado === 'REGISTRADO') {
+                        await gastoModel.anular(client, gasto.id_gasto, motivo);
+                    }
+                }
+            }
         } else {
             if (
                 original.tipo_movimiento !== "AJUSTE" ||

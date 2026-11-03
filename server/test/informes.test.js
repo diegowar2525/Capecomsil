@@ -17,7 +17,7 @@ test("Informes: agregación sin duplicados, datos pendientes e intervalos de tan
         await admin.query("CREATE SCHEMA " + schema);
         await admin.query("SET LOCAL search_path TO " + schema + ",public");
         await admin.query(fs.readFileSync(path.join(__dirname,"../../database/schema.sql"),"utf8"));
-        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;");
+        await admin.query("INSERT INTO tipo_gasto(nombre,concepto_estimado) VALUES ('Comida',NULL),('Peaje','PEAJE'),('Otro',NULL);");
         await admin.query(`INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('I1',100),('I2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('C','C','DIARIO_FIJO');
             INSERT INTO configuracion_viatico(importe_diario,fecha_inicio) VALUES (12,'2026-01-01');
@@ -49,15 +49,15 @@ test("Informes: agregación sin duplicados, datos pendientes e intervalos de tan
         // Dos conceptos en el primer viaje; dos gastos de peaje: sus joins no deben multiplicar importes.
         const v1 = await viaje("02","08",[{...detalle,galones:"40"},{...detalle,id_producto_transportado:2,galones:"60"}]);
         const v2 = await viaje("02","10");
-        const gasto = async (patch) => req("/gastos","POST",{fecha:"2026-10-02",tipo_gasto:"PEAJE",monto:"3",...patch},201);
+        const gasto = async (patch) => req("/gastos","POST",{fecha:"2026-10-02",id_tipo_gasto:4,monto:"3",...patch},201);
         await gasto({id_viaje:v1.id_viaje});
         await gasto({id_viaje:v1.id_viaje,monto:"4"});
         const anulado = await gasto({id_viaje:v1.id_viaje,monto:"99"});
         await req(`/gastos/${anulado.id_gasto}/anular`,"POST",{motivo:"Duplicado"});
         const diario = (await isolated.query("SELECT id_viatico_chofer FROM viatico_chofer WHERE fecha='2026-10-02'")).rows[0].id_viatico_chofer;
-        await gasto({tipo_gasto:"VIATICO",id_viatico_chofer:diario,monto:"6"});
-        await gasto({tipo_gasto:"VIATICO",id_viatico_chofer:diario,monto:"8",fecha:"2026-11-01"});
-        await gasto({tipo_gasto:"OTRO",monto:"11"});
+        await gasto({origen:"VIATICO",id_tipo_gasto:null,id_viatico_chofer:diario,monto:"6"});
+        await gasto({origen:"VIATICO",id_tipo_gasto:null,id_viatico_chofer:diario,monto:"8",fecha:"2026-11-01"});
+        await gasto({id_tipo_gasto:5,monto:"11"});
         const carga = async (dia,odometro,galones,lleno=true,extra={}) => req("/abastecimientos-combustible","POST",{
             id_vehiculo:1,fecha_hora:`2026-10-${dia}T07:00`,kilometraje_odometro:String(odometro),galones:String(galones),
             precio_por_galon:"3",tanque_lleno:lleno,...extra

@@ -90,7 +90,7 @@ test("Costos y horarios: CRUD, histórico, transacciones, concurrencia y anulaci
         assert.equal((await req(`/viajes/${first.body.id_viaje}`)).body.costos.find(c => c.tipo_costo === "COMBUSTIBLE").valor, "60.00");
         const mantenimiento = (inicio, fin) => req("/mantenimientos", "POST", { id_vehiculo: 1,
             fecha_inicio: `2026-10-16T${inicio}:00`, fecha_fin: fin ? `2026-10-16T${fin}:00` : null,
-            tipo: "Prueba", monto: 0, detalles: [] });
+            clase: "PREVENTIVO", tipo: "Prueba", monto: 0, detalles: [] });
         assert.equal((await mantenimiento("08:30", "09:30")).status, 409);
         const abierto = await mantenimiento("11:00", null);
         assert.equal(abierto.status, 201);
