@@ -6,8 +6,8 @@ export const api = {
     ...crearCatalogoApi(path),
     listar: signal => listarPaginas(path, {}, signal),
     opciones: async signal => {
-        const options = await cargarOpciones({tipo_gasto:['/api/tipos-gasto','codigo','nombre'],id_vehiculo:['/api/vehiculos','id_vehiculo','placa'],id_viaje:['/api/viajes','id_viaje', row => 'Viaje '+row.id_viaje+' · '+row.placa+' · '+row.fecha_inicio],id_proveedor:['/api/proveedores','id_proveedor','nombre']},signal);
-        options.tipo_gasto = options.tipo_gasto.filter(option => option.registro.estado && option.value !== 'COMBUSTIBLE');
+        const options = await cargarOpciones({id_tipo_gasto:['/api/tipos-gasto','id_tipo_gasto','nombre'],id_vehiculo:['/api/vehiculos','id_vehiculo','placa'],id_viaje:['/api/viajes','id_viaje', row => 'Viaje '+row.id_viaje+' · '+row.placa+' · '+row.fecha_inicio],id_proveedor:['/api/proveedores','id_proveedor','nombre']},signal);
+        options.id_tipo_gasto = options.id_tipo_gasto.filter(option => option.registro.estado);
         return options;
     },
     ejecutar: (action,id,data) => {

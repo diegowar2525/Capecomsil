@@ -1,21 +1,42 @@
 export const fields = [
     {
+        "name": "origen",
+        "label": "¿Qué deseas registrar?",
+        "type": "select",
+        "required": true,
+        "defaultValue": "OPERATIVO",
+        "options": [
+            {
+                "value": "OPERATIVO",
+                "label": "Gasto operativo"
+            },
+            {
+                "value": "VIATICO",
+                "label": "Desembolso de viático"
+            }
+        ]
+    },
+    {
         "name": "fecha",
-        "label": "Fecha",
+        "label": "Fecha del desembolso",
         "type": "date",
         "required": true
     },
     {
-        "name": "tipo_gasto",
-        "label": "Tipo de gasto",
+        "name": "id_tipo_gasto",
+        "label": "Tipo de gasto operativo",
         "type": "select",
-        "source": "tipo_gasto",
+        "source": "id_tipo_gasto",
         "required": true,
-        "maxLength": 100
+        "maxLength": 100,
+        "when": {
+            "field": "origen",
+            "value": "OPERATIVO"
+        }
     },
     {
         "name": "monto",
-        "label": "Monto",
+        "label": "Monto desembolsado",
         "type": "number",
         "required": true,
         "min": 0.01,
@@ -26,14 +47,22 @@ export const fields = [
         "label": "Vehículo",
         "type": "select",
         "required": false,
-        "source": "id_vehiculo"
+        "source": "id_vehiculo",
+        "when": {
+            "field": "origen",
+            "value": "OPERATIVO"
+        }
     },
     {
         "name": "id_viaje",
         "label": "Viaje",
         "type": "select",
         "required": false,
-        "source": "id_viaje"
+        "source": "id_viaje",
+        "when": {
+            "field": "origen",
+            "value": "OPERATIVO"
+        }
     },
     {
         "name": "id_proveedor",
@@ -44,10 +73,13 @@ export const fields = [
     },
     {
         "name": "id_viatico_chofer",
-        "when": {"field":"tipo_gasto","value":"VIATICO"},
+        "when": {
+            "field": "origen",
+            "value": "VIATICO"
+        },
         "label": "Viático diario",
         "type": "select",
-        "required": false,
+        "required": true,
         "source": "id_viatico_chofer"
     },
     {

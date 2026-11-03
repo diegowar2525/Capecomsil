@@ -6,6 +6,7 @@ export const actions = [
     },
     {
         "id": "annul",
+        available: row => !row.id_pago_proveedor && !row.pago_directo_automatico,
         "label": "Anular",
         "fields": [
             {

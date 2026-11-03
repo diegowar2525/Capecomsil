@@ -1,6 +1,6 @@
 export const page = {
     "title": "Gastos operativos",
-    "subtitle": "Los viáticos diarios se vinculan sin viaje y con tipo VIATICO. Registre combustible desde Abastecimientos.",
+    "subtitle": "Registra gastos operativos o desembolsos de viáticos. Los pagos de combustible y del taller se reflejan desde sus módulos.",
     "rowKey": "id_gasto",
     "actionLabel": "Registrar gasto",
     "api": "/gastos"

@@ -8,10 +8,6 @@ export const columns = [
         "label": "Nombre"
     },
     {
-        "key": "codigo",
-        "label": "Código"
-    },
-    {
         "key": "descripcion",
         "label": "Descripción"
     },

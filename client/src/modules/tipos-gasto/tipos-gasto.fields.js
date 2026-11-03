@@ -1,11 +1,5 @@
 export const fields = [
     {
-        "name": "codigo",
-        "label": "Código (no cambia después de crear)",
-        "required": true,
-        "maxLength": 100
-    },
-    {
         "name": "nombre",
         "label": "Nombre",
         "required": true,
