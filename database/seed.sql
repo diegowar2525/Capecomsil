@@ -1194,20 +1194,20 @@ BEGIN
         FROM (SELECT id_viaje,row_number() OVER(ORDER BY id_viaje) posicion FROM viaje
             WHERE id_viaje=ANY(viajes_ids) AND fecha_inicio::date=r.fecha AND estado='REGISTRADO') seleccionados;
         IF r.fecha=DATE '2026-10-05' THEN
-            INSERT INTO gasto(fecha,tipo_gasto,monto,id_viatico_chofer,descripcion,numero_comprobante)
+            INSERT INTO gasto(fecha,origen,monto,id_viatico_chofer,descripcion,numero_comprobante)
             VALUES(r.fecha,'VIATICO',14,diario_id,'SEED: comida real, 2 dólares sobre el viático','SEED-COMIDA-001');
         END IF;
     END LOOP;
 
-    INSERT INTO tipo_gasto(codigo,nombre) VALUES ('COMIDA','Comida'),('PEAJE','Peaje'),('OTRO','Otro') ON CONFLICT DO NOTHING;
-    INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante) VALUES
-        ('2026-10-05','PEAJE',3,vehiculo_id,viajes_ids[1],'SEED: peaje pagado','SEED-PEAJE-001'),
-        ('2026-10-06','PEAJE',5,vehiculo_id,viajes_ids[3],'SEED: peaje pagado','SEED-PEAJE-002'),
-        ('2026-10-07','PEAJE',4,vehiculo_id,viajes_ids[4],'SEED: gasto conservado aunque se anuló el viaje','SEED-PEAJE-003');
-    INSERT INTO gasto(fecha,tipo_gasto,monto,descripcion,numero_comprobante)
-    VALUES('2026-10-06','OTRO',25,'SEED: gasto general sin vehículo ni viaje','SEED-GENERAL-001');
-    INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante,estado,fecha_anulacion,motivo_anulacion)
-    VALUES('2026-10-05','PEAJE',99,vehiculo_id,viajes_ids[1],'SEED: gasto anulado, excluido del informe','SEED-ANULADO-001',
+    INSERT INTO tipo_gasto(nombre,concepto_estimado) VALUES ('Comida',NULL),('Peaje','PEAJE'),('Otro',NULL) ON CONFLICT DO NOTHING;
+    INSERT INTO gasto(fecha,id_tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante) VALUES
+        ('2026-10-05',(SELECT id_tipo_gasto FROM tipo_gasto WHERE nombre='Peaje'),3,vehiculo_id,viajes_ids[1],'SEED: peaje pagado','SEED-PEAJE-001'),
+        ('2026-10-06',(SELECT id_tipo_gasto FROM tipo_gasto WHERE nombre='Peaje'),5,vehiculo_id,viajes_ids[3],'SEED: peaje pagado','SEED-PEAJE-002'),
+        ('2026-10-07',(SELECT id_tipo_gasto FROM tipo_gasto WHERE nombre='Peaje'),4,vehiculo_id,viajes_ids[4],'SEED: gasto conservado aunque se anuló el viaje','SEED-PEAJE-003');
+    INSERT INTO gasto(fecha,id_tipo_gasto,monto,descripcion,numero_comprobante)
+    VALUES('2026-10-06',(SELECT id_tipo_gasto FROM tipo_gasto WHERE nombre='Otro'),25,'SEED: gasto general sin vehículo ni viaje','SEED-GENERAL-001');
+    INSERT INTO gasto(fecha,id_tipo_gasto,monto,id_vehiculo,id_viaje,descripcion,numero_comprobante,estado,fecha_anulacion,motivo_anulacion)
+    VALUES('2026-10-05',(SELECT id_tipo_gasto FROM tipo_gasto WHERE nombre='Peaje'),99,vehiculo_id,viajes_ids[1],'SEED: gasto anulado, excluido del informe','SEED-ANULADO-001',
         'ANULADO','2026-10-05 18:00','SEED: comprobante duplicado');
 
     -- Dos tanques completos con una carga parcial intermedia: 66 km y 12 galones.
@@ -1217,7 +1217,7 @@ BEGIN
         (TIMESTAMP '2026-10-06 18:00',1066,8,TRUE,'SEED-CARGA-003')
     ) AS cargas(fecha,odometro,galones,lleno,comprobante)
     LOOP
-        INSERT INTO gasto(fecha,tipo_gasto,monto,id_vehiculo,descripcion,numero_comprobante)
+        INSERT INTO gasto(fecha,origen,monto,id_vehiculo,descripcion,numero_comprobante)
         VALUES(r.fecha::date,'COMBUSTIBLE',round(r.galones*combustible.precio_por_galon,2),vehiculo_id,
             'SEED: abastecimiento sintético',r.comprobante) RETURNING id_gasto INTO gasto_id;
         INSERT INTO abastecimiento_combustible(id_vehiculo,id_gasto,fecha_hora,kilometraje_odometro,galones,precio_por_galon,tanque_lleno,observacion)
