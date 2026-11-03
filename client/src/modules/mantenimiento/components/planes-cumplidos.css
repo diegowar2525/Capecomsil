@@ -1,0 +1,8 @@
+.planes-cumplidos { margin: 1.25rem 0 0; padding: 1rem; border: 1px solid var(--border-color, #dce3ee); border-radius: 12px; min-width: 0; }
+.planes-cumplidos p { margin: .5rem 0 1rem; }
+.planes-cumplidos__lista { display: grid; gap: .65rem; max-height: 320px; overflow-y: auto; }
+.planes-cumplidos__opcion { display: flex; gap: .8rem; align-items: flex-start; padding: .85rem; border: 1px solid #dce3ee; border-radius: 8px; cursor: pointer; }
+.planes-cumplidos__opcion:has(input:checked) { background: #f2edff; border-color: #9462e8; }
+.planes-cumplidos__opcion input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: .2rem; }
+.planes-cumplidos__opcion span { min-width: 0; overflow-wrap: anywhere; }
+.planes-cumplidos__opcion small { display: block; margin-top: .3rem; }

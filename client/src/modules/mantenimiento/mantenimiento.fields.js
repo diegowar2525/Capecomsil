@@ -1,4 +1,26 @@
+import { fields as facturaFields } from '../facturas-proveedores/facturas-proveedores.fields.js';
 export const fields = [
+    {
+        name: 'modalidad_pago', label: 'Forma de registro', type: 'select', required: true, defaultValue: 'DIRECTO', options: [
+            { value: 'DIRECTO', label: 'Sin factura' },
+            { value: 'NUEVA', label: 'Con factura' }]
+    },
+    {
+        "name": "clase",
+        "label": "Clase de trabajo",
+        "type": "select",
+        "required": true,
+        "options": [
+            {
+                "value": "PREVENTIVO",
+                "label": "Mantenimiento preventivo"
+            },
+            {
+                "value": "CORRECTIVO",
+                "label": "Correctivo / reparación"
+            }
+        ]
+    },
     {
         "name": "id_vehiculo",
         "label": "Vehículo",
@@ -8,6 +30,7 @@ export const fields = [
     },
     {
         "name": "id_proveedor",
+        requiredWhen: { field: 'modalidad_pago', value: 'NUEVA' },
         "label": "Proveedor",
         "type": "select",
         "required": false,
@@ -27,14 +50,15 @@ export const fields = [
     },
     {
         "name": "tipo",
-        "label": "Tipo",
+        "label": "Trabajo realizado",
         "type": "text",
         "required": true,
         "maxLength": 100
     },
     {
         "name": "monto",
-        "label": "Monto",
+        when: { field: 'modalidad_pago', value: 'DIRECTO' },
+        "label": "Total cobrado por el taller",
         "type": "number",
         "required": true,
         "min": 0,
@@ -53,70 +77,24 @@ export const fields = [
         "required": false
     },
     {
-        "name": "detalles",
-        "label": "Materiales",
-        "type": "rows",
-        "fields": [
-            {
-                "name": "origen_producto",
-                "label": "Origen",
-                "type": "select",
-                "required": true,
-                "options": [
-                    {
-                        "value": "INVENTARIO",
-                        "label": "Inventario"
-                    },
-                    {
-                        "value": "EXTERNO",
-                        "label": "Externo"
-                    }
-                ]
-            },
-            {
-                "name": "id_producto",
-                "label": "Producto",
-                "type": "select",
-                "required": true,
-                "source": "id_producto",
-                "when": {
-                    "field": "origen_producto",
-                    "value": "INVENTARIO"
-                }
-            },
-            {
-                "name": "descripcion_producto",
-                "label": "Material externo",
-                "type": "text",
-                "required": true,
-                "when": {
-                    "field": "origen_producto",
-                    "value": "EXTERNO"
-                }
-            },
-            {
-                "name": "cantidad",
-                "label": "Cantidad",
-                "type": "number",
-                "required": true,
-                "min": 0.01,
-                "step": 0.01
-            },
-            {
-                "name": "observacion",
-                "label": "Observación",
-                "type": "textarea",
-                "required": false
-            }
-        ],
-        "minRows": 0
-    },
-    {
         "name": "planes_cumplidos",
         "label": "Planes cumplidos",
         "type": "select",
         "required": false,
         "source": "planes_cumplidos",
         "multiple": true
+    },
+    {
+        "name": "id_factura_proveedor",
+        "label": "Factura",
+        when: { field: 'modalidad_pago', value: 'EXISTENTE' },
+        "type": "select",
+        "source": "id_factura_proveedor",
+        "required": true
+    },
+    { name: 'numero_comprobante', label: 'Comprobante del pago (opcional)', maxLength: 100, when: { field: 'modalidad_pago', value: 'DIRECTO' } },
+    {
+        name: 'factura', label: 'Factura', type: 'group', when: { field: 'modalidad_pago', value: 'NUEVA' },
+        fields: facturaFields.filter(field => !['id_proveedor', 'incluir_recepcion_inicial', 'recepcion_inicial'].includes(field.name)).map(field => field.name === 'detalles' ? {...field,fields:field.fields.map(item => item.name === 'descuento' ? {...item,required:false,defaultValue:'0'} : item)} : field)
     }
 ];

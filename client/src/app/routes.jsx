@@ -35,13 +35,13 @@ import { ProductosPage } from '../modules/productos/ProductosPage.jsx';
 import { ProveedoresPage } from '../modules/proveedores/ProveedoresPage.jsx';
 
 export const routes = [
-    {path:'/tipos-gasto',label:'Tipos de gasto',section:'Catálogos',Component:TiposGastoPage},
+    {path:'/tipos-gasto',label:'Tipos de gasto operativo',section:'Catálogos',Component:TiposGastoPage},
     { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
     { path: '/dashboard', label: "Dashboard", Component: Dashboard },
     { path: '/viajes', label: "Viajes", section: "Operaciones", Component: Viajes },
     { path: '/costos-viaje', label: "Costos de Viaje", section: "Operaciones", Component: CostosViajePage },
     { path: '/liquidaciones', label: "Liquidaciones", section: "Operaciones", Component: LiquidacionesPage },
-    { path: '/mantenimiento', label: "Mantenimiento", section: "Operaciones", Component: MantenimientoPage },
+    { path: '/mantenimiento', label: "Mantenimientos y reparaciones", section: "Operaciones", Component: MantenimientoPage },
     { path: '/facturacion', label: "Facturación Clientes", section: "Finanzas y Facturación", Component: FacturacionPage },
     { path: '/pagos', label: "Cobros a clientes", section: "Finanzas y Facturación", Component: PagosPage },
     { path: '/facturas-proveedores', label: "Facturas Proveedores", section: "Finanzas y Facturación", Component: FacturasProveedoresPage },

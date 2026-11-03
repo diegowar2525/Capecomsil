@@ -1,7 +1,7 @@
 export const page = {
-    "title": "Mantenimiento",
-    "subtitle": "Consulta y administración de mantenimiento",
+    "title": "Mantenimientos y reparaciones",
+    "subtitle": "Trabajos preventivos, reparaciones, materiales y pagos al taller",
     "rowKey": "id_mantenimiento",
-    "actionLabel": "Registrar mantenimiento",
+    "actionLabel": "Registrar trabajo",
     "api": "/mantenimientos"
 };
