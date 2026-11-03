@@ -16,7 +16,7 @@ const baseData = {
 };
 const payload = (viaje) => ({
     fecha_inicio: viaje.fecha_inicio, fecha_fin: viaje.fecha_fin, id_vehiculo: viaje.id_vehiculo, id_chofer: viaje.id_chofer,
-    version: viaje.version, motivo: "Corrección verificada",
+    version: viaje.version,
     detalles: viaje.detalles.map(({ id_detalle_viaje, id_gasolinera, id_terminal, id_producto_transportado, galones }) =>
         ({ id_detalle_viaje, id_gasolinera, id_terminal, id_producto_transportado, galones })),
     tramos: viaje.tramos.map(({ id_tramo_viaje, orden, id_trayecto, observacion }) =>
@@ -26,7 +26,8 @@ const payload = (viaje) => ({
 test("Edición: versión, motivo, IDs y campos controlados por el servidor", () => {
     const data = { ...baseData, version: 1, motivo: "Corrección" };
     assert.equal(validateEdicion(data).detalles[0].id_detalle_viaje, null);
-    for (const patch of [{ version: undefined }, { version: true }, { motivo: " " }, { estado: "ANULADO" },
+    assert.equal(validateEdicion({...data,motivo:undefined}).motivo,null);
+    for (const patch of [{ version: undefined }, { version: true }, { estado: "ANULADO" },
         { detalles: baseData.detalles.map((d) => ({ ...d, id_detalle_viaje: 1 })) },
         { detalles: [{ ...baseData.detalles[0], tarifa_aplicada: "99" }] },
         { tramos: [{ orden: 1, id_trayecto: 1, kilometros: 100 }] }]) {
@@ -80,7 +81,9 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         const capacidadMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/024_tarifas_capacidad.sql"), "utf8");
         await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/025_tipos_gasto.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
-        await admin.query("INSERT INTO tipo_gasto(codigo,nombre) VALUES ('OTRO','Otro') ON CONFLICT DO NOTHING");
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/029_origen_gastos_mantenimientos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/030_edicion_mantenimiento.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query("INSERT INTO tipo_gasto(nombre) VALUES ('Otro')");
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -188,7 +191,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         const resultados = await Promise.all([editar(payload(actual)), editar(payload(actual))]);
         assert.deepEqual(resultados.map((res) => res.status).sort(), [200, 409]);
         actual = await get();
-        assert.equal((await request("/gastos", "POST", { id_viaje: id, fecha: "2026-10-10", tipo_gasto: "OTRO", monto: "5" }, jefe)).status, 201);
+        assert.equal((await request("/gastos", "POST", { id_viaje: id, fecha: "2026-10-10", id_tipo_gasto: 3, monto: "5" }, jefe)).status, 201);
         assert.equal((await editar({ ...payload(actual), id_vehiculo: 1 })).status, 409);
         const cancelados = await Promise.all([editar(payload(actual)), request(route + "/anular", "POST", { motivo: "Descartado" })]);
         assert.equal(cancelados[1].status, 200);

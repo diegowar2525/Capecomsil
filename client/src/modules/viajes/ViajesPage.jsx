@@ -6,7 +6,11 @@ import { actions as declaredActions } from './viajes.actions.js';
 import { api } from './services/viajes.api.js';
 import { useViajes } from './hooks/useViajes.js';
 
-const actions = declaredActions.map(action => ({ ...action, permission: `viajes.${({ edit: 'editar', annul: 'anular' })[action.id] ?? 'consultar'}` }));
+const actions = declaredActions.map(action => ({
+    ...action,
+    permission: `viajes.${({ edit: 'editar', annul: 'anular' })[action.id] ?? 'consultar'}`
+}));
+
 const definition = {
     filters,
     page: {

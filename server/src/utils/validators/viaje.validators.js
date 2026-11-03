@@ -2,11 +2,12 @@ const {
     validateId,
     validateDateTime,
     validateDate,
+    validateOptionalText,
     validateDecimal
 } = require("./common.validators");
 const { validateTramos } = require("./tramo_viaje.validators");
 const { createHttpError } = require("../errors/http.error");
-const { validateMotivo } = require("./anulacion.validators");
+
 
 const validateEdicion = (data) => {
     const resultado = validateData(data);
@@ -32,7 +33,7 @@ const validateEdicion = (data) => {
         ["id_detalle_viaje", "id_gasolinera", "id_terminal", "id_producto_transportado", "galones"]);
     asignarIds([...data.tramos].sort((a, b) => a.orden - b.orden), resultado.tramos, "id_tramo_viaje",
         ["id_tramo_viaje", "id_trayecto", "orden", "observacion"]);
-    return { ...resultado, version: validateId(data.version), motivo: validateMotivo(data) };
+    return { ...resultado, version: validateId(data.version), motivo: validateOptionalText(data.motivo, "motivo", 150) };
 };
 
 const validateData = (data) => {
