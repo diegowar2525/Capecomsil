@@ -8,7 +8,7 @@
     border-radius: var(--radius-lg);
     background: linear-gradient(115deg, var(--accent-light), var(--bg-surface) 75%);
 }
-.catalogo-detalle__imagen { width: 88px; height: 88px; display: flex; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 14px; color: var(--accent-primary); background: var(--bg-surface); border: 1px solid var(--border-color); }
+.catalogo-detalle__imagen { width: 112px; height: 112px; display: flex; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 14px; color: var(--accent-primary); background: var(--bg-surface); border: 1px solid var(--border-color); }
 .catalogo-detalle__imagen .foto-miniatura { width: 100%; height: 100%; border: 0; border-radius: inherit; }
 .catalogo-detalle__identidad { min-width: 0; }
 .catalogo-detalle__etiqueta { margin: 0 0 5px; font-size: .75rem; font-weight: 600; color: var(--text-secondary); }
@@ -37,7 +37,7 @@
 .catalogo-detalle-tabla > h3 { font-size: .9rem; padding: 12px 0; border-bottom: 1px solid var(--border-color); margin-bottom: 14px; }
 @media (max-width: 540px) {
     .catalogo-detalle__cabecera { padding: 16px; gap: 12px; align-items: flex-start; }
-    .catalogo-detalle__imagen { width: 64px; height: 64px; }
+    .catalogo-detalle__imagen { width: 80px; height: 80px; }
     .catalogo-detalle__identidad h3 { font-size: 1.05rem; }
     .catalogo-detalle__campos { grid-template-columns: minmax(0, 1fr); }
     .catalogo-detalle__campo { padding: 12px 14px; }

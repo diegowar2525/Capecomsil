@@ -105,3 +105,55 @@
         width: 100%;
     }
 }
+/* La misma interacción del perfil, adaptada a las fotos de catálogos. */
+.foto-selector input[type="file"][hidden] { display: none; }
+.foto-selector--catalogo {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+    margin: 0 0 24px;
+    padding: 20px;
+    background: var(--bg-primary);
+}
+.catalogo-foto-cambiar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 176px;
+    height: 124px;
+    padding: 6px;
+    border: 1px dashed var(--accent-border);
+    border-radius: 16px;
+    background: var(--bg-surface);
+    color: var(--accent-primary);
+    cursor: pointer;
+}
+.catalogo-foto-cambiar:hover { border-color: var(--accent-primary); background: var(--accent-light); }
+.catalogo-foto-cambiar:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 4px; }
+.catalogo-foto-cambiar img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
+.foto-selector--rostro .catalogo-foto-cambiar { width: 124px; }
+.foto-selector--rostro .catalogo-foto-cambiar img { object-fit: cover; }
+.catalogo-foto-cambiar__icon {
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: var(--text-inverse);
+    border: 3px solid var(--bg-primary);
+}
+.foto-selector__contenido { min-width: 0; }
+.foto-selector--catalogo label { font-weight: 600; }
+.foto-selector__nombre { overflow-wrap: anywhere; font-size: .8rem; color: var(--accent-primary); }
+.foto-selector--catalogo .foto-selector__acciones .btn { padding: 7px 10px; font-size: .8rem; }
+.foto-selector--catalogo .foto-selector__quitar { font-size: .8rem; }
+@media (max-width: 560px) {
+    .foto-selector--catalogo { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .catalogo-foto-cambiar { justify-self: center; max-width: 100%; }
+}
