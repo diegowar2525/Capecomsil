@@ -4,10 +4,13 @@ const findAll = async (client = pool) => {
     const result = await client.query(`
         SELECT
             producto.*,
-            categoria.nombre AS nombre_categoria
+            categoria.nombre AS nombre_categoria,
+            ma.nombre AS marca, COALESCE(mo.nombre, producto.modelo_anterior) AS modelo
         FROM
             producto
             JOIN categoria_producto AS categoria USING (id_categoria)
+            LEFT JOIN marca ma ON ma.id_marca=producto.id_marca
+            LEFT JOIN modelo mo ON mo.id_modelo=producto.id_modelo
         ORDER BY
             id_producto DESC
     `);
@@ -20,10 +23,13 @@ const findById = async (id, client = pool) => {
         `
         SELECT
             producto.*,
-            categoria.nombre AS nombre_categoria
+            categoria.nombre AS nombre_categoria,
+            ma.nombre AS marca, COALESCE(mo.nombre, producto.modelo_anterior) AS modelo
         FROM
             producto
             JOIN categoria_producto AS categoria USING (id_categoria)
+            LEFT JOIN marca ma ON ma.id_marca=producto.id_marca
+            LEFT JOIN modelo mo ON mo.id_modelo=producto.id_modelo
         WHERE
             id_producto = $1
     `,
@@ -38,8 +44,8 @@ const create = async (data, client = pool) => {
         id_categoria,
         nombre,
         medida,
-        modelo,
-        marca,
+        id_modelo,
+        id_marca,
         descripcion,
         unidad_medida,
         stock_minimo,
@@ -54,8 +60,8 @@ const create = async (data, client = pool) => {
                 id_categoria,
                 nombre,
                 medida,
-                modelo,
-                marca,
+                id_modelo,
+                id_marca,
                 descripcion,
                 unidad_medida,
                 stock_minimo,
@@ -72,8 +78,8 @@ const create = async (data, client = pool) => {
             id_categoria,
             nombre,
             medida,
-            modelo,
-            marca,
+            id_modelo,
+            id_marca,
             descripcion,
             unidad_medida,
             stock_minimo,
@@ -91,8 +97,8 @@ const update = async (id, data, client = pool) => {
         id_categoria,
         nombre,
         medida,
-        modelo,
-        marca,
+        id_modelo,
+        id_marca,
         descripcion,
         unidad_medida,
         stock_minimo,
@@ -107,8 +113,9 @@ const update = async (id, data, client = pool) => {
             id_categoria = $1,
             nombre = $2,
             medida = $3,
-            modelo = $4,
-            marca = $5,
+            modelo_anterior = CASE WHEN id_modelo IS NOT NULL OR $4::integer IS NOT NULL THEN NULL ELSE modelo_anterior END,
+            id_modelo = $4,
+            id_marca = $5,
             descripcion = $6,
             unidad_medida = $7,
             stock_minimo = $8,
@@ -124,8 +131,8 @@ const update = async (id, data, client = pool) => {
             id_categoria,
             nombre,
             medida,
-            modelo,
-            marca,
+            id_modelo,
+            id_marca,
             descripcion,
             unidad_medida,
             stock_minimo,
@@ -214,14 +221,16 @@ const findStock = async (id = null, soloBajoStock = false, client = pool) => {
             p.estado,
             p.imagen_url,
             p.medida,
-            p.marca,
-            p.modelo,
+            ma.nombre AS marca,
+            COALESCE(mo.nombre,p.modelo_anterior) AS modelo,
             p.condicion_llanta,
             p.stock_minimo,
             COALESCE(s.stock, 0)::text AS stock_actual,
             COALESCE(s.stock, 0) < p.stock_minimo AS bajo_stock
         FROM
             producto p
+            LEFT JOIN marca ma ON ma.id_marca=p.id_marca
+            LEFT JOIN modelo mo ON mo.id_modelo=p.id_modelo
             LEFT JOIN (
                 SELECT
                     id_producto,

@@ -22,9 +22,10 @@ test("Imágenes: persistencia y lectura en los tres catálogos", async () => {
         await client.query("SET LOCAL search_path TO imagenes_test_" + process.pid + ",public");
         await client.query(fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8"));
         await client.query("INSERT INTO categoria_producto(nombre) VALUES ('Test')");
+        await client.query("INSERT INTO marca(ambito,nombre) VALUES ('VEHICULO','Test'); INSERT INTO modelo(id_marca,nombre) VALUES (1,'Test')");
         pool.query = client.query.bind(client);
         for (const [entity, data] of [
-            ["vehiculo", { placa: "TEST", marca: "Marca", modelo: "Modelo", anio: 2026, capacidad_galones: 100 }],
+            ["vehiculo", { placa: "TEST", id_marca: 1, id_modelo: 1, anio: 2026, capacidad_galones: 100 }],
             ["chofer", { nombre: "Test", cedula: "TEST", tipo_remuneracion: "DIARIO_FIJO" }],
             ["producto", { id_categoria: 1, nombre: "Test", unidad_medida: "unidad" }]
         ]) {

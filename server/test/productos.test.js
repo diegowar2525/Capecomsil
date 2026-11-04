@@ -13,7 +13,7 @@ test("PRODUCTO: datos normalizados y límites", () => {
     assert.equal(result.nombre, "Filtro");
     assert.equal(result.unidad_medida, "unidad");
     assert.equal(result.stock_minimo, "0");
-    assert.equal(result.marca, null);
+    assert.equal(result.id_marca, null);
     assert.equal(result.estado, true);
     assert.equal(validateData({ ...data, condicion_llanta: " reencauchada " }).condicion_llanta, "REENCAUCHADA");
     for (const condicion_llanta of [true, "USADA", ""]) {

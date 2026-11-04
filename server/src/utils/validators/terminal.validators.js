@@ -1,5 +1,7 @@
 const { createHttpError } = require("../errors/http.error");
 
+const { validateId } = require("./common.validators");
+
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos del terminal son obligatorios", 400);
@@ -17,6 +19,7 @@ const validateData = (data) => {
         throw createHttpError("El estado debe ser true o false", 400);
     }
     return {
+        id_ciudad: data.id_ciudad == null || data.id_ciudad === "" ? null : validateId(data.id_ciudad),
         nombre: nombre.trim(),
         ubicacion: ubicacion.trim(),
         estado: estado ?? true

@@ -49,8 +49,12 @@ test('Capacidad HTTP: migración con historial, terminal independiente, edición
         await admin.query('SET CONSTRAINTS ALL IMMEDIATE');
         const migration=fs.readFileSync(path.join(__dirname,'../../database/migrations/024_tarifas_capacidad.sql'),'utf8');
         await admin.query(migration.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
+        const geografia = fs.readFileSync(path.join(__dirname,'../../database/migrations/031_provincias_ciudades.sql'),'utf8');
+        await admin.query(geografia.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         assert.equal((await admin.query('SELECT valor_transporte FROM detalle_viaje WHERE id_detalle_viaje=1')).rows[0].valor_transporte,'300.00');
         assert.equal((await admin.query('SELECT tarifa_aplicada FROM detalle_liquidacion WHERE id_liquidacion=1')).rows[0].tarifa_aplicada,'0.1000');
+        const marcas = fs.readFileSync(path.join(__dirname,'../../database/migrations/032_marcas_modelos.sql'),'utf8');
+        await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         await admin.query('COMMIT');
         pool.query=isolated.query.bind(isolated); pool.connect=isolated.connect.bind(isolated);
         const jefe=await createAuthenticatedFetch(isolated), operador=await createAuthenticatedFetch(isolated,'OPERADOR');

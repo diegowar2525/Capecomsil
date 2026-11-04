@@ -71,6 +71,10 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const facturacionMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/028_facturas_cobros_cliente.sql"), "utf8");
         await admin.query(facturacionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const geografia = fs.readFileSync(path.join(__dirname, "../../database/migrations/031_provincias_ciudades.sql"), "utf8");
+        await admin.query(geografia.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const marcas = fs.readFileSync(path.join(__dirname,'../../database/migrations/032_marcas_modelos.sql'),'utf8');
+        await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);

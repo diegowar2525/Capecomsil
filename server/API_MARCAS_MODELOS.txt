@@ -1,0 +1,21 @@
+MARCAS Y MODELOS — API
+Requiere sesión y permisos catalogos.consultar/crear/editar/eliminar según la operación.
+
+GET /api/marcas?ambito=VEHICULO (o PRODUCTO; omitir para todos)
+GET /api/marcas/:id
+POST /api/marcas  {"nombre":"Hino","ambito":"VEHICULO","estado":true}
+PUT /api/marcas/:id  mismo formato. No permite cambiar ámbito.
+DELETE /api/marcas/:id  solo sin referencias.
+
+GET /api/modelos?ambito=VEHICULO
+GET /api/modelos/:id
+POST /api/modelos  {"nombre":"700","id_marca":1,"estado":true}
+PUT /api/modelos/:id  mismo formato. No permite cambiar marca.
+DELETE /api/modelos/:id  solo sin referencias.
+
+Listados devuelven arrays; registros incluyen sus IDs, nombre y estado. Nombres: máximo 100 caracteres, espacios normalizados; duplicados por ámbito/marca devuelven 409. Marca inactiva no admite crear modelos. Referencias inexistentes, incompatibles, inactivas para nuevas asociaciones o eliminaciones en uso devuelven 409. Datos inválidos: 400; ID inexistente: 404.
+
+VEHÍCULOS / PRODUCTOS
+Enviar id_marca e id_modelo en creación/edición, no los antiguos textos marca/modelo (rechazados con 400). Vehículos requiere ambos; productos permite null y exige marca si hay modelo. GET devuelve IDs y nombres legibles marca/modelo. Un registro existente puede conservar su asociación inactiva al editar otros campos.
+
+Renombrar o cambiar estado desde el formulario modifica el catálogo inmediatamente. La selección del vehículo/producto se aplica al guardar el formulario principal. Los nombres históricos sin marca se conservan en modelo_anterior y pueden completarse posteriormente.

@@ -8,7 +8,7 @@ const cases = [
     ["gasolinera", "gasolineras", "Gasolinera", { nombre: " Gasolinera ", ruc: " 123 ", agente_retencion: false }],
     ["chofer", "choferes", "Chofer", { nombre: " Chofer ", cedula: " 123 ", tipo_remuneracion: " diario_fijo " }],
     ["terminal", "terminales", "Terminal", { nombre: " Terminal ", ubicacion: " Ubicación " }],
-    ["vehiculo", "vehiculos", "Vehiculo", { placa: " abc ", marca: " Marca ", modelo: " Modelo ", anio: "2026", capacidad_galones: "100" }],
+    ["vehiculo", "vehiculos", "Vehiculo", { placa: " abc ", id_marca: 1, id_modelo: 1, anio: "2026", capacidad_galones: "100" }],
     ["tarifa", "tarifas", "Tarifa", { id_gasolinera: "1", id_terminal: "1", valor_por_galon: "0.035", fecha_inicio: "2026-01-01" }]
 ];
 

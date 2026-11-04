@@ -1,5 +1,7 @@
 const { createHttpError } = require("../errors/http.error");
 
+const { validateId } = require("./common.validators");
+
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos deben ser un objeto válido", 400);
@@ -42,6 +44,7 @@ const validateData = (data) => {
         throw createHttpError("El campo representante_legal debe ser texto", 400);
     }
     return {
+        id_ciudad: data.id_ciudad == null || data.id_ciudad === "" ? null : validateId(data.id_ciudad),
         nombre: data.nombre.trim(),
         ruc: data.ruc.trim(),
         direccion: data.direccion?.trim() || null,

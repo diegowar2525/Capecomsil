@@ -7,6 +7,8 @@ const { translateFacturaProveedorError } = require("./factura_proveedor.errors")
 const { translateTrayectoError } = require("./trayecto.errors");
 
 const translators = [
+    require("./marca_modelo.errors").translateMarcaModeloError,
+    require("./geografia.errors").translateGeografiaError,
     require("./pago_mantenimiento.errors").translatePagoMantenimientoError,
     require("./factura_cliente.errors").translateFacturaClienteError,
     require("./tarifa_capacidad.errors").translateTarifaCapacidadError,

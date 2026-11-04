@@ -1,0 +1,20 @@
+CATÁLOGOS DE PROVINCIAS Y CIUDADES
+
+Requieren sesión, CSRF para escrituras y permisos catalogos.consultar/crear/editar/eliminar según la operación, igual que los demás catálogos.
+
+GET /api/provincias y GET /api/ciudades: listado.
+GET /api/provincias/:id y GET /api/ciudades/:id: detalle (404 si no existe).
+POST /api/provincias: { "nombre": "Azuay", "estado": true }
+POST /api/ciudades: { "nombre": "Cuenca", "id_provincia": 1, "estado": true }
+PUT en las mismas rutas con /:id: edición con los mismos campos.
+DELETE en las mismas rutas con /:id: eliminación si no existen referencias.
+
+Nombre obligatorio, máximo 100 caracteres. Estado opcional, true por defecto.
+Provincia obligatoria para una ciudad. Nombres duplicados y referencias inválidas/en uso devuelven 409.
+Ciudades incluye el nombre de provincia en el campo provincia.
+
+GASOLINERAS Y TERMINALES
+POST/PUT aceptan id_ciudad opcional; null permite quitarla. GET devuelve id_ciudad, id_provincia, ciudad y provincia. No se guarda id_provincia en estos establecimientos: se deriva de la ciudad.
+En frontend se selecciona provincia y luego ciudad. Cambiar provincia limpia la ciudad seleccionada. Ambos campos pueden quedar vacíos. No incluye coordenadas ni integración con mapas.
+
+Base de datos: aplicar database/migrations/031_provincias_ciudades.sql antes de usar estas rutas con una instalación existente.

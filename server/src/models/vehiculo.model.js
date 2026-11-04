@@ -5,16 +5,18 @@ const findAll = async (client = pool) => {
         SELECT
             id_vehiculo,
             placa,
-            marca,
-            modelo,
+            vehiculo.id_marca,
+            ma.nombre AS marca,
+            vehiculo.id_modelo,
+            COALESCE(mo.nombre, vehiculo.modelo_anterior) AS modelo,
             anio,
             capacidad_galones,
             kilometraje_base,
             to_char(fecha_inicio_control_km, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km,
             imagen_url,
-            estado
+            vehiculo.estado
         FROM
-            vehiculo
+            vehiculo LEFT JOIN marca ma USING(id_marca) LEFT JOIN modelo mo ON mo.id_modelo=vehiculo.id_modelo
         ORDER BY
             id_vehiculo DESC
     `);
@@ -28,16 +30,18 @@ const findById = async (id, client = pool) => {
         SELECT
             id_vehiculo,
             placa,
-            marca,
-            modelo,
+            vehiculo.id_marca,
+            ma.nombre AS marca,
+            vehiculo.id_modelo,
+            COALESCE(mo.nombre, vehiculo.modelo_anterior) AS modelo,
             anio,
             capacidad_galones,
             kilometraje_base,
             to_char(fecha_inicio_control_km, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio_control_km,
             imagen_url,
-            estado
+            vehiculo.estado
         FROM
-            vehiculo
+            vehiculo LEFT JOIN marca ma USING(id_marca) LEFT JOIN modelo mo ON mo.id_modelo=vehiculo.id_modelo
         WHERE
             id_vehiculo = $1
     `,
@@ -50,8 +54,8 @@ const findById = async (id, client = pool) => {
 const create = async (
     {
         placa,
-        marca,
-        modelo,
+        id_marca,
+        id_modelo,
         anio,
         capacidad_galones,
         kilometraje_base,
@@ -66,8 +70,8 @@ const create = async (
         INSERT INTO
             vehiculo (
                 placa,
-                marca,
-                modelo,
+                id_marca,
+                id_modelo,
                 anio,
                 capacidad_galones,
                 kilometraje_base,
@@ -83,8 +87,8 @@ const create = async (
     `,
         [
             placa,
-            marca,
-            modelo,
+            id_marca,
+            id_modelo,
             anio,
             capacidad_galones,
             kilometraje_base,
@@ -101,8 +105,8 @@ const update = async (
     id,
     {
         placa,
-        marca,
-        modelo,
+        id_marca,
+        id_modelo,
         anio,
         capacidad_galones,
         kilometraje_base,
@@ -117,8 +121,9 @@ const update = async (
         UPDATE vehiculo
         SET
             placa = $1,
-            marca = $2,
-            modelo = $3,
+            id_marca = $2,
+            modelo_anterior = CASE WHEN id_modelo IS NOT NULL OR $3::integer IS NOT NULL THEN NULL ELSE modelo_anterior END,
+            id_modelo = $3,
             anio = $4,
             capacidad_galones = $5,
             kilometraje_base = $6,
@@ -133,8 +138,8 @@ const update = async (
     `,
         [
             placa,
-            marca,
-            modelo,
+            id_marca,
+            id_modelo,
             anio,
             capacidad_galones,
             kilometraje_base,

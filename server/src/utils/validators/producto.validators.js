@@ -6,12 +6,12 @@ const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos del producto son obligatorios", 400);
     }
+    if (data.marca !== undefined || data.modelo !== undefined) throw createHttpError("Seleccione id_marca e id_modelo del catálogo",400);
+    if (data.id_modelo != null && data.id_marca == null) throw createHttpError("Seleccione la marca del modelo",400);
     const {
         id_categoria,
         nombre,
         medida,
-        modelo,
-        marca,
         descripcion,
         unidad_medida,
         stock_minimo = 0,
@@ -29,16 +29,12 @@ const validateData = (data) => {
     const camposTexto = {
         nombre,
         medida,
-        modelo,
-        marca,
         descripcion,
         unidad_medida
     };
     const limites = {
         nombre: 150,
         medida: 50,
-        modelo: 100,
-        marca: 100,
         unidad_medida: 30
     };
     for (const [campo, valor] of Object.entries(camposTexto)) {
@@ -82,8 +78,8 @@ const validateData = (data) => {
         id_categoria: idCategoriaNumerico,
         nombre: nombre.trim(),
         medida: medida?.trim() || null,
-        modelo: modelo?.trim() || null,
-        marca: marca?.trim() || null,
+        id_modelo: data.id_modelo == null ? null : validateId(data.id_modelo),
+        id_marca: data.id_marca == null ? null : validateId(data.id_marca),
         descripcion: descripcion?.trim() || null,
         unidad_medida: unidad_medida.trim().toLowerCase(),
         stock_minimo: String(stock_minimo),

@@ -39,11 +39,7 @@ test("Fotos HTTP: permisos, reemplazo atómico, rollback y limpieza recuperable"
         await admin.query(`CREATE SCHEMA ${schemaName}`);
         await admin.query(`SET LOCAL search_path TO ${schemaName},public`);
         const schema = fs.readFileSync(path.join(__dirname, "../../database/schema.sql"), "utf8");
-        await admin.query(schema.split("-- Fotos de perfil: almacenamiento privado y limpieza diferida.")[0]);
-        const migration = fs.readFileSync(path.join(__dirname, "../../database/migrations/026_fotos_usuario.sql"), "utf8");
-        await admin.query(migration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
-        const catalogoMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/027_fotos_catalogos.sql"), "utf8");
-        await admin.query(catalogoMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        await admin.query(schema);
         await admin.query("COMMIT");
         t.mock.method(pool, "query", isolated.query.bind(isolated));
         t.mock.method(pool, "connect", isolated.connect.bind(isolated));
@@ -120,9 +116,10 @@ test("Fotos HTTP: permisos, reemplazo atómico, rollback y limpieza recuperable"
         // Los tres catálogos conservan sus permisos y usan la misma limpieza.
         const apiBase = base.replace(/\/auth$/, "");
         const categoria = (await isolated.query("INSERT INTO categoria_producto(nombre) VALUES ('Fotos') RETURNING id_categoria")).rows[0];
+        await isolated.query("INSERT INTO marca(ambito,nombre) VALUES ('VEHICULO','Test'); INSERT INTO modelo(id_marca,nombre) VALUES (1,'Test')");
         const casos = [
             { recurso: "choferes", key: "id_chofer", data: { nombre: "Chofer foto", cedula: "foto-test", tipo_remuneracion: "DIARIO_FIJO" } },
-            { recurso: "vehiculos", key: "id_vehiculo", data: { placa: "FOTO-001", marca: "Test", modelo: "Test", anio: 2025, capacidad_galones: 4000 } },
+            { recurso: "vehiculos", key: "id_vehiculo", data: { placa: "FOTO-001", id_marca: 1, id_modelo: 1, anio: 2025, capacidad_galones: 4000 } },
             { recurso: "productos", key: "id_producto", data: { id_categoria: categoria.id_categoria, nombre: "Producto foto", unidad_medida: "unidad" } }
         ];
         for (const caso of casos) {

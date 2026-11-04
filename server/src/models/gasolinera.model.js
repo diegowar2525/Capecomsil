@@ -1,33 +1,8 @@
 const pool = require("../config/database");
-
-const findAll = async (client = pool) => {
-    const result = await client.query(`
-        SELECT
-            *
-        FROM
-            gasolinera
-        ORDER BY
-            id_gasolinera
-    `);
-
-    return result.rows;
-};
-
-const findById = async (id, client = pool) => {
-    const result = await client.query(
-        `
-        SELECT
-            *
-        FROM
-            gasolinera
-        WHERE
-            id_gasolinera = $1
-    `,
-        [id]
-    );
-
-    return result.rows[0] ?? null;
-};
+const select = `SELECT t.*, c.id_provincia, c.nombre AS ciudad, p.nombre AS provincia
+    FROM gasolinera t LEFT JOIN ciudad c USING(id_ciudad) LEFT JOIN provincia p USING(id_provincia)`;
+const findAll = async (client = pool) => (await client.query(`${select} ORDER BY id_gasolinera`)).rows;
+const findById = async (id, client = pool) => (await client.query(`${select} WHERE id_gasolinera = $1`, [id])).rows[0] ?? null;
 
 const create = async (data, client = pool) => {
     const {
@@ -38,7 +13,8 @@ const create = async (data, client = pool) => {
         correo,
         representante_legal,
         agente_retencion,
-        estado
+        estado,
+        id_ciudad
     } = data;
     const result = await client.query(
         `
@@ -51,14 +27,15 @@ const create = async (data, client = pool) => {
                 correo,
                 representante_legal,
                 agente_retencion,
-                estado
+                estado,
+                id_ciudad
             )
         VALUES
-            ($1, $2, $3, $4, $5, $6, $7, $8)
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING
             *
     `,
-        [nombre, ruc, direccion, telefono, correo, representante_legal, agente_retencion, estado]
+        [nombre, ruc, direccion, telefono, correo, representante_legal, agente_retencion, estado, id_ciudad]
     );
 
     return result.rows[0] ?? null;
@@ -73,7 +50,8 @@ const update = async (id, data, client = pool) => {
         correo,
         representante_legal,
         agente_retencion,
-        estado
+        estado,
+        id_ciudad
     } = data;
     const result = await client.query(
         `
@@ -86,9 +64,9 @@ const update = async (id, data, client = pool) => {
             correo = $5,
             representante_legal = $6,
             agente_retencion = $7,
-            estado = $8
+            estado = $8, id_ciudad = $9
         WHERE
-            id_gasolinera = $9
+            id_gasolinera = $10
         RETURNING
             *
     `,
@@ -101,6 +79,7 @@ const update = async (id, data, client = pool) => {
             representante_legal,
             agente_retencion,
             estado,
+            id_ciudad,
             id
         ]
     );
