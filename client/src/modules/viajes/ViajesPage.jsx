@@ -22,6 +22,7 @@ const definition = {
     actions,
     api,
     fields: [],
+    detailFields: [{ name: 'motivo_anulacion', label: 'Motivo de anulación', type: 'textarea' }],
     rowKey: 'id_viaje',
     permissionResource: 'viajes',
     Form: ViajeOperacionForm

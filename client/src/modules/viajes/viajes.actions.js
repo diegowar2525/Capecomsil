@@ -1,3 +1,5 @@
+import { resumirRecorrido } from './domain/resumen-recorrido.js';
+
 export const actions = [
     {
         "id": "detail",
@@ -33,23 +35,10 @@ export const actions = [
             {
                 "name": "tramos",
                 "label": "Recorrido",
+                transform: resumirRecorrido,
                 "columns": [
-                    {
-                        "key": "orden",
-                        "label": "Orden"
-                    },
-                    {
-                        "key": "nombre_origen",
-                        "label": "Origen"
-                    },
-                    {
-                        "key": "nombre_destino",
-                        "label": "Destino"
-                    },
-                    {
-                        "key": "kilometros",
-                        "label": "Kilómetros"
-                    }
+                    { "key": "recorrido", "label": "Recorrido" },
+                    { "key": "kilometros", "label": "Kilómetros totales" }
                 ]
             },
             {

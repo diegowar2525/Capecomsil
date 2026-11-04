@@ -8,8 +8,8 @@ const validateData = (data) => {
     if (typeof nombre !== "string" || nombre.trim() === "") {
         throw createHttpError("El nombre del producto transportado es obligatorio", 400);
     }
-    if (typeof unidad_medida !== "string" || unidad_medida.trim() === "") {
-        throw createHttpError("La unidad de medida es obligatoria", 400);
+    if (unidad_medida !== undefined && (typeof unidad_medida !== 'string' || !['galon', 'galones'].includes(unidad_medida.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()))) {
+        throw createHttpError("Los productos transportados solo utilizan galón como unidad", 400);
     }
     if (estado !== undefined && typeof estado !== "boolean") {
         throw createHttpError("El campo estado debe ser booleano", 400);
@@ -23,7 +23,7 @@ const validateData = (data) => {
     }
     return {
         nombre: data.nombre.trim(),
-        unidad_medida: data.unidad_medida.trim(),
+        unidad_medida: "galón",
         descripcion: data.descripcion?.trim() || null,
         estado: estado ?? true
     };
