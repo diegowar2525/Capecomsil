@@ -52,7 +52,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
             INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('LIQ',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','LIQ','DIA_TRABAJADO');
             INSERT INTO gasolinera(nombre) VALUES ('A'),('B'),('Sin entregas'); INSERT INTO terminal(nombre) VALUES ('T');
-            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones');
+            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (1,1,0.035,'2026-01-01'),(2,1,0.04,'2026-01-01');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('T-A',1,1,10);
             INSERT INTO trayecto(nombre,id_gasolinera_origen,id_gasolinera_destino,kilometros) VALUES ('A-B',1,2,20);

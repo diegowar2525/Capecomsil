@@ -32,7 +32,7 @@ test('Capacidad HTTP: migración con historial, terminal independiente, edición
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba capacidad','CAP','DIA_TRABAJADO');
             INSERT INTO gasolinera(nombre) VALUES ('Especial'),('Normal');
             INSERT INTO terminal(nombre) VALUES ('T1'),('T2');
-            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones');
+            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (1,1,.10,'2026-01-01'),(2,1,.20,'2026-01-01');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('T1-A',1,1,10);
             INSERT INTO trayecto(nombre,id_gasolinera_origen,id_gasolinera_destino,kilometros) VALUES ('A-B',1,2,20);

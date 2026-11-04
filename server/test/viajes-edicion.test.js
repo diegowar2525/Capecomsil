@@ -56,7 +56,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
             INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('EDIT1',100),('EDIT2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Uno','EDIT1','DIA_TRABAJADO'),('Dos','EDIT2','DIA_TRABAJADO');
             INSERT INTO gasolinera(nombre) VALUES ('A'),('B'); INSERT INTO terminal(nombre) VALUES ('T');
-            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones');
+            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio,fecha_fin)
             VALUES (1,1,0.10,'2026-01-01','2026-10-08'),(1,1,0.20,'2026-10-09',NULL),(2,1,0.30,'2026-01-01',NULL);
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('T-A',1,1,10);

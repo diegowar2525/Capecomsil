@@ -40,7 +40,7 @@ test('PostgreSQL: períodos e historial (esquema aislado y rollback)', async () 
             VALUES (1,1,0.04,'2026-09-01'), (2,1,0.05,'2026-01-01')`);
         await rejected("UPDATE tarifa SET fecha_fin='2026-09-01' WHERE id_tarifa=1", '23P01');
         await client.query("INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100); INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Prueba','TEST','DIARIO_FIJO')");
-        await client.query("INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones')");
+        await client.query("INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón')");
         await client.query("INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-05-15 08:00','2026-05-15 09:00')");
         await client.query("INSERT INTO detalle_viaje(id_viaje,id_tarifa,id_producto_transportado,galones,tarifa_aplicada,valor_transporte) VALUES (1,1,1,100,0.035,3.50)");
         for (const change of ["valor_por_galon=0.04", 'id_gasolinera=2', "fecha_fin='2026-05-14'", "fecha_inicio='2026-05-16'"]) {

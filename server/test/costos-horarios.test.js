@@ -21,7 +21,7 @@ test("Costos y horarios: CRUD, histórico, transacciones, concurrencia y anulaci
             INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('V1',100),('V2',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('C1','C1','DIARIO_FIJO'),('C2','C2','DIA_TRABAJADO');
             INSERT INTO terminal(nombre) VALUES ('T'); INSERT INTO gasolinera(nombre) VALUES ('G');
-            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones');
+            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio) VALUES (1,1,0.04,'2026-01-01');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('T-G',1,1,100);
             INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('G-T',1,1,100);`);

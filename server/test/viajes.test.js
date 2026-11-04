@@ -53,7 +53,7 @@ test("Viajes: registro HTTP, tarifas históricas, capacidad y rollback", async (
             INSERT INTO vehiculo(placa,capacidad_galones) VALUES ('TEST',100);
             INSERT INTO chofer(nombre,cedula,tipo_remuneracion) VALUES ('Test','TEST','DIARIO_FIJO');
             INSERT INTO gasolinera(nombre) VALUES ('A'),('B'); INSERT INTO terminal(nombre) VALUES ('T');
-            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galones'),('Extra','galones');
+            INSERT INTO producto_transportado(nombre,unidad_medida) VALUES ('Diesel','galón'),('Extra','galón');
             INSERT INTO tarifa(id_gasolinera,id_terminal,valor_por_galon,fecha_inicio,fecha_fin,estado)
             VALUES (1,1,0.035,'2026-01-01','2026-10-08',false),(2,1,0.04,'2026-01-01',NULL,true);`);
         await admin.query(`INSERT INTO trayecto(nombre,id_gasolinera_origen,id_terminal_destino,kilometros) VALUES ('Salida',1,1,10.25);
