@@ -14,6 +14,8 @@ export const fields = [
     {
         "name": "unidad_medida",
         "label": "Unidad de medida",
+        "defaultValue": "galón",
+        "readOnly": true,
         "required": true
     },
     {

@@ -4,7 +4,8 @@ export const fields = [
         "label": "Trayecto",
         "type": "select",
         "required": true,
-        "source": "id_trayecto"
+        "source": "id_trayecto",
+        "searchable": true
     },
     {
         "name": "importe",
