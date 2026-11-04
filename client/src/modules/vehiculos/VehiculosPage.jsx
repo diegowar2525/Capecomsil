@@ -1,3 +1,4 @@
+import { MarcaModeloForm } from '../../components/MarcaModeloForm/MarcaModeloForm.jsx';
 import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
 import { crudActions } from '../../components/CatalogoConectado/catalogo.actions.js';
 import { useVehiculos } from './hooks/useVehiculos.js';
@@ -11,6 +12,8 @@ import { prepararVehiculo } from './domain/vehiculo.js';
 import { fotoVehiculoApi } from '../../services/fotos.api.js';
 
 const definition = {
+    renderForm: props => <MarcaModeloForm {...props} fields={fields} ambito="VEHICULO" />,
+    detailFields: fields.filter(field => !['id_marca','id_modelo'].includes(field.name)),
     page, columns, fields, filters, api, rowKey: 'id_vehiculo', prepare: prepararVehiculo, foto: fotoVehiculoApi,
     actions: [...crudActions, {
         ...relatedAction, parent: 'detail', query: true,

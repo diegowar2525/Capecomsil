@@ -5,13 +5,19 @@ export const fields = [
         "required": true
     },
     {
-        "name": "marca",
+        "name": "id_marca",
+        "placeholder": "Ej.: Hino",
         "label": "Marca",
+        "type": "select",
+        "source": "id_marca",
         "required": true
     },
     {
-        "name": "modelo",
+        "name": "id_modelo",
+        "placeholder": "Ej.: 700",
         "label": "Modelo",
+        "type": "select",
+        "source": "id_modelo",
         "required": true
     },
     {

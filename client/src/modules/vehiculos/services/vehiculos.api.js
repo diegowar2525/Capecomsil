@@ -1,3 +1,4 @@
+import { cargarMarcasModelos } from '../../../services/marcas-modelos.api.js';
 import { requestJson } from '../../../services/http.js';
 
 export const listarVehiculos = (signal) => requestJson('/api/vehiculos', { signal });
@@ -11,6 +12,7 @@ export const consultarKilometraje = (id, fecha, signal) => {
 };
 
 export const api = {
+    opciones: signal => cargarMarcasModelos('VEHICULO',signal),
     listar: listarVehiculos,
     consultar: consultarVehiculo,
     crear: crearVehiculo,

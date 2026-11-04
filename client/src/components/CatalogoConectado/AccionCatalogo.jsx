@@ -63,7 +63,7 @@ export function AccionCatalogo({ definition, id, action, registro, catalogos, ex
             {action.id === 'delete'
                 ? <p>¿Eliminar <strong>{registro?.nombre ?? registro?.placa ?? id}</strong>? Esta operación no se puede deshacer.</p>
                 : !editable && definition.renderActionForm ? definition.renderActionForm({ form, registro, catalogos, action, saving: busy, fields })
-                : definition.renderForm && editable ? definition.renderForm({ form, registro, catalogos, action, saving: busy, fotoSelector }) : <CatalogoForm fields={editable && definition.foto ? displayFields.filter(field => field.name !== 'imagen_url') : displayFields} values={form.values} change={form.change} saving={busy} catalogos={catalogos} />}
+                : definition.renderForm && editable ? definition.renderForm({ form, registro, catalogos, action, saving: busy, fotoSelector, onBusy: setChildBusy }) : <CatalogoForm fields={editable && definition.foto ? displayFields.filter(field => field.name !== 'imagen_url') : displayFields} values={form.values} change={form.change} saving={busy} catalogos={catalogos} />}
             {action.query && resultado && <>
                 <CatalogoDetalle columns={action.columns ?? []} fields={[]} registro={resultado} />
                 {action.tables?.map(table => <section key={table.name}><h3>{table.label}</h3><DataTable columns={table.columns} data={resultado[table.name] ?? []} rowKey={table.rowKey} /></section>)}

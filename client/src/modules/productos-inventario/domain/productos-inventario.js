@@ -5,7 +5,13 @@ const esLlanta = (values, catalogos) => catalogos.id_categoria?.find((item) => i
 
 export function formFields(values, catalogos) {
     return fields.filter((field) => field.name !== 'condicion_llanta' || esLlanta(values, catalogos))
-        .map((field) => field.name === 'condicion_llanta' ? { ...field, required: true } : field);
+        .map((field) => {
+            if (field.name === 'condicion_llanta') return { ...field, required: true };
+            if (field.name === 'unidad_medida' && values.unidad_medida && !field.options.some(option => option.value === values.unidad_medida)) {
+                return { ...field, options: [...field.options, { value: values.unidad_medida, label: values.unidad_medida }] };
+            }
+            return field;
+        });
 }
 
 export function prepare(values, catalogos) {

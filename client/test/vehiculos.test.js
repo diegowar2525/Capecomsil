@@ -18,12 +18,12 @@ test('Vehículos: la acción adicional del catálogo conserva fecha opcional y e
 
 test('Vehículos: formulario conserva decimales, fecha local, cero y estado; elimina campos ajenos', () => {
     const form = {
-        placa: ' abc-123 ', marca: ' Marca ', modelo: ' Modelo ', anio: '2026',
+        placa: ' abc-123 ', id_marca: '1', id_modelo: '2', anio: '2026',
         capacidad_galones: '8000.50', kilometraje_base: '0', fecha_inicio_control_km: '2026-10-23T08:15:30',
         imagen_url: '', estado: true, id_vehiculo: '999', kilometraje_estimado: '300'
     };
     assert.deepEqual(prepararVehiculo(form), {
-        placa: 'ABC-123', marca: 'Marca', modelo: 'Modelo', anio: 2026, capacidad_galones: '8000.50',
+        placa: 'ABC-123', id_marca: '1', id_modelo: '2', anio: 2026, capacidad_galones: '8000.50',
         kilometraje_base: '0', fecha_inicio_control_km: '2026-10-23T08:15:30', imagen_url: null, estado: true
     });
     form.estado = false;

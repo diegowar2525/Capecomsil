@@ -1,0 +1,10 @@
+.marca-modelo { margin-top: 1.25rem; }
+.marca-modelo__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.marca-modelo__selector { min-width: 0; margin: 0; padding: 1rem; border: 1px solid #dce3ef; border-radius: 12px; display: flex; flex-direction: column; gap: .65rem; }
+.marca-modelo__selector legend { padding: 0 .35rem; font-weight: 600; }
+.marca-modelo__selector label, .marca-modelo__selector small { font-size: .85rem; }
+.marca-modelo__selector button { white-space: normal; overflow-wrap: anywhere; }
+.marca-modelo__admin { border-top: 1px solid #dce3ef; padding-top: .75rem; }
+.marca-modelo__admin .record-actions { flex-wrap: wrap; }
+.marca-modelo [role="alert"] { color: #b42318; }
+@media (max-width: 640px) { .marca-modelo__grid { grid-template-columns: minmax(0,1fr); } }

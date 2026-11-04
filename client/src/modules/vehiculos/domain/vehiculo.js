@@ -8,8 +8,8 @@ export function prepararVehiculo(values) {
     }
     return {
         placa: text('placa').toUpperCase(),
-        marca: text('marca'),
-        modelo: text('modelo'),
+        id_marca: text('id_marca'),
+        id_modelo: text('id_modelo'),
         anio: Number(text('anio')),
         capacidad_galones: text('capacidad_galones'),
         kilometraje_base: kilometraje || null,

@@ -11,7 +11,7 @@ export const columns = [
     { "key": "nombre_categoria", "label": "Categoría" },
     {
         "key": "unidad_medida",
-        "label": "Unidad"
+        "label": "Unidad de inventario"
     },
     {
         "key": "stock_minimo",

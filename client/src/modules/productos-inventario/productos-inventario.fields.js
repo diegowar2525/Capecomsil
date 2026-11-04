@@ -8,6 +8,7 @@ export const fields = [
     },
     {
         "name": "nombre",
+        "placeholder": "Ej.: Filtro de aceite",
         "label": "Nombre",
         "type": "text",
         "required": true,
@@ -15,28 +16,42 @@ export const fields = [
     },
     {
         "name": "unidad_medida",
-        "label": "Unidad de medida",
-        "type": "text",
+        "label": "Unidad de inventario",
+        "type": "select",
         "required": true,
-        "maxLength": 30
+        "options": [
+            { "value": "unidad", "label": "Unidad" },
+            { "value": "litro", "label": "Litro" },
+            { "value": "galón", "label": "Galón" },
+            { "value": "kilogramo", "label": "Kilogramo" },
+            { "value": "metro", "label": "Metro" },
+            { "value": "envase", "label": "Envase" },
+            { "value": "caja", "label": "Caja" },
+            { "value": "par", "label": "Par" },
+            { "value": "no aplica", "label": "No aplica" }
+        ]
     },
     {
-        "name": "marca",
+        "name": "id_marca",
+        "placeholder": "Ej.: Bridgestone",
         "label": "Marca",
-        "type": "text",
+        "type": "select",
+        "source": "id_marca",
         "required": false,
         "maxLength": 100
     },
     {
-        "name": "modelo",
+        "name": "id_modelo",
+        "placeholder": "Ej.: R268",
         "label": "Modelo",
-        "type": "text",
+        "type": "select",
+        "source": "id_modelo",
         "required": false,
         "maxLength": 100
     },
     {
         "name": "medida",
-        "label": "Medida",
+        "label": "Tamaño o medida",
         "type": "text",
         "required": false,
         "maxLength": 50
