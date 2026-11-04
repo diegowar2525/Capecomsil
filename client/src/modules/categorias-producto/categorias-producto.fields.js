@@ -14,7 +14,7 @@ export const fields = [
     },
     {
         "name": "es_llanta",
-        "label": "Es categoría de llantas",
+        "label": "Es llanta",
         "type": "checkbox",
         "required": false
     },

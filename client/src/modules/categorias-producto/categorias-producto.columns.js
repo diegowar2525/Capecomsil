@@ -13,7 +13,7 @@ export const columns = [
     },
     {
         "key": "es_llanta",
-        "label": "Llantas"
+        "label": "Llanta"
     },
     {
         "key": "estado",
