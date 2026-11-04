@@ -20,8 +20,12 @@ export function CatalogoForm({ fields, values, change, saving, catalogos = {} })
                 </fieldset>)}<button type="button" className="btn btn-outline" disabled={saving} onClick={() => set(field.name, [...(values[field.name] ?? []), valoresIniciales(field.fields)])}>Agregar {field.label.toLowerCase()}</button></>}
         </fieldset>;
         const { when: _when, source, defaultChecked, defaultValue, requiredWhen, labelKey: _labelKey, field: _field, operator: _operator, ...props } = field;
+        const required = Boolean(field.required || (requiredWhen && values[requiredWhen.field] === requiredWhen.value));
+        const label = field.label.replace(/\s*\(opcional\)/gi, '');
+        const optional = !required && field.type !== 'checkbox' && !field.disabled && !field.readOnly;
         return <div key={field.name} className={field.type === 'checkbox' ? 'form-checkbox-wrapper' : 'form-field-wrapper'}><FormField {...props}
-            required={field.required || Boolean(requiredWhen && values[requiredWhen.field] === requiredWhen.value)}
+            label={optional ? `${label} (opcional)` : label}
+            required={required}
             disabled={saving || field.disabled} onChange={change} options={source ? catalogos[source] ?? [] : field.options}
             {...(field.type === 'checkbox' ? { checked: values[field.name] ?? defaultChecked ?? false } : { value: values[field.name] ?? defaultValue ?? (field.multiple ? [] : '') })} /></div>;
     })}</div>;

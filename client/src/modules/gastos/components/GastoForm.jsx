@@ -18,9 +18,7 @@ export function GastoForm({ form, catalogos, saving }) {
         form.change(event);
     };
     const viatico = state.data.find(row => String(row.id_viatico_chofer) === String(form.values.id_viatico_chofer));
-    const displayFields = fields.filter(field => !['origen','id_viatico_chofer'].includes(field.name)).map(field => ({
-        ...field, label: field.required ? field.label : field.label + ' (opcional)'
-    }));
+    const displayFields = fields.filter(field => !['origen','id_viatico_chofer'].includes(field.name));
     return <>
         <CatalogoForm fields={fields.filter(field => field.name === 'origen')} values={form.values} change={change} saving={saving} />
         {esViatico && <fieldset className="form-section">

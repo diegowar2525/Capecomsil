@@ -1,6 +1,6 @@
 import { CatalogoForm } from '../../../components/CatalogoConectado/CatalogoForm.jsx';
 import { FacturaMantenimientoForm } from './FacturaMantenimientoForm.jsx';
-import { indicarOpcionales, servicioInicial } from '../domain/formulario.js';
+import { servicioInicial } from '../domain/formulario.js';
 import './planes-cumplidos.css';
 
 export function MantenimientoForm({ form, registro, catalogos, saving, fields, action }) {
@@ -12,12 +12,12 @@ export function MantenimientoForm({ form, registro, catalogos, saving, fields, a
     const opciones = (catalogos.planes_cumplidos ?? []).filter(({ registro: plan, value }) =>
         plan.estado && String(plan.id_vehiculo) === String(trabajo?.id_vehiculo) && !vinculados.has(String(value)));
     const seleccion = form.values.planes_cumplidos ?? [];
-    const formFields = indicarOpcionales(fields.filter(field => !['planes_cumplidos','factura'].includes(field.name)).map(field => ({
+    const formFields = fields.filter(field => !['planes_cumplidos','factura'].includes(field.name)).map(field => ({
         ...field,
         ...(field.name === 'modalidad_pago' && action.id === 'edit' && registro?.id_factura_proveedor ? {options:[{value:'EXISTENTE',label:'Con factura'},{value:'DIRECTO',label:'Sin factura'}]} : {}),
         disabled: action.id === 'edit' && (['modalidad_pago', 'id_factura_proveedor'].includes(field.name) || (registro?.id_factura_proveedor && field.name === 'id_proveedor')),
         required: field.name === 'id_proveedor' && form.values.modalidad_pago !== 'DIRECTO' ? true : field.required
-    })),form.values);
+    }));
     const change = event => {
         if (event.target.name === 'tipo') {
             const factura = form.values.factura ?? {};

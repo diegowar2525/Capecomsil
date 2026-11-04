@@ -8,6 +8,7 @@ export const fields = [
     },
     {
         "name": "nombre",
+        "placeholder": "Ej.: Cambio de aceite cada 8000 km",
         "label": "Nombre",
         "type": "text",
         "required": true,

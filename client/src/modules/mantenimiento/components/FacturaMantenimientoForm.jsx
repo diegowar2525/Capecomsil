@@ -1,5 +1,5 @@
 import { CatalogoForm } from '../../../components/CatalogoConectado/CatalogoForm.jsx';
-import { indicarOpcionales, servicioInicial } from '../domain/formulario.js';
+import { servicioInicial } from '../domain/formulario.js';
 
 export function FacturaMantenimientoForm({ field, factura, trabajo, change, saving, catalogos }) {
     const values = factura ?? {};
@@ -13,13 +13,13 @@ export function FacturaMantenimientoForm({ field, factura, trabajo, change, savi
     }));
     return <fieldset className="form-section" disabled={saving}>
         <legend>Factura</legend>
-        <CatalogoForm fields={indicarOpcionales(field.fields.filter(item=>item.name !== 'detalles'),values)} values={values} change={changeHeader} saving={saving} catalogos={catalogos} />
+        <CatalogoForm fields={field.fields.filter(item=>item.name !== 'detalles')} values={values} change={changeHeader} saving={saving} catalogos={catalogos} />
         <fieldset className="form-section">
             <legend>Servicio del trabajo</legend>
             <p>La descripción se completa desde «Trabajo realizado». Introduce el precio y el impuesto según la factura.</p>
-            <CatalogoForm fields={indicarOpcionales(serviceFields,servicio)} values={servicio} change={changeServicio} saving={saving} catalogos={catalogos} />
+            <CatalogoForm fields={serviceFields} values={servicio} change={changeServicio} saving={saving} catalogos={catalogos} />
         </fieldset>
-        <CatalogoForm fields={[{...conceptos,name:'adicionales',label:'Conceptos adicionales (opcional)',minRows:0,fields:indicarOpcionales(conceptos.fields)}]}
+        <CatalogoForm fields={[{...conceptos,name:'adicionales',label:'Conceptos adicionales (opcional)',minRows:0,fields:conceptos.fields}]}
             values={{adicionales:(values.detalles ?? []).slice(1)}} saving={saving} catalogos={catalogos}
             change={event=>setFactura({...values,detalles:[servicio,...event.target.value]})} />
     </fieldset>;

@@ -15,6 +15,7 @@ export const fields = [
     {
         "name": "cantidad",
         "label": "Cantidad del ajuste",
+        "placeholder": "Ej.: -3 para retirar, 3 para agregar",
         "type": "number",
         "required": true,
         "step": 0.01

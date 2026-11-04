@@ -1,6 +1,7 @@
 export const fields = [
     {
         "name": "nombre",
+        "placeholder": "Ej.: Diésel",
         "label": "Producto transportado",
         "required": true
     },

@@ -50,6 +50,7 @@ export const fields = [
     },
     {
         "name": "tipo",
+        "placeholder": "Ej.: Cambio de filtros y aceite",
         "label": "Trabajo realizado",
         "type": "text",
         "required": true,

@@ -11,7 +11,7 @@ export function DestinoFinalForm({ agregarFinal, destinoFinal, lugares, onAgrega
             checked={agregarFinal} onChange={event => onAgregarFinal(event.target.checked)} aria-controls={contentId} />
         <div id={contentId}>
             {agregarFinal ? <div className="viaje-destino-final-content">
-                <FormField name="destino_final" label="Destino final adicional" type="select"
+                <FormField name="destino_final" label="Destino final adicional (opcional)" type="select"
                     options={lugares} required value={destinoFinal} onChange={event => onDestinoFinal(event.target.value)} />
             </div> : <div className="viaje-destino-final-hint">
                 <Info size={15} aria-hidden="true" /><span>El viaje termina en la última entrega.</span>

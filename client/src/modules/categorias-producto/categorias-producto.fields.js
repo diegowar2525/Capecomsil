@@ -1,6 +1,7 @@
 export const fields = [
     {
         "name": "nombre",
+        "placeholder": "Ej.: Filtros",
         "label": "Nombre",
         "type": "text",
         "required": true

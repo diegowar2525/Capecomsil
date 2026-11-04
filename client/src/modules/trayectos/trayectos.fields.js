@@ -1,6 +1,7 @@
 export const fields = [
     {
         "name": "nombre",
+        "placeholder": "Ej.: Terminal La Troncal → Estación Central",
         "label": "Nombre",
         "type": "text",
         "required": true,

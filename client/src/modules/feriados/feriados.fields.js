@@ -7,6 +7,7 @@ export const fields = [
     },
     {
         "name": "descripcion",
+        "placeholder": "Ej.: Día del Trabajo",
         "label": "Descripción",
         "type": "text",
         "required": true,
