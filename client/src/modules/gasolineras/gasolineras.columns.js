@@ -31,6 +31,8 @@ export const columns = [
         "key": "agente_retencion",
         "label": "Agente de retención"
     },
+    { key: 'provincia', label: 'Provincia' },
+    { key: 'ciudad', label: 'Ciudad' },
     {
         "key": "estado",
         "label": "Estado"

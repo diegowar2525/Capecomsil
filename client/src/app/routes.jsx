@@ -34,7 +34,13 @@ import { TerminalesPage } from '../modules/terminales/TerminalesPage.jsx';
 import { ProductosPage } from '../modules/productos/ProductosPage.jsx';
 import { ProveedoresPage } from '../modules/proveedores/ProveedoresPage.jsx';
 
+import { ProvinciasPage } from '../modules/provincias/ProvinciasPage.jsx';
+
+import { CiudadesPage } from '../modules/ciudades/CiudadesPage.jsx';
+
 export const routes = [
+    { path: '/ciudades', label: 'Ciudades', section: 'Catálogos', Component: CiudadesPage },
+    { path: '/provincias', label: 'Provincias', section: 'Catálogos', Component: ProvinciasPage },
     {path:'/tipos-gasto',label:'Tipos de gasto operativo',section:'Catálogos',Component:TiposGastoPage},
     { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
     { path: '/dashboard', label: "Dashboard", Component: Dashboard },

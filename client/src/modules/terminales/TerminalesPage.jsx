@@ -7,7 +7,11 @@ import { api } from './services/terminales.api.js';
 import { prepare } from './domain/terminales.js';
 import { useTerminales } from './hooks/useTerminales.js';
 
-const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_terminal' };
+import { UbicacionForm } from '../../components/UbicacionForm/UbicacionForm.jsx';
+
+const definition = {
+    renderForm: props => <UbicacionForm {...props} fields={fields} />,
+    detailFields: fields.filter(field => !['id_ciudad', 'id_provincia'].includes(field.name)), filters, fields, columns, page, api, prepare, rowKey: 'id_terminal' };
 
 export function TerminalesPage() {
     const controller = useTerminales();

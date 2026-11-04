@@ -51,7 +51,8 @@ test('Catálogos: campos explícitos conservan ceros, booleanos y opcionales vac
         const result = prepare({ ...values, id_ajeno: 99 });
         assert.equal(result.estado, false);
         assert.equal(result.id_ajeno, undefined);
-        for (const field of fields.filter((field) => !field.required && field.type !== 'checkbox')) assert.equal(result[field.name], null);
+        for (const field of fields.filter((field) => !field.required && field.type !== 'checkbox' && field.name !== 'id_provincia')) assert.equal(result[field.name], null);
+        assert.equal(result.id_provincia, undefined);
         assert.throws(() => prepare({ ...values, nombre: ' ' }), /obligatorio/);
     }
 });

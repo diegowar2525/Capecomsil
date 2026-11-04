@@ -1,6 +1,9 @@
 export const fields = [
+    { name: 'id_provincia', label: 'Provincia', type: 'select', source: 'id_provincia' },
+    { name: 'id_ciudad', label: 'Ciudad', type: 'select', source: 'id_ciudad' },
     {
         "name": "nombre",
+        "placeholder": "Ej.: Estación de servicio Central",
         "label": "Gasolinera",
         "required": true
     },

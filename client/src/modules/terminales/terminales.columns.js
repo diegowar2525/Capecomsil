@@ -11,6 +11,8 @@ export const columns = [
         "key": "ubicacion",
         "label": "Ubicación"
     },
+    { key: 'provincia', label: 'Provincia' },
+    { key: 'ciudad', label: 'Ciudad' },
     {
         "key": "estado",
         "label": "Estado"
