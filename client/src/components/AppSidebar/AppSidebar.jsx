@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+import { SidebarIcon } from './SidebarIcon.jsx';
 import { SidebarPerfil } from '../../modules/perfil/components/SidebarPerfil.jsx';
 
 import { useId, useState } from 'react';
@@ -18,9 +20,7 @@ function SidebarGroup({ group, activePath, onClose }) {
                 onClick={() => setIsExpanded((expanded) => !expanded)}
             >
                 <span>{group.section}</span>
-                <span className="sidebar-section-chevron" aria-hidden="true">
-                    {isExpanded ? '▾' : '▸'}
-                </span>
+                <ChevronDown className="sidebar-section-chevron" size={16} aria-hidden="true" />
             </button>
 
             <ul id={menuId} className="sidebar-menu-list" hidden={!isExpanded}>
@@ -32,7 +32,8 @@ function SidebarGroup({ group, activePath, onClose }) {
                             className={`sidebar-link ${activePath === item.path ? 'active' : ''}`}
                             onClick={onClose}
                         >
-                            <span>{item.label}</span>
+                            <SidebarIcon path={item.path} />
+                            <span className="sidebar-link-label">{item.label}</span>
                         </a>
                     </li>
                 ))}

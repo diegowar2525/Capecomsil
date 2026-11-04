@@ -56,7 +56,7 @@ export function AccionCatalogo({ definition, id, action, registro, catalogos, ex
             {action.id === 'detail' && <CatalogoDetalle columns={definition.columns} fields={definition.detailFields ?? definition.fields} registro={source} rowKey={definition.rowKey} catalogos={catalogos} />}
             {action.tables?.map((table) => <section key={table.name} className="catalogo-detalle-tabla">
                 <h3>{table.label}</h3>
-                <DataTable columns={table.columns} data={extra?.[table.name] ?? registro?.[table.name] ?? []} rowKey={table.rowKey} />
+                <DataTable columns={table.columns} data={table.transform ? table.transform(extra?.[table.name] ?? registro?.[table.name] ?? []) : extra?.[table.name] ?? registro?.[table.name] ?? []} rowKey={table.rowKey} />
             </section>)}
         </> : editable && definition.Form ? <definition.Form id={formId} registro={registro} catalogos={catalogos} guardar={guardar} onSaved={onSaved} onBusy={setChildBusy} action={action} /> : <form id={formId} onSubmit={form.submit} aria-busy={form.saving}>
             {!definition.renderForm && fotoSelector}
