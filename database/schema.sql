@@ -108,7 +108,7 @@ CREATE TABLE producto_transportado (
     id_producto_transportado INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     descripcion TEXT,
-    unidad_medida VARCHAR(30) NOT NULL,
+    unidad_medida VARCHAR(30) NOT NULL DEFAULT 'galón' CONSTRAINT producto_transportado_unidad_galon CHECK (unidad_medida = 'galón'),
     estado BOOLEAN NOT NULL DEFAULT TRUE
 );
 

@@ -274,25 +274,25 @@ VALUES
 (
     'Gasolina Súper',
     'Gasolina de alto octanaje',
-    'galones',
+    'galón',
     TRUE
 ),
 (
     'Gasolina Extra',
     'Gasolina de uso regular',
-    'galones',
+    'galón',
     TRUE
 ),
 (
     'Diésel',
     'Combustible diésel para distribución',
-    'galones',
+    'galón',
     TRUE
 ),
 (
     'Ecopaís',
     'Gasolina Ecopaís para distribución',
-    'galones',
+    'galón',
     TRUE
 );
 
