@@ -38,7 +38,35 @@ const findById = async (id) => {
     return result;
 };
 
+const completarPendientes = async () => {
+    const choferes = await remuneracionChoferModel.findChoferesAutomaticos();
+    let generadas = 0;
+    const fallos = [];
+    for (const { id_chofer } of choferes) {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+            await lock(client);
+            const fechas = await remuneracionChoferModel.findPendientes(id_chofer, client);
+            for (const { fecha } of fechas) await remuneracionChoferModel.recalcular(client, id_chofer, fecha);
+            await client.query("COMMIT");
+            generadas += fechas.length;
+        } catch (error) {
+            await client.query("ROLLBACK");
+            fallos.push({ id_chofer, code: error.code });
+        } finally { client.release(); }
+    }
+    return { generadas, fallos };
+};
+
+const cobertura = async query => {
+    const result = await remuneracionChoferModel.findCobertura(validatePeriodo(query));
+    if (!result) throw createHttpError('Chofer no encontrado',404);
+    return result;
+};
+
 module.exports = {
+    completarPendientes, cobertura,
     generar,
     findAll,
     findById

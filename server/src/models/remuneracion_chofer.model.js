@@ -64,7 +64,34 @@ const findFechasPeriodo = async (client, filtros) => {
     return result.rows;
 };
 
+// El corte depende de Ecuador, no de la zona horaria del servidor.
+const findChoferesAutomaticos = async (client = pool) => (await client.query(`
+    SELECT id_chofer FROM chofer WHERE fecha_inicio_trabajo IS NOT NULL ORDER BY id_chofer
+`)).rows;
+
+const findPendientes = async (id, client = pool) => (await client.query(`
+    SELECT d.fecha::text AS fecha FROM chofer c
+    CROSS JOIN LATERAL (SELECT c.fecha_inicio_trabajo + n AS fecha FROM generate_series(0,
+        LEAST(COALESCE(c.fecha_fin_trabajo, (CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1),
+        (CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1) - c.fecha_inicio_trabajo) n) d
+    WHERE c.id_chofer=$1 AND NOT EXISTS (SELECT 1 FROM remuneracion_chofer r WHERE r.id_chofer=c.id_chofer AND r.fecha=d.fecha)
+      AND EXISTS (SELECT 1 FROM configuracion_remuneracion cf WHERE cf.fecha_inicio<=d.fecha AND (cf.fecha_fin IS NULL OR cf.fecha_fin>=d.fecha))
+    ORDER BY d.fecha LIMIT 366
+`, [id])).rows;
+
+const findCobertura = async (filtros, client = pool) => (await client.query(`
+    SELECT c.fecha_inicio_trabajo::text, c.fecha_fin_trabajo::text,
+        ((CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1)::text AS hasta_procesable,
+        (SELECT COUNT(*)::integer FROM generate_series(
+            GREATEST(c.fecha_inicio_trabajo,$2::date),
+            LEAST(COALESCE(c.fecha_fin_trabajo,$3::date),$3::date,(CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1),
+            interval '1 day') d(fecha)
+         WHERE c.fecha_inicio_trabajo IS NOT NULL AND NOT EXISTS (SELECT 1 FROM remuneracion_chofer r WHERE r.id_chofer=c.id_chofer AND r.fecha=d.fecha::date)) AS dias_pendientes
+    FROM chofer c WHERE c.id_chofer=$1
+`, [filtros.id_chofer,filtros.fecha_desde,filtros.fecha_hasta])).rows[0] ?? null;
+
 module.exports = {
+    findChoferesAutomaticos, findPendientes, findCobertura,
     recalcular,
     findAll,
     findById,

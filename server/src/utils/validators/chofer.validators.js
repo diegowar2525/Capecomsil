@@ -1,5 +1,5 @@
 const { createHttpError } = require("../errors/http.error");
-const { validateImagenUrl } = require("./common.validators");
+const { validateImagenUrl, validateDate } = require("./common.validators");
 
 const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
@@ -26,7 +26,14 @@ const validateData = (data) => {
     if (estado !== undefined && typeof estado !== "boolean") {
         throw createHttpError("El estado debe ser true o false.", 400);
     }
+    const fecha_inicio_trabajo = data.fecha_inicio_trabajo == null ? null : validateDate(data.fecha_inicio_trabajo);
+    const fecha_fin_trabajo = data.fecha_fin_trabajo == null ? null : validateDate(data.fecha_fin_trabajo);
+    if (fecha_fin_trabajo && (!fecha_inicio_trabajo || fecha_fin_trabajo < fecha_inicio_trabajo)) {
+        throw createHttpError('La fecha de fin debe ser igual o posterior al inicio de trabajo.', 400);
+    }
     return {
+        fecha_inicio_trabajo,
+        fecha_fin_trabajo,
         imagen_url: validateImagenUrl(data.imagen_url),
         nombre: nombre.trim(),
         cedula: cedula.trim(),

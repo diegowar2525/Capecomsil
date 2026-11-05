@@ -1,3 +1,4 @@
+const { iniciarRemuneracionesAutomaticas } = require('./jobs/remuneraciones.job');
 const app = require("./app");
 const config = require("./config/env");
 const pool = require("./config/database");
@@ -12,6 +13,7 @@ const startServer = async () => {
     console.log("Conexión a PostgreSQL exitosa");
 
     const server = app.listen(PORT, () => {
+      server.once("close", iniciarRemuneracionesAutomaticas());
       const detenerLimpieza = iniciarLimpiezaFotos();
       server.once("close", detenerLimpieza);
       console.log(
