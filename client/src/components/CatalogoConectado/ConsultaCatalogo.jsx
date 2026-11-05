@@ -8,7 +8,7 @@ import { prepararCampos, valoresIniciales } from '../../domain/catalogo.js';
 function Resultado({ definition, params, toolbar }) {
     const api = useMemo(() => ({ ...definition.api, listar: signal => params ? definition.api.buscar(params, signal) : Promise.resolve([]) }), [definition.api, params]);
     const controller = useCatalogo(api, definition.rowKey);
-    return <CatalogoConectado definition={definition} controller={{ ...controller, toolbar }} />;
+    return <CatalogoConectado definition={definition} controller={{ ...controller, toolbar: <>{toolbar}{params && definition.Summary && <definition.Summary params={params} data={controller.data} loading={controller.loading} error={controller.error} />}</> }} />;
 }
 export function ConsultaCatalogo({ definition, fields }) {
     const [params, setParams] = useState(null);
