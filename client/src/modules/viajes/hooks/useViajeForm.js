@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { inicializarViaje } from '../domain/edicion.js';
 import { construirRecorrido, prepararViaje, punto } from '../domain/recorrido.js';
 
-const nuevoProducto = () => ({ key: crypto.randomUUID(), id_producto_transportado: '', galones: '' });
-const nuevaParada = () => ({ key: crypto.randomUUID(), id_gasolinera: '', productos: [nuevoProducto()] });
+// Claves locales de React: no son IDs del servidor ni requieren criptografía/HTTPS.
+let siguienteClave = 0;
+const claveFormulario = () => `viaje-nuevo-${++siguienteClave}`;
+
+const nuevoProducto = () => ({ key: claveFormulario(), id_producto_transportado: '', galones: '' });
+const nuevaParada = () => ({ key: claveFormulario(), id_gasolinera: '', productos: [nuevoProducto()] });
 const opciones = (items, id, label = 'nombre') => items.filter((item) => item.estado !== false)
     .map((item) => ({ value: String(item[id]), label: item[label] }));
 
