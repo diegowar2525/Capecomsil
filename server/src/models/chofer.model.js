@@ -8,6 +8,8 @@ const findAll = async (client = pool) => {
             cedula,
             telefono,
             tipo_remuneracion,
+            fecha_inicio_trabajo::text,
+            fecha_fin_trabajo::text,
             imagen_url,
             estado
         FROM
@@ -27,6 +29,8 @@ const findById = async (id, client = pool) => {
             cedula,
             telefono,
             tipo_remuneracion,
+            fecha_inicio_trabajo::text,
+            fecha_fin_trabajo::text,
             imagen_url,
             estado
         FROM
@@ -39,19 +43,19 @@ const findById = async (id, client = pool) => {
 };
 
 const create = async (
-    { nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado },
+    { nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, fecha_inicio_trabajo, fecha_fin_trabajo },
     client = pool
 ) => {
     const result = await client.query(
         `
         INSERT INTO
-            chofer (nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado)
+            chofer (nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, fecha_inicio_trabajo, fecha_fin_trabajo)
         VALUES
-            ($1, $2, $3, $4, $5, $6)
+            ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING
             *;
     `,
-        [nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado]
+        [nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, fecha_inicio_trabajo, fecha_fin_trabajo]
     );
 
     return result.rows[0] ?? null;
@@ -59,7 +63,7 @@ const create = async (
 
 const update = async (
     id,
-    { nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado },
+    { nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, fecha_inicio_trabajo, fecha_fin_trabajo },
     client = pool
 ) => {
     const result = await client.query(
@@ -71,13 +75,15 @@ const update = async (
             telefono = $3,
             tipo_remuneracion = $4,
             imagen_url = $5,
-            estado = $6
+            estado = $6,
+            fecha_inicio_trabajo = $8,
+            fecha_fin_trabajo = $9
         WHERE
             id_chofer = $7
         RETURNING
             *;
     `,
-        [nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, id]
+        [nombre, cedula, telefono, tipo_remuneracion, imagen_url, estado, id, fecha_inicio_trabajo, fecha_fin_trabajo]
     );
 
     return result.rows[0] ?? null;

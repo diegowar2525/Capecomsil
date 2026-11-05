@@ -27,7 +27,13 @@ const generar = async (req, res, next) => {
     }
 };
 
+const cobertura = async (req, res, next) => {
+    try { return res.status(200).json(await remuneracionesService.cobertura(req.query)); }
+    catch (error) { next(error); }
+};
+
 module.exports = {
+    cobertura,
     findAll,
     findById,
     generar
