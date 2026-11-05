@@ -118,7 +118,7 @@ test("Fotos HTTP: permisos, reemplazo atómico, rollback y limpieza recuperable"
         const categoria = (await isolated.query("INSERT INTO categoria_producto(nombre) VALUES ('Fotos') RETURNING id_categoria")).rows[0];
         await isolated.query("INSERT INTO marca(ambito,nombre) VALUES ('VEHICULO','Test'); INSERT INTO modelo(id_marca,nombre) VALUES (1,'Test')");
         const casos = [
-            { recurso: "choferes", key: "id_chofer", data: { nombre: "Chofer foto", cedula: "foto-test", tipo_remuneracion: "DIARIO_FIJO" } },
+            { recurso: "choferes", key: "id_chofer", data: { nombre: "Chofer foto", fecha_inicio_trabajo: "2026-01-01", cedula: "foto-test", tipo_remuneracion: "DIARIO_FIJO" } },
             { recurso: "vehiculos", key: "id_vehiculo", data: { placa: "FOTO-001", id_marca: 1, id_modelo: 1, anio: 2025, capacidad_galones: 4000 } },
             { recurso: "productos", key: "id_producto", data: { id_categoria: categoria.id_categoria, nombre: "Producto foto", unidad_medida: "unidad" } }
         ];
