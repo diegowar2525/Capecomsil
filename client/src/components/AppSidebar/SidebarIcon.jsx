@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 const icons = {
+    '/resumen': ChartNoAxesCombined, '/consulta-viajes': Route, '/consulta-viaticos': Utensils, '/consulta-combustible': Gauge,
     '/ciudades': MapPin, '/provincias': Map, '/tipos-gasto': Tags,
     '/vehiculos': Truck, '/choferes': ContactRound, '/gasolineras': Fuel,
     '/terminales': Warehouse, '/productos': Droplets, '/proveedores': Handshake,

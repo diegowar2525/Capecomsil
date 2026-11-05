@@ -1,8 +1,8 @@
 # Capecomsil — Frontend
 
 La estructura y las convenciones del proyecto están documentadas en
-[ESTRUCTURA.md](ESTRUCTURA.md). Las pantallas actuales son una base visual;
-la integración con sesiones, permisos y APIs está pendiente.
+[ESTRUCTURA.md](ESTRUCTURA.md). Las pantallas se integran con sesiones,
+permisos y las APIs del servidor.
 
 ## Plantilla original
 
@@ -27,7 +27,17 @@ Los listados conectados comparten búsqueda, orden y paginación. Los filtros
 adicionales se despliegan en «Más filtros», usando la cuadrícula responsiva
 existente. Los selectores conservan el ID como valor y muestran nombres, placas
 o números de factura mediante labelKey; las fechas incluyen el día completo.
-Informes usa sus consultas específicas y no muestra un listado vacío con filtros.
+Viajes, viáticos y consumo de combustible tienen páginas independientes bajo «Consultas e informes», con filtros de período, listado paginado e impresión completa de los resultados.
+
+## Resumen e impresión
+
+«Resumen», debajo del perfil, reemplaza al dashboard. Tiene dos vistas: resumen mensual (ingresos por viajes, costos y movimientos) y cuentas por cobrar acumuladas con detalle por gasolinera. Las rutas antiguas `/dashboard` e `/informes` abren Resumen por compatibilidad.
+
+El módulo `modules/resumen` separa servicios HTTP, hook de carga, formatos, componentes y estilos. Reglas y endpoints: [INFORMES.md](../server/INFORMES.md). No requiere migraciones adicionales a la 034.
+
+`components/InformeImpresion` comparte el membrete, tablas y estilos A4 entre el resumen y las consultas. Usa copias de los logos proporcionados en `assets/brand`, sin depender de rutas locales. «Imprimir / PDF» abre la impresión del navegador; elegir «Guardar como PDF». Se incluyen todos los registros cargados del período, no solo la página visible ni los filtros locales del listado. Se conservan encabezados de tabla y números de página en navegadores compatibles.
+
+Prueba: `node test/resumen.browser.cjs` con Playwright y Edge. Usa datos ficticios y deja PDFs de comprobación en la carpeta temporal del sistema. Incluye escritorio, móvil, recuperación de errores y cartera de varias páginas.
 
 Tipos de gasto tiene CRUD propio. Gastos consulta sus tipos activos y permite
 elegir la fecha del viático cuando se registra un desembolso posterior al viaje.

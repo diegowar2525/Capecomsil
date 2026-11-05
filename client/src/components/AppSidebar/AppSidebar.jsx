@@ -1,6 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import { SidebarIcon } from './SidebarIcon.jsx';
 import { SidebarPerfil } from '../../modules/perfil/components/SidebarPerfil.jsx';
+import { useAuth } from '../../modules/auth/hooks/useAuth.js';
 
 import { useId, useState } from 'react';
 
@@ -50,6 +51,8 @@ export function Sidebar({
     sidebarRef,
     isMobile
 }) {
+    const { permisos } = useAuth();
+    const resumenActivo = ['/resumen', '/dashboard', '/informes'].includes(activePath);
     return (
         <aside
             id="app-sidebar"
@@ -61,9 +64,9 @@ export function Sidebar({
             inert={isMobile && !isOpen}
         >
             <div className="sidebar-brand">
-                <a className="sidebar-brand-title" href="#/dashboard" onClick={onClose}
-                    aria-label="Capecomsil S.A — Ir al dashboard"
-                    aria-current={activePath === '/dashboard' ? 'page' : undefined}>
+                <a className="sidebar-brand-title" href="#/resumen" onClick={onClose}
+                    aria-label="Capecomsil S.A — Ir al resumen"
+                    aria-current={resumenActivo ? 'page' : undefined}>
                     Capecomsil S.A
                 </a>
 
@@ -80,6 +83,10 @@ export function Sidebar({
             <SidebarPerfil activePath={activePath} onClose={onClose} />
 
             <nav className="sidebar-nav">
+                {permisos.includes('informes.consultar') && <a href="#/resumen" onClick={onClose}
+                    className={`sidebar-link ${resumenActivo ? 'active' : ''}`} aria-current={resumenActivo ? 'page' : undefined}>
+                    <SidebarIcon path="/resumen" /><span className="sidebar-link-label">Resumen</span>
+                </a>}
                 {groups.map((group) => (
                     <SidebarGroup
                         key={`${group.section}:${activePath}`}

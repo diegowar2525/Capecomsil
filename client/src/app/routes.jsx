@@ -2,7 +2,8 @@ import { TiposGastoPage } from '../modules/tipos-gasto/TiposGastoPage.jsx';
 import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
 import { TarifasCapacidadPage } from '../modules/tarifas-capacidad/TarifasCapacidadPage.jsx';
 import { ModalidadesTarifaPage } from '../modules/modalidades-tarifa/ModalidadesTarifaPage.jsx';
-import { InformesPage } from '../modules/informes/InformesPage.jsx';
+import { ConsultaViajesPage, ConsultaViaticosPage, ConsultaCombustiblePage } from '../modules/informes/ConsultasInformesPage.jsx';
+import { ResumenPage } from '../modules/resumen/ResumenPage.jsx';
 import { InventarioPage } from '../modules/inventario/InventarioPage.jsx';
 import { RecepcionesCompraPage } from '../modules/recepciones-compra/RecepcionesCompraPage.jsx';
 import { RemuneracionesPage } from '../modules/remuneraciones-chofer/RemuneracionesPage.jsx';
@@ -17,7 +18,6 @@ import { ProductosInventarioPage } from '../modules/productos-inventario/Product
 import { CategoriasProductoPage } from '../modules/categorias-producto/CategoriasProductoPage.jsx';
 import { TrayectosPage } from '../modules/trayectos/TrayectosPage.jsx';
 import { TarifasPage } from '../modules/tarifas/TarifasPage.jsx';
-import { Dashboard } from '../modules/dashboard/DashboardPage.jsx';
 import { Viajes } from '../modules/viajes/ViajesPage.jsx';
 import { CostosViajePage } from '../modules/costos-viaje/CostosViajePage.jsx';
 import { LiquidacionesPage } from '../modules/liquidaciones/LiquidacionesPage.jsx';
@@ -43,9 +43,10 @@ export const routes = [
     { path: '/provincias', label: 'Provincias', section: 'Catálogos', Component: ProvinciasPage },
     {path:'/tipos-gasto',label:'Tipos de gasto operativo',section:'Catálogos',Component:TiposGastoPage},
     { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
-    { path: '/dashboard', label: "Dashboard", Component: Dashboard },
+    { path: '/resumen', label: 'Resumen', Component: ResumenPage },
+    { path: '/dashboard', label: 'Resumen', Component: ResumenPage },
     { path: '/viajes', label: "Viajes", section: "Operaciones", Component: Viajes },
-    { path: '/costos-viaje', label: "Costos de Viaje", section: "Operaciones", Component: CostosViajePage },
+    { path: '/costos-viaje', label: "Costos de Viaje", section: "Consultas e informes", Component: CostosViajePage },
     { path: '/liquidaciones', label: "Liquidaciones", section: "Operaciones", Component: LiquidacionesPage },
     { path: '/mantenimiento', label: "Mantenimientos y reparaciones", section: "Operaciones", Component: MantenimientoPage },
     { path: '/facturacion', label: "Facturación Clientes", section: "Finanzas y Facturación", Component: FacturacionPage },
@@ -72,8 +73,11 @@ export const routes = [
     { path: '/feriados', label: 'Feriados', section: 'Configuración', Component: FeriadosPage },
     { path: '/planes-mantenimiento', label: 'Planes de mantenimiento', section: 'Operaciones', Component: PlanesMantenimientoPage },
     { path: '/abastecimientos-combustible', label: 'Abastecimientos de combustible', section: 'Operaciones', Component: AbastecimientosPage },
-    { path: '/remuneraciones-chofer', label: 'Remuneraciones de choferes', section: 'Finanzas y Facturación', Component: RemuneracionesPage },
+    { path: '/remuneraciones-chofer', label: 'Remuneraciones de choferes', section: 'Consultas e informes', Component: RemuneracionesPage },
     { path: '/recepciones-compra', label: 'Recepciones de compra', section: 'Inventario', Component: RecepcionesCompraPage },
     { path: '/inventario', label: 'Inventario', section: 'Inventario', Component: InventarioPage },
-    { path: '/informes', label: 'Informes', section: 'Informes', Component: InformesPage },
+    { path: '/informes', label: 'Resumen', Component: ResumenPage },
+    { path: '/consulta-viajes', label: 'Consulta de viajes', section: 'Consultas e informes', Component: ConsultaViajesPage },
+    { path: '/consulta-viaticos', label: 'Consulta de viáticos', section: 'Consultas e informes', Component: ConsultaViaticosPage },
+    { path: '/consulta-combustible', label: 'Consumo de combustible', section: 'Consultas e informes', Component: ConsultaCombustiblePage },
 ];

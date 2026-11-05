@@ -3,7 +3,7 @@ const groups = {
     catalogos: ['tipos-gasto', 'vehiculos', 'choferes', 'gasolineras', 'terminales', 'productos', 'proveedores', 'trayectos', 'categorias-producto', 'productos-inventario'],
     tarifas: ['tarifas', 'tarifas-capacidad', 'modalidades-tarifa'],
     configuraciones: ['configuraciones-viatico', 'configuraciones-remuneracion', 'configuraciones-combustible', 'configuraciones-peaje-trayecto', 'feriados'],
-    viajes: ['viajes', 'costos-viaje'], inventario: ['inventario'], informes: ['informes'],
+    viajes: ['viajes', 'costos-viaje'], inventario: ['inventario'], informes: ['informes', 'resumen', 'dashboard', 'consulta-viajes', 'consulta-viaticos', 'consulta-combustible'],
     recepciones: ['recepciones-compra'], liquidaciones: ['liquidaciones'], mantenimientos: ['mantenimiento'],
     compras: ['facturas-proveedores'], pagos_proveedor: ['pagos-proveedores'], gastos: ['gastos'],
     planes_mantenimiento: ['planes-mantenimiento'], abastecimientos: ['abastecimientos-combustible'],

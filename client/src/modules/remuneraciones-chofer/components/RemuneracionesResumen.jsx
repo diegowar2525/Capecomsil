@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/remuneraciones-chofer.api.js';
-import './remuneraciones-resumen.css';
 
 const dinero = value => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(value);
 export function RemuneracionesResumen({ params, data = [], loading, error }) {

@@ -9,7 +9,7 @@ export function AppRoutes({ path }) {
         return (
             <section>
                 <h1>Página no encontrada</h1>
-                <a href="#/dashboard">Volver al inicio</a>
+                <a href="#/resumen">Volver al inicio</a>
             </section>
         );
     }

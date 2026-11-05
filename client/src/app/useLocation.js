@@ -7,10 +7,10 @@ const subscribe = (listener) => {
 
 const getLocation = () => {
     const path = window.location.hash.slice(1).split('?')[0].replace(/\/+$/, '');
-    return path || '/dashboard';
+    return path || '/resumen';
 };
 
 // Rutas hash: funcionan al recargar incluso en hosting estático sin reescrituras.
 export function useLocation() {
-    return useSyncExternalStore(subscribe, getLocation, () => '/dashboard');
+    return useSyncExternalStore(subscribe, getLocation, () => '/resumen');
 }
