@@ -18,6 +18,9 @@ test("Seed: escenario económico reproducible y consumo entre cargas completas",
         await client.query("SET CONSTRAINTS ALL IMMEDIATE");
         pool.query = client.query.bind(client);
         const filtros = {fecha_desde:"2026-10-01",fecha_hasta:"2026-10-31"};
+        const mensual = await require('../src/services/resumen.service').getMensual({mes:'2026-10'});
+        assert.equal(mensual.ingresos_viajes, '240.00');
+        assert.equal(mensual.cantidad_viajes, 3);
         const resumen = await informes.getResumen(filtros);
         assert.equal(resumen.cantidad_viajes,3);
         assert.equal(resumen.ingreso_transporte,"240.00");
@@ -38,7 +41,10 @@ test("Seed: escenario económico reproducible y consumo entre cargas completas",
         assert.equal(viajes.filter(v=>v.peaje_real_registrado===null).length,1);
         const diarios = await informes.getViaticos(filtros);
         assert.equal(diarios.find(d=>d.fecha==="2026-10-05").diferencia,"2.00");
-        assert.equal(diarios.find(d=>d.fecha==="2026-10-06").gasto_real_registrado,null);
+        const sinDesembolso = diarios.find(d=>d.fecha==="2026-10-06");
+        assert.equal(sinDesembolso.gasto_real_registrado,"0.00");
+        assert.equal(Number(sinDesembolso.diferencia),-Number(sinDesembolso.estimado));
+        assert.equal(sinDesembolso.estado_comparacion,"SIN_GASTOS_REGISTRADOS");
         const cargas = await informes.getCombustible(filtros);
         assert.equal(cargas.length,2);
         assert.equal(cargas[0].estado_comparacion,"COMPARABLE");

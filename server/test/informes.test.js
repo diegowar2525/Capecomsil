@@ -66,6 +66,13 @@ test("Informes: agregación sin duplicados, datos pendientes e intervalos de tan
         await carga("02",1050,4,false,{fecha_hora:"2026-10-02T09:30"});
         const final = await carga("03",1100,8);
         const base = "?fecha_desde=2026-10-01&fecha_hasta=2026-10-31";
+        const mensual = await req('/informes/resumen-mensual?mes=2026-10');
+        assert.equal(mensual.ingresos_viajes, '150.00');
+        assert.equal(mensual.cantidad_viajes, 2);
+        assert.equal(mensual.conceptos.find(c=>c.concepto==='Viáticos desembolsados').importe, '6.00');
+        assert.equal(mensual.conceptos.find(c=>c.concepto==='Combustible registrado').importe, '186.00');
+        assert.equal((await req('/informes/cuentas-por-cobrar')).cantidad_facturas, 0);
+        await req('/informes/resumen-mensual?mes=incorrecto','GET',undefined,400);
         const filas = await req("/informes/viajes"+base);
         const fila = filas.find(v=>v.id_viaje===v1.id_viaje);
         assert.equal(fila.ingreso_transporte,"100.00");

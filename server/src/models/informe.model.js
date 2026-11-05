@@ -95,13 +95,13 @@ const viaticos = async (filtros, client = pool) => {
             ch.nombre,
             to_char(vc.fecha, 'YYYY-MM-DD') AS fecha,
             vc.total::text AS estimado,
-            g.total::text AS gasto_real_registrado,
+            COALESCE(g.total,0)::numeric(14,2)::text AS gasto_real_registrado,
             COALESCE(g.cantidad, 0) AS cantidad_gastos,
-            (g.total - vc.total)::text AS diferencia,
-            round((g.total - vc.total) * 100 / NULLIF(vc.total, 0), 2)::text AS diferencia_porcentaje,
+            (COALESCE(g.total,0) - vc.total)::text AS diferencia,
+            round((COALESCE(g.total,0) - vc.total) * 100 / NULLIF(vc.total, 0), 2)::text AS diferencia_porcentaje,
             CASE
                 WHEN g.total IS NULL THEN 'SIN_GASTOS_REGISTRADOS'
-                ELSE 'COMPARACION_PARCIAL'
+                ELSE 'REGISTRADO'
             END AS estado_comparacion,
             count(*) OVER ()::int AS total_registros
         FROM
@@ -253,6 +253,7 @@ const combustible = async (filtros, client = pool) => {
             )
         SELECT
             id_vehiculo,
+            (SELECT v.placa FROM vehiculo v WHERE v.id_vehiculo=medidas.id_vehiculo) AS placa,
             id_inicio AS id_abastecimiento_inicio,
             id_abastecimiento_combustible AS id_abastecimiento_fin,
             to_char(inicio, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,

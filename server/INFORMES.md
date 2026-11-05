@@ -2,7 +2,32 @@
 
 Consultas de solo lectura. No crean gastos, remuneraciones ni costos, ni cambian configuraciones. Usan los valores históricos guardados en detalles y costos de viaje. No requieren modificar el esquema.
 
-## Rutas y filtros
+## Resumen mensual y cuentas por cobrar
+
+Ambas rutas requieren sesión y permiso `informes.consultar`. Son consultas de solo lectura; no necesitan una migración nueva (la base debe estar actualizada hasta la 034).
+
+- `GET /api/informes/resumen-mensual?mes=2026-10`: mes calendario obligatorio, formato `AAAA-MM` (1900–2199). No admite otros filtros. Devuelve totales, `conceptos`, cobertura de remuneraciones y `generado_en` en hora de Ecuador.
+- `GET /api/informes/cuentas-por-cobrar`: saldo acumulado actual, sin filtros. Devuelve `total_pendiente`, `total_vencido`, cantidades y `clientes`. Cada cliente incluye sus facturas pendientes con fechas, neto cobrable, abonos y saldo. No se limita a un mes ni a una página.
+
+| Concepto mensual | Importe y fecha |
+| --- | --- |
+| Ingresos por viajes | Suma de `detalle_viaje.valor_transporte` de viajes REGISTRADO por fecha de inicio; incluye servicios sin factura y sin cobro |
+| Viáticos | Desembolsos registrados por fecha del gasto; sin registros = 0 |
+| Remuneraciones | Total diario calculado, incluyendo días sin viajes; no vuelve a sumar su asignación a costos de viajes |
+| Combustible | Gastos reales de origen COMBUSTIBLE; no se suman estimaciones |
+| Peajes | Gastos operativos cuyo tipo tiene `concepto_estimado=PEAJE` |
+| Otros gastos operativos | Resto de gastos operativos registrados |
+| Mantenimiento y reparación | Monto completo de trabajos vigentes por fecha de inicio; no vuelve a sumar su factura ni su pago como costo |
+
+`resultado = ingresos_viajes - total_costos`. Es el resultado de gestión con los conceptos registrados, no un saldo bancario. Las compras de inventario no se convierten automáticamente en costo del mes. Los estimados se conservan para comparación, pero no sustituyen desembolsos faltantes.
+
+Los movimientos usan fechas de pago: cobros de clientes, gastos pagados y pagos a proveedores. Los gastos con `id_pago_proveedor` se excluyen de `gastos_pagados` porque ya están en pagos a proveedores: el reflejo automático del pago de mantenimiento no se duplica. Remuneraciones calculadas se descuentan del resultado, pero no se inventan desembolsos de nómina.
+
+Las cuentas por cobrar usan `valor_neto - cobros REGISTRADO`, excluyen facturas anuladas y saldadas. El vencimiento se compara con la fecha actual de Ecuador; sin fecha de vencimiento no se presume mora. Los abonos por gasolinera corresponden a sus facturas aún pendientes, no a todos sus cobros históricos.
+
+Las consultas no generan remuneraciones. `choferes_sin_fecha` y `dias_pendientes` advierten cobertura incompleta; el proceso automático completa días vencidos hasta ayer. No se presentan como definitivos los días actuales o futuros.
+
+## Rutas operativas y filtros
 
 | Ruta GET | Contenido | Filtro opcional |
 | --- | --- | --- |
@@ -53,6 +78,8 @@ Estos subconjuntos pueden solaparse; **no se suman entre sí** para obtener el t
 Los conceptos sin gasto registrado o sin estimación conservan `null` en ese lado; no se inventa una comparación. Los tipos manuales son texto normalizado: use `PEAJE` y `VIATICO` de forma consistente; `COMIDA` se considera un concepto distinto.
 
 ## Viáticos por día
+
+Sin desembolsos asociados se devuelve `gasto_real_registrado="0.00"`, diferencia contra el estimado y estado `SIN_GASTOS_REGISTRADOS`. Con desembolsos, el estado es `REGISTRADO`: no se exige una confirmación de cierre. El estimado nunca se convierte automáticamente en desembolso.
 
 Selecciona por fecha del `VIATICO_CHOFER` y suma sus gastos válidos asociados mediante `id_viatico_chofer`, independientemente de cuándo se pagaron. Varios comprobantes del mismo día se suman una sola vez. El estimado diario tampoco se multiplica por la cantidad de viajes.
 
