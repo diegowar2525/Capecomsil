@@ -8,7 +8,7 @@ import { prepare } from './domain/choferes.js';
 import { useChoferes } from './hooks/useChoferes.js';
 import { fotoChoferApi } from '../../services/fotos.api.js';
 
-const definition = { filters, fields, columns, page, api, prepare, rowKey: 'id_chofer', foto: fotoChoferApi, fotoVariant: 'rostro' };
+const definition = { formMessage: 'Las fechas delimitan la remuneración automática. Indica el último día trabajado al finalizar la relación laboral; desactivar el chofer no sustituye la fecha de fin.', filters, fields, columns, page, api, prepare, rowKey: 'id_chofer', foto: fotoChoferApi, fotoVariant: 'rostro' };
 
 export function ChoferesPage() {
     const controller = useChoferes();

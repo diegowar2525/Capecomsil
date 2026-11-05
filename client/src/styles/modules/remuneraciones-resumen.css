@@ -1,0 +1,37 @@
+.remuneraciones-resumen {
+    margin: 1.25rem 0;
+}
+
+.remuneraciones-resumen dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.remuneraciones-resumen dl>div {
+    padding: 1rem;
+    border: 1px solid var(--border-color, #dce3ef);
+    border-radius: 12px;
+    background: var(--bg-card, #fff);
+}
+
+.remuneraciones-resumen dt {
+    font-size: .85rem;
+    color: var(--text-muted);
+}
+
+.remuneraciones-resumen dd {
+    margin: .5rem 0 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.remuneraciones-resumen [role="alert"] {
+    color: #b42318;
+}
+
+@media (max-width: 640px) {
+    .remuneraciones-resumen dl {
+        grid-template-columns: 1fr;
+    }
+}

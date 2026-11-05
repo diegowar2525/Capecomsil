@@ -17,10 +17,10 @@ export const columns = [
     },
     {
         "key": "costo_asignado",
-        "label": "Asignado"
+        "label": "Distribuido en viajes"
     },
     {
         "key": "costo_sin_asignar",
-        "label": "Sin asignar"
+        "label": "Sin distribuir en viajes"
     }
 ];

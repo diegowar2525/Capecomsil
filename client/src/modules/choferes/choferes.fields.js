@@ -1,4 +1,6 @@
 export const fields = [
+    { name: 'fecha_inicio_trabajo', label: 'Fecha de inicio de trabajo', type: 'date', required: true },
+    { name: 'fecha_fin_trabajo', label: 'Fecha de fin de trabajo', type: 'date' },
     {
         "name": "nombre",
         "placeholder": "Ej.: Ana Pérez",

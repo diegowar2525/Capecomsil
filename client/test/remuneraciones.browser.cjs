@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+(async()=>{const {createServer}=await import('vite');const server=await createServer({server:{port:0,host:'127.0.0.1',hmr:false}});await server.listen();let browser;
+try{browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.route('**/api/**',async route=>{const path=new URL(route.request().url()).pathname;const json=data=>route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
+if(path==='/api/auth/me')return json({usuario:{id_usuario:1,nombre:'Prueba',rol:'JEFE',activo:true},permisos:['catalogos.consultar','catalogos.crear','catalogos.editar','remuneraciones.consultar'],fecha_expiracion:'2099-01-01'});
+if(path==='/api/choferes')return json([{id_chofer:1,nombre:'Chofer de prueba',cedula:'1',tipo_remuneracion:'DIARIO_FIJO',estado:true}]);
+if(path.includes('/cobertura'))return json({fecha_inicio_trabajo:null,fecha_fin_trabajo:null,hasta_procesable:'2026-11-03',dias_pendientes:0});
+if(path==='/api/remuneraciones-chofer')return json([{id_remuneracion_chofer:1,nombre_chofer:'Chofer de prueba',fecha:'2026-10-01',total:'30',costo_asignado:'0',costo_sin_asignar:'30'}]);return json([]);});
+const url=`http://127.0.0.1:${server.httpServer.address().port}`;
+await page.goto(url+'/#/remuneraciones-chofer');await page.getByLabel('Chofer',{exact:true}).selectOption('1');await page.locator('.consulta-form').getByLabel('Desde',{exact:true}).fill('2026-10-01');await page.locator('.consulta-form').getByLabel('Hasta',{exact:true}).fill('2026-10-31');await page.getByRole('button',{name:'Consultar',exact:true}).click();await page.getByText('Total calculado del período',{exact:true}).waitFor();await page.getByRole('alert').filter({hasText:'Completa la fecha'}).waitFor();assert.equal(await page.getByRole('button',{name:'Generar remuneraciones'}).count(),0);assert.match(await page.locator('.remuneraciones-resumen dd').first().textContent(),/30/);
+assert.equal(await page.getByRole('button',{name:'Consultas e informes'}).count(),1);
+await page.setViewportSize({width:390,height:844});assert.equal(await page.locator('.remuneraciones-resumen').evaluate(e=>e.scrollWidth>e.clientWidth),false);
+await page.goto(url+'/#/choferes');await page.getByRole('button',{name:/Nuevo Chofer/i}).click();assert.equal(await page.getByLabel('Fecha de inicio de trabajo',{exact:true}).getAttribute('required'),'');await page.getByLabel('Fecha de fin de trabajo (opcional)',{exact:true}).waitFor();assert.deepEqual(errors,[]);console.log('Consulta, total, aviso de fecha pendiente y formulario móvil correctos');
+}finally{await browser?.close();await server.close();}})().catch(error=>{console.error(error);process.exitCode=1});

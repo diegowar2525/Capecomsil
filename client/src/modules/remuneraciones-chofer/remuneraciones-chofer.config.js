@@ -1,7 +1,6 @@
 export const page = {
     "title": "Remuneraciones de choferes",
-    "subtitle": "Generación y consulta por chofer, para períodos de hasta 366 días. Sin cierre de remuneración.",
+    "subtitle": "Remuneración calculada por día. La generación automática completa los días hasta ayer; no registra pagos.",
     "rowKey": "id_remuneracion_chofer",
-    "actionLabel": "Generar remuneraciones",
     "api": "/remuneraciones-chofer"
 };

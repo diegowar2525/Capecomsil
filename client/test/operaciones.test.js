@@ -57,7 +57,7 @@ test('Listados paginados: consulta todas las páginas y conserva los filtros', a
  try { const rows=await listarPaginas('/api/inventario/movimientos',{fecha_desde:'2026-10-01',id_producto:null}); assert.equal(rows.length,201);assert.equal(calls.length,2);assert.match(calls[1],/offset=200/);assert.ok(!calls[0].includes('id_producto')); } finally {globalThis.fetch=original;}
 });
 
-test('Operaciones: rutas de envío, borrado con versión, recepción y generación', async () => {
+test('Operaciones: rutas de envío, borrado con versión, recepción y consulta de cobertura', async () => {
  const original=globalThis.fetch;const calls=[];
  globalThis.fetch=async (path,options)=>{calls.push({path,...options});return Response.json({});};
  try {
@@ -67,8 +67,9 @@ test('Operaciones: rutas de envío, borrado con versión, recepción y generaci�
   const {api:f}=await import('../src/modules/facturas-proveedores/services/facturas-proveedores.api.js');
   await f.ejecutar('receive',2,{detalles:[]});assert.equal(calls.at(-1).path,'/api/recepciones-compra');assert.equal(JSON.parse(calls.at(-1).body).id_factura_proveedor,2);
   const {api:r}=await import('../src/modules/remuneraciones-chofer/services/remuneraciones-chofer.api.js');
-  await r.crear({id_chofer:1});assert.equal(calls.at(-1).path,'/api/remuneraciones-chofer/generar');
-  for (const call of calls) {assert.equal(call.credentials,'include');assert.equal(call.headers['X-CSRF-Protection'],'1');}
+  assert.equal(r.crear, undefined);
+  await r.cobertura({id_chofer:1});assert.equal(calls.at(-1).path,'/api/remuneraciones-chofer/cobertura?id_chofer=1');
+  for (const call of calls) {assert.equal(call.credentials,'include');if(call.method !== 'GET') assert.equal(call.headers['X-CSRF-Protection'],'1');}
  } finally {globalThis.fetch=original;}
 });
 
