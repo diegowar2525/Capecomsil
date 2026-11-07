@@ -3,7 +3,18 @@ const pool = require('../config/database');
 // Cada origen se agrega por separado: los pagos no multiplican facturas ni costos.
 const mensual = async ({ fecha_desde, fecha_hasta }, client = pool) => {
     const result = await client.query(`
-        WITH gastos AS (
+        WITH produccion AS (
+            SELECT g.id_gasolinera, g.nombre gasolinera, count(DISTINCT v.id_viaje)::int viajes,
+                count(*)::int entregas, sum(d.galones) galones, sum(d.valor_transporte) ingresos
+            FROM viaje v JOIN detalle_viaje d USING(id_viaje) JOIN gasolinera g USING(id_gasolinera)
+            WHERE v.estado='REGISTRADO' AND v.fecha_inicio >= $1::date AND v.fecha_inicio < $2::date+1
+            GROUP BY g.id_gasolinera,g.nombre
+        ), proveedores AS (
+            SELECT pr.id_proveedor,pr.nombre proveedor,sum(p.monto) importe
+            FROM pago_proveedor p JOIN factura_proveedor f USING(id_factura_proveedor) JOIN proveedor pr USING(id_proveedor)
+            WHERE p.estado='REGISTRADO' AND f.estado<>'ANULADA' AND p.fecha_pago BETWEEN $1::date AND $2::date
+            GROUP BY pr.id_proveedor,pr.nombre
+        ), gastos AS (
             SELECT * FROM gasto_clasificado
             WHERE estado='REGISTRADO' AND fecha BETWEEN $1::date AND $2::date
         ), conceptos AS (
@@ -11,7 +22,7 @@ const mensual = async ({ fecha_desde, fecha_hasta }, client = pool) => {
             UNION ALL SELECT 2, 'Remuneraciones calculadas', COALESCE(SUM(total),0) FROM remuneracion_chofer WHERE fecha BETWEEN $1::date AND $2::date
             UNION ALL SELECT 3, 'Combustible registrado', COALESCE(SUM(monto),0) FROM gastos WHERE origen='COMBUSTIBLE'
             UNION ALL SELECT 4, 'Peajes registrados', COALESCE(SUM(monto),0) FROM gastos WHERE origen='OPERATIVO' AND tipo_gasto='PEAJE'
-            UNION ALL SELECT 5, 'Otros gastos operativos', COALESCE(SUM(monto),0) FROM gastos WHERE origen='OPERATIVO' AND tipo_gasto<>'PEAJE'
+            UNION ALL SELECT 5, nombre_tipo_gasto, SUM(monto) FROM gastos WHERE origen='OPERATIVO' AND tipo_gasto<>'PEAJE' GROUP BY nombre_tipo_gasto
             UNION ALL SELECT 6, 'Mantenimientos y reparaciones', COALESCE(SUM(monto),0) FROM mantenimiento
                 WHERE estado='REGISTRADO' AND fecha_inicio >= $1::date AND fecha_inicio < $2::date+1
         ), ingresos AS (
@@ -35,7 +46,10 @@ const mensual = async ({ fecha_desde, fecha_hasta }, client = pool) => {
                  WHERE c.fecha_inicio_trabajo IS NOT NULL AND NOT EXISTS (
                     SELECT 1 FROM remuneracion_chofer r WHERE r.id_chofer=c.id_chofer AND r.fecha=d.fecha::date)) dias_pendientes
         )
-        SELECT i.*, c.*, cobertura.*, (SELECT SUM(importe) FROM conceptos) total_costos,
+        SELECT i.*, c.*, cobertura.*,
+            COALESCE((SELECT sum(galones) FROM produccion),0) galones,
+            COALESCE((SELECT json_agg(produccion ORDER BY ingresos DESC,gasolinera) FROM produccion),'[]') produccion,
+            COALESCE((SELECT json_agg(proveedores ORDER BY importe DESC,proveedor) FROM proveedores),'[]') proveedores, (SELECT SUM(importe) FROM conceptos) total_costos,
             i.ingresos_viajes-(SELECT SUM(importe) FROM conceptos) resultado,
             c.gastos_pagados+c.pagos_proveedores desembolsos,
             c.cobros-c.gastos_pagados-c.pagos_proveedores flujo_registrado,
