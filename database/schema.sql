@@ -203,10 +203,10 @@ CREATE TABLE liquidacion (
     estado VARCHAR(30) NOT NULL DEFAULT 'BORRADOR',
     observacion TEXT,
 
-    CONSTRAINT liquidacion_estado CHECK (estado IN ('BORRADOR','ENVIADA','CONFIRMADA','ANULADA')),
+    CONSTRAINT liquidacion_estado CHECK (estado IN ('BORRADOR','PREPARADA','CONFIRMADA','ANULADA')),
     CONSTRAINT liquidacion_fechas CHECK (
         (estado='BORRADOR' AND fecha_envio IS NULL AND fecha_confirmacion IS NULL AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
-        OR (estado='ENVIADA' AND fecha_envio IS NOT NULL AND fecha_confirmacion IS NULL AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
+        OR (estado='PREPARADA' AND fecha_envio IS NOT NULL AND fecha_confirmacion IS NULL AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
         OR (estado='CONFIRMADA' AND fecha_envio IS NOT NULL AND fecha_confirmacion IS NOT NULL AND fecha_anulacion IS NULL AND motivo_anulacion IS NULL)
         OR (estado='ANULADA' AND fecha_anulacion IS NOT NULL AND motivo_anulacion IS NOT NULL AND btrim(motivo_anulacion)<>'')
     ),
@@ -1379,7 +1379,7 @@ BEGIN
     IF TG_OP<>'INSERT' THEN
         SELECT * INTO cab FROM liquidacion WHERE id_liquidacion=OLD.id_liquidacion FOR UPDATE;
         IF cab.estado<>'BORRADOR' THEN
-            RAISE EXCEPTION 'Los detalles de una liquidación enviada o anulada conservan su historial'
+            RAISE EXCEPTION 'Los detalles de una liquidación preparada o anulada conservan su historial'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
         END IF;
     END IF;
@@ -1426,8 +1426,8 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
-            (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='PREPARADA') OR
+            (OLD.estado='PREPARADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
     END IF;
@@ -1435,7 +1435,7 @@ BEGIN
         ((to_jsonb(NEW)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion'])
         IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion'])
         OR (OLD.fecha_confirmacion IS NOT NULL AND NEW.fecha_confirmacion IS DISTINCT FROM OLD.fecha_confirmacion)) THEN
-        RAISE EXCEPTION 'Una liquidación enviada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
+        RAISE EXCEPTION 'Una liquidación preparada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
     END IF;
     IF NEW.estado='ANULADA' AND EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=OLD.id_liquidacion) THEN
         RAISE EXCEPTION 'No se puede anular una liquidación con factura asociada' USING ERRCODE='23514',CONSTRAINT='liquidacion_facturada';
@@ -1449,7 +1449,7 @@ BEGIN
         RAISE EXCEPTION 'Las entregas no corresponden a la gasolinera o período de la liquidación'
             USING ERRCODE='23514',CONSTRAINT='liquidacion_entrega';
     END IF;
-    IF NEW.estado='ENVIADA' AND OLD.estado='BORRADOR' THEN
+    IF NEW.estado='PREPARADA' AND OLD.estado='BORRADOR' THEN
         IF NOT EXISTS (SELECT 1 FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR EXISTS (SELECT 1 FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
                 WHERE dl.id_liquidacion=NEW.id_liquidacion AND
@@ -1457,7 +1457,7 @@ BEGIN
             OR NEW.total_galones<>(SELECT sum(galones) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.valor_transporte<>(SELECT sum(valor_transporte) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.total_liquidacion<>NEW.valor_transporte-NEW.retencion+NEW.recargo THEN
-            RAISE EXCEPTION 'Revise las entregas y los totales antes de enviar la liquidación'
+            RAISE EXCEPTION 'Revise las entregas y los totales antes de preparar la liquidación'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_totales';
         END IF;
     END IF;
@@ -1783,8 +1783,8 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
-            (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='PREPARADA') OR
+            (OLD.estado='PREPARADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
     END IF;
@@ -1798,7 +1798,7 @@ BEGIN
         ((to_jsonb(NEW)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         OR (OLD.fecha_confirmacion IS NOT NULL AND NEW.fecha_confirmacion IS DISTINCT FROM OLD.fecha_confirmacion)) THEN
-        RAISE EXCEPTION 'Una liquidación enviada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
+        RAISE EXCEPTION 'Una liquidación preparada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
     END IF;
     IF NEW.estado='ANULADA' AND EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=OLD.id_liquidacion) THEN
         RAISE EXCEPTION 'No se puede anular una liquidación con factura asociada' USING ERRCODE='23514',CONSTRAINT='liquidacion_facturada';
@@ -1812,7 +1812,7 @@ BEGIN
         RAISE EXCEPTION 'Las entregas no corresponden a la gasolinera o período de la liquidación'
             USING ERRCODE='23514',CONSTRAINT='liquidacion_entrega';
     END IF;
-    IF NEW.estado='ENVIADA' AND OLD.estado='BORRADOR' THEN
+    IF NEW.estado='PREPARADA' AND OLD.estado='BORRADOR' THEN
         IF NOT EXISTS (SELECT 1 FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR EXISTS (SELECT 1 FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
                 WHERE dl.id_liquidacion=NEW.id_liquidacion AND
@@ -1820,7 +1820,7 @@ BEGIN
             OR NEW.total_galones<>(SELECT sum(galones) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.valor_transporte<>(SELECT sum(valor_transporte) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.total_liquidacion<>NEW.valor_transporte-NEW.retencion+NEW.recargo THEN
-            RAISE EXCEPTION 'Revise las entregas y los totales antes de enviar la liquidación'
+            RAISE EXCEPTION 'Revise las entregas y los totales antes de preparar la liquidación'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_totales';
         END IF;
     END IF;
@@ -2016,7 +2016,7 @@ BEGIN
     IF TG_OP<>'INSERT' THEN
         SELECT * INTO cab FROM liquidacion WHERE id_liquidacion=OLD.id_liquidacion FOR UPDATE;
         IF cab.estado<>'BORRADOR' THEN
-            RAISE EXCEPTION 'Los detalles de una liquidación enviada o anulada conservan su historial'
+            RAISE EXCEPTION 'Los detalles de una liquidación preparada o anulada conservan su historial'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
         END IF;
     END IF;
@@ -2063,8 +2063,8 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
-            (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='PREPARADA') OR
+            (OLD.estado='PREPARADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
     END IF;
@@ -2078,7 +2078,7 @@ BEGIN
         ((to_jsonb(NEW)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         OR (OLD.fecha_confirmacion IS NOT NULL AND NEW.fecha_confirmacion IS DISTINCT FROM OLD.fecha_confirmacion)) THEN
-        RAISE EXCEPTION 'Una liquidación enviada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
+        RAISE EXCEPTION 'Una liquidación preparada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
     END IF;
     IF NEW.estado='ANULADA' AND EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=OLD.id_liquidacion) THEN
         RAISE EXCEPTION 'No se puede anular una liquidación con factura asociada' USING ERRCODE='23514',CONSTRAINT='liquidacion_facturada';
@@ -2092,7 +2092,7 @@ BEGIN
         RAISE EXCEPTION 'Las entregas no corresponden a la gasolinera o período de la liquidación'
             USING ERRCODE='23514',CONSTRAINT='liquidacion_entrega';
     END IF;
-    IF NEW.estado='ENVIADA' AND OLD.estado='BORRADOR' THEN
+    IF NEW.estado='PREPARADA' AND OLD.estado='BORRADOR' THEN
         IF NOT EXISTS (SELECT 1 FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR EXISTS (SELECT 1 FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
                 WHERE dl.id_liquidacion=NEW.id_liquidacion AND
@@ -2100,7 +2100,7 @@ BEGIN
             OR NEW.total_galones<>(SELECT sum(galones) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.valor_transporte<>(SELECT sum(valor_transporte) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.total_liquidacion<>NEW.valor_transporte-NEW.retencion+NEW.recargo THEN
-            RAISE EXCEPTION 'Revise las entregas y los totales antes de enviar la liquidación'
+            RAISE EXCEPTION 'Revise las entregas y los totales antes de preparar la liquidación'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_totales';
         END IF;
     END IF;
@@ -2307,8 +2307,8 @@ BEGIN
     END IF;
     IF OLD.estado='ANULADA' OR
         (NEW.estado<>OLD.estado AND NOT (
-            (OLD.estado='BORRADOR' AND NEW.estado='ENVIADA') OR
-            (OLD.estado='ENVIADA' AND NEW.estado IN ('CONFIRMADA','ANULADA')) OR
+            (OLD.estado='BORRADOR' AND NEW.estado='PREPARADA') OR
+            (OLD.estado='PREPARADA' AND NEW.estado IN ('BORRADOR','CONFIRMADA','ANULADA')) OR
             (OLD.estado='CONFIRMADA' AND NEW.estado='ANULADA'))) THEN
         RAISE EXCEPTION 'Transición de liquidación no permitida' USING ERRCODE='23514',CONSTRAINT='liquidacion_transicion';
     END IF;
@@ -2318,11 +2318,17 @@ BEGIN
     IF OLD.estado<>'BORRADOR' AND NEW.estado=OLD.estado AND NEW.version<>OLD.version THEN
         RAISE EXCEPTION 'La versión solo cambia al transicionar' USING ERRCODE='23514',CONSTRAINT='liquidacion_version';
     END IF;
-    IF OLD.estado<>'BORRADOR' AND
+    IF OLD.estado='PREPARADA' AND NEW.estado='BORRADOR' THEN
+        IF (to_jsonb(NEW)-ARRAY['estado','fecha_envio','version']) IS DISTINCT FROM
+           (to_jsonb(OLD)-ARRAY['estado','fecha_envio','version']) THEN
+            RAISE EXCEPTION 'La reapertura solo cambia el estado y la fecha de preparación' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
+        END IF;
+    END IF;
+    IF OLD.estado<>'BORRADOR' AND NEW.estado<>'BORRADOR' AND
         ((to_jsonb(NEW)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         IS DISTINCT FROM (to_jsonb(OLD)-ARRAY['estado','fecha_confirmacion','fecha_anulacion','motivo_anulacion','version'])
         OR (OLD.fecha_confirmacion IS NOT NULL AND NEW.fecha_confirmacion IS DISTINCT FROM OLD.fecha_confirmacion)) THEN
-        RAISE EXCEPTION 'Una liquidación enviada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
+        RAISE EXCEPTION 'Una liquidación preparada conserva sus datos e importes' USING ERRCODE='23514',CONSTRAINT='liquidacion_historial';
     END IF;
     IF NEW.estado='ANULADA' AND EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=OLD.id_liquidacion AND estado<>'ANULADA') THEN
         RAISE EXCEPTION 'No se puede anular una liquidación con factura asociada' USING ERRCODE='23514',CONSTRAINT='liquidacion_facturada';
@@ -2336,7 +2342,7 @@ BEGIN
         RAISE EXCEPTION 'Las entregas no corresponden a la gasolinera o período de la liquidación'
             USING ERRCODE='23514',CONSTRAINT='liquidacion_entrega';
     END IF;
-    IF NEW.estado='ENVIADA' AND OLD.estado='BORRADOR' THEN
+    IF NEW.estado='PREPARADA' AND OLD.estado='BORRADOR' THEN
         IF NOT EXISTS (SELECT 1 FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR EXISTS (SELECT 1 FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
                 WHERE dl.id_liquidacion=NEW.id_liquidacion AND
@@ -2344,7 +2350,7 @@ BEGIN
             OR NEW.total_galones<>(SELECT sum(galones) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.valor_transporte<>(SELECT sum(valor_transporte) FROM detalle_liquidacion WHERE id_liquidacion=NEW.id_liquidacion)
             OR NEW.total_liquidacion<>NEW.valor_transporte-NEW.retencion+NEW.recargo THEN
-            RAISE EXCEPTION 'Revise las entregas y los totales antes de enviar la liquidación'
+            RAISE EXCEPTION 'Revise las entregas y los totales antes de preparar la liquidación'
                 USING ERRCODE='23514',CONSTRAINT='liquidacion_totales';
         END IF;
     END IF;
@@ -2676,3 +2682,21 @@ BEGIN
 END; $$;
 CREATE TRIGGER chofer_periodo_laboral AFTER UPDATE OF fecha_inicio_trabajo,fecha_fin_trabajo ON chofer
 FOR EACH ROW EXECUTE FUNCTION recalcular_periodo_laboral();
+
+CREATE TABLE liquidacion_estado_historial (
+    id_historial BIGSERIAL PRIMARY KEY,
+    id_liquidacion INTEGER NOT NULL REFERENCES liquidacion(id_liquidacion) ON DELETE CASCADE,
+    estado_anterior VARCHAR(20) NOT NULL,
+    estado_nuevo VARCHAR(20) NOT NULL,
+    fecha TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    id_usuario INTEGER REFERENCES usuario(id_usuario),
+    version INTEGER NOT NULL,
+    UNIQUE(id_liquidacion, version)
+);
+
+-- Retenciones y recargos (037).
+-- Conserva los importes históricos. La nueva regla se aplica al guardar borradores.
+ALTER TABLE liquidacion ADD COLUMN recargos jsonb NOT NULL DEFAULT '[]'::jsonb,
+    ADD COLUMN tasa_retencion numeric(4,2) NOT NULL DEFAULT 0;
+ALTER TABLE liquidacion ADD CONSTRAINT liquidacion_recargos_lista CHECK(jsonb_typeof(recargos)='array'),
+    ADD CONSTRAINT liquidacion_tasa_retencion CHECK(tasa_retencion IN (0,0.01));
