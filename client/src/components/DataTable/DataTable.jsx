@@ -4,6 +4,7 @@ import { FotoMiniatura } from '../FotoMiniatura/FotoMiniatura.jsx';
 
 
 export function DataTable({
+    totals,
     columns = [],
     data = [],
     rowKey = 'id',
@@ -127,6 +128,9 @@ export function DataTable({
                         ))
                     )}
                 </tbody>
+                {totals && !loading && !error && <tfoot className="reporte-totales"><tr>{visibleColumns.map((column, index) =>
+                    <td key={column.key}>{index === 0 ? 'Total' : totals[column.key] != null ? (column.render ? column.render(totals) : totals[column.key]) : '—'}</td>
+                )}</tr></tfoot>}
             </table>
         </div>
     );
