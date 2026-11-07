@@ -28,20 +28,36 @@ const validateEntregas = (value, permitirVacio) => {
     return ids.sort((a, b) => a - b);
 };
 
+const validateRecargos = (value = []) => {
+    if (!Array.isArray(value) || value.length > 100) throw createHttpError("Recargos debe ser una lista de hasta 100 conceptos", 400);
+    return value.map(item => {
+        validateCampos(item, ["concepto", "importe", "id_viaje"]);
+        const concepto = validateOptionalText(item.concepto, "concepto", 250);
+        if (!concepto || !["string", "number"].includes(typeof item.importe)
+            || !/^\d+(\.\d{1,2})?$/.test(String(item.importe))
+            || Number(item.importe) <= 0 || Number(item.importe) > 999999999999.99) {
+            throw createHttpError("Cada recargo requiere concepto e importe positivo con hasta dos decimales", 400);
+        }
+        return { concepto, importe: Number(item.importe).toFixed(2), id_viaje: item.id_viaje == null ? null : validateId(item.id_viaje) };
+    });
+};
+
 const validateCreacion = (data) => {
-    validateCampos(data, ["id_gasolinera", "periodo_inicio", "periodo_fin", "observacion", "id_detalles_viaje"]);
+    validateCampos(data, ["id_gasolinera", "periodo_inicio", "periodo_fin", "observacion", "recargos", "id_detalles_viaje"]);
     return {
         ...validatePeriodo(data),
         observacion: validateOptionalText(data.observacion, "observacion"),
+        recargos: validateRecargos(data.recargos),
         id_detalles_viaje: data.id_detalles_viaje === undefined ? null : validateEntregas(data.id_detalles_viaje, false)
     };
 };
 
 const validateEdicion = (data) => {
-    validateCampos(data, ["id_gasolinera", "periodo_inicio", "periodo_fin", "observacion", "id_detalles_viaje", "version"]);
+    validateCampos(data, ["id_gasolinera", "periodo_inicio", "periodo_fin", "observacion", "recargos", "id_detalles_viaje", "version"]);
     return {
         ...validatePeriodo(data),
         observacion: validateOptionalText(data.observacion, "observacion"),
+        recargos: validateRecargos(data.recargos),
         id_detalles_viaje: validateEntregas(data.id_detalles_viaje, true),
         version: validateId(data.version)
     };
@@ -58,7 +74,7 @@ const validateDisponibles = (query) => {
 const validateFiltros = (query = {}) => {
     validateCampos(query, ["id_gasolinera", "estado", "periodo_desde", "periodo_hasta", "limit", "offset"]);
     const estado = query.estado ?? null;
-    if (estado !== null && !["BORRADOR", "ENVIADA", "CONFIRMADA", "ANULADA"].includes(estado)) {
+    if (estado !== null && !["BORRADOR", "PREPARADA", "CONFIRMADA", "ANULADA"].includes(estado)) {
         throw createHttpError("Estado de liquidación inválido", 400);
     }
     const periodo_desde = query.periodo_desde === undefined ? null : validateDate(query.periodo_desde);

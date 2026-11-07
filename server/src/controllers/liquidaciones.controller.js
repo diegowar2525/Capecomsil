@@ -47,7 +47,7 @@ const update = async (req, res, next) => {
 
 const enviar = async (req, res, next) => {
     try {
-        const resultado = await liquidacionesService.enviar(req.params.id, req.body);
+        const resultado = await liquidacionesService.enviar(req.params.id, req.body, req.auth.usuario.id_usuario);
         return res.status(200).json(resultado);
     } catch (error) {
         next(error);
@@ -56,7 +56,7 @@ const enviar = async (req, res, next) => {
 
 const confirmar = async (req, res, next) => {
     try {
-        const resultado = await liquidacionesService.confirmar(req.params.id, req.body);
+        const resultado = await liquidacionesService.confirmar(req.params.id, req.body, req.auth.usuario.id_usuario);
         return res.status(200).json(resultado);
     } catch (error) {
         next(error);
@@ -65,7 +65,7 @@ const confirmar = async (req, res, next) => {
 
 const anular = async (req, res, next) => {
     try {
-        const resultado = await liquidacionesService.anular(req.params.id, req.body);
+        const resultado = await liquidacionesService.anular(req.params.id, req.body, req.auth.usuario.id_usuario);
         return res.status(200).json(resultado);
     } catch (error) {
         next(error);
@@ -81,4 +81,11 @@ const remove = async (req, res, next) => {
     }
 };
 
-module.exports = { findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };
+const reabrir = async (req, res, next) => {
+    try {
+        const resultado = await liquidacionesService.reabrir(req.params.id, req.body, req.auth.usuario.id_usuario);
+        return res.status(200).json(resultado);
+    } catch (error) { next(error); }
+};
+
+module.exports = { reabrir, findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };

@@ -137,3 +137,156 @@
         gap: 10px;
     }
 }
+
+.liquidacion-estado {
+    display: inline-flex;
+    padding: .3rem .65rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: .85rem;
+    background: #eef2f6;
+    color: #475569;
+}
+
+.liquidacion-estado--preparada {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.liquidacion-estado--confirmada {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.liquidacion-estado--anulada {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.liquidacion-progreso {
+    margin-bottom: 1.25rem;
+}
+
+.liquidacion-progreso ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.liquidacion-progreso li {
+    flex: 1;
+    min-width: 120px;
+    border-bottom: 3px solid #e2e8f0;
+    padding: .75rem;
+    color: #64748b;
+}
+
+.liquidacion-progreso li.completado {
+    border-color: #7c3aed;
+    color: #6d28d9;
+    background: #f5f3ff;
+}
+
+.liquidacion-progreso li[aria-current] {
+    font-weight: 700;
+    background: #6d28d9;
+    color: #fff;
+    border-color: #4c1d95;
+    box-shadow: 0 0 0 2px #c4b5fd;
+    border-radius: .5rem .5rem 0 0;
+}
+
+.liquidacion-progreso li.estado-anulado {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: #f1f5f9;
+    color: #64748b;
+    border-color: #cbd5e1;
+}
+
+.liquidacion-progreso li.estado-anulado[aria-current] {
+    background: #475569;
+    color: #fff;
+    border-color: #334155;
+    box-shadow: 0 0 0 2px #cbd5e1;
+}
+
+.liquidacion-confirmacion {
+    display: grid;
+    gap: .75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: .75rem;
+}
+
+.liquidacion-confirmacion dt {
+    color: #64748b;
+    font-size: .85rem;
+}
+
+.liquidacion-confirmacion dd {
+    margin: .2rem 0 0;
+    overflow-wrap: anywhere;
+}
+
+button.liquidacion-estado {
+    border: 1px solid transparent;
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
+    border-radius: .65rem;
+}
+
+button.liquidacion-estado:hover {
+    border-color: currentColor;
+}
+
+button.liquidacion-estado:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+.liquidacion-historial {
+    margin: 1rem 0;
+}
+
+.liquidacion-historial summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: .5rem 0;
+}
+
+.liquidacion-historial ol {
+    padding-left: 1.25rem;
+}
+
+.liquidacion-historial li {
+    margin: .75rem 0;
+}
+
+.liquidacion-historial span {
+    display: block;
+    color: #64748b;
+    font-size: .85rem;
+}
+
+.liquidacion-estado-descripcion {
+    margin: .4rem 0 1rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.liquidacion-motivo {
+    margin-top: 1rem;
+}
+
+.liquidacion-motivo p {
+    margin: .4rem 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

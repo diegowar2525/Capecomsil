@@ -1,4 +1,12 @@
+export const recargosField = {
+    name: 'recargos', label: 'Recargos', type: 'rows', fields: [
+        { name: 'concepto', label: 'Concepto', required: true, maxLength: 250 },
+        { name: 'importe', label: 'Importe', type: 'number', required: true, min: '0.01', step: '0.01' },
+        { name: 'id_viaje', label: 'Viaje anulado', type: 'select', source: 'viajes_anulados' }
+    ]
+};
 export const fields = [
+    recargosField,
     {
         "name": "id_gasolinera",
         "label": "Gasolinera",

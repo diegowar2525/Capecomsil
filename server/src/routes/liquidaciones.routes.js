@@ -8,6 +8,7 @@ router.get("/:id", exigirPermiso("liquidaciones.consultar"), liquidacionesContro
 router.post("/", exigirPermiso("liquidaciones.crear"), liquidacionesController.create);
 router.put("/:id", exigirPermiso("liquidaciones.editar"), liquidacionesController.update);
 router.post("/:id/enviar", exigirPermiso("liquidaciones.enviar"), liquidacionesController.enviar);
+router.post("/:id/reabrir", exigirPermiso("liquidaciones.editar"), liquidacionesController.reabrir);
 router.post("/:id/confirmar", exigirPermiso("liquidaciones.confirmar"), liquidacionesController.confirmar);
 router.post("/:id/anular", exigirPermiso("liquidaciones.anular"), liquidacionesController.anular);
 router.delete("/:id", exigirPermiso("liquidaciones.eliminar"), liquidacionesController.remove);

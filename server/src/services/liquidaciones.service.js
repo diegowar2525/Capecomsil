@@ -27,7 +27,7 @@ const consultarCompleta = async (client, id) => {
     if (!liquidacion) {
         throw createHttpError("Liquidación no encontrada", 404);
     }
-    return { ...liquidacion, detalles: await detalleLiquidacionModel.findByLiquidacion(id, client) };
+    return { ...liquidacion, historial: await liquidacionModel.historial(client, id), detalles: await detalleLiquidacionModel.findByLiquidacion(id, client) };
 };
 
 const findAll = async (query) => {
@@ -89,12 +89,14 @@ const guardarBorrador = async (id, datosValidados) => {
             if (liquidacion.version !== datosValidados.version) {
                 throw createHttpError("La liquidación fue modificada; vuelva a consultarla antes de editar", 409);
             }
-            if (liquidacion.retencion !== "0.00" || liquidacion.recargo !== "0.00") {
-                throw createHttpError("Este borrador tiene ajustes previos; su edición requiere la gestión de retenciones y recargos", 409);
-            }
             anteriores = await detalleLiquidacionModel.findByLiquidacion(id, client);
         }
         await validarGasolinera(client, datosValidados.id_gasolinera);
+        for (const recargo of datosValidados.recargos) {
+            if (recargo.id_viaje !== null && !await liquidacionModel.viajeAnuladoDeGasolinera(client, recargo.id_viaje, datosValidados.id_gasolinera)) {
+                throw createHttpError("El viaje del recargo debe estar anulado y tener una entrega para esta gasolinera", 400);
+            }
+        }
         const disponibles = await detalleLiquidacionModel.findDisponibles({ ...datosValidados, id_liquidacion: id }, client);
         const idsDisponibles = new Set(disponibles.map((entrega) => entrega.id_detalle_viaje));
         const seleccionados = datosValidados.id_detalles_viaje ?? [...idsDisponibles].sort((a, b) => a - b);
@@ -142,7 +144,7 @@ const update = async (id, data) => {
     return guardarBorrador(validateId(id), validateEdicion(data));
 };
 
-const ejecutarAccion = async (id, datosValidados, accion) => {
+const ejecutarAccion = async (id, datosValidados, accion, usuario) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -155,8 +157,8 @@ const ejecutarAccion = async (id, datosValidados, accion) => {
             throw createHttpError("La liquidación fue modificada; vuelva a consultarla", 409);
         }
         const estadosPermitidos = {
-            enviar: ["BORRADOR"], confirmar: ["ENVIADA"],
-            anular: ["ENVIADA", "CONFIRMADA"], eliminar: ["BORRADOR"]
+            reabrir: ["PREPARADA"], enviar: ["BORRADOR"], confirmar: ["PREPARADA"],
+            anular: ["PREPARADA", "CONFIRMADA"], eliminar: ["BORRADOR"]
         };
         if (accion === "anular" && liquidacion.estado === "BORRADOR") {
             throw createHttpError("Un borrador no se puede anular; puede eliminarlo", 409);
@@ -168,22 +170,24 @@ const ejecutarAccion = async (id, datosValidados, accion) => {
             throw createHttpError("La liquidación tiene una factura asociada", 409);
         }
         if (accion === "enviar") {
+            if (!await liquidacionModel.ajustesVigentes(client, id)) {
+                throw createHttpError("Guarde nuevamente el borrador para actualizar la retención y los recargos antes de prepararlo", 409);
+            }
             const detalles = await detalleLiquidacionModel.findByLiquidacion(id, client);
             if (detalles.length === 0) {
-                throw createHttpError("No se puede enviar una liquidación sin entregas", 409);
+                throw createHttpError("No se puede preparar una liquidación sin entregas", 409);
             }
-            if (liquidacion.retencion !== "0.00" || liquidacion.recargo !== "0.00") {
-                throw createHttpError("La gestión de retenciones y recargos todavía no está habilitada", 409);
-            }
+
         }
         let resultado;
         if (accion === "eliminar") {
             await detalleLiquidacionModel.removeNoSeleccionados(client, id, []);
             resultado = await liquidacionModel.remove(client, id);
         } else {
-            const estados = { enviar: "ENVIADA", confirmar: "CONFIRMADA", anular: "ANULADA" };
+            const estados = { reabrir: "BORRADOR", enviar: "PREPARADA", confirmar: "CONFIRMADA", anular: "ANULADA" };
             // El trigger verifica copias históricas y totales antes de permitir el envío.
             await liquidacionModel.cambiarEstado(client, id, estados[accion], datosValidados.motivo);
+            await liquidacionModel.registrarTransicion(client, id, liquidacion.estado, estados[accion], usuario, liquidacion.version + 1);
             resultado = await consultarCompleta(client, id);
         }
         await client.query("COMMIT");
@@ -196,20 +200,22 @@ const ejecutarAccion = async (id, datosValidados, accion) => {
     }
 };
 
-const enviar = async (id, data) => {
-    return ejecutarAccion(validateId(id), validateTransicion(data), "enviar");
+const enviar = async (id, data, usuario) => {
+    return ejecutarAccion(validateId(id), validateTransicion(data), "enviar", usuario);
 };
 
-const confirmar = async (id, data) => {
-    return ejecutarAccion(validateId(id), validateTransicion(data), "confirmar");
+const confirmar = async (id, data, usuario) => {
+    return ejecutarAccion(validateId(id), validateTransicion(data), "confirmar", usuario);
 };
 
-const anular = async (id, data) => {
-    return ejecutarAccion(validateId(id), validateAnulacion(data), "anular");
+const anular = async (id, data, usuario) => {
+    return ejecutarAccion(validateId(id), validateAnulacion(data), "anular", usuario);
 };
 
 const remove = async (id, data) => {
     return ejecutarAccion(validateId(id), validateTransicion(data), "eliminar");
 };
 
-module.exports = { findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };
+const reabrir = async (id, data, usuario) => ejecutarAccion(validateId(id), validateTransicion(data), "reabrir", usuario);
+
+module.exports = { reabrir, findAll, findById, findDisponibles, create, update, enviar, confirmar, anular, remove };

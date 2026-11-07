@@ -29,8 +29,8 @@ export const filters = [
                 "label": "Borrador"
             },
             {
-                "value": "ENVIADA",
-                "label": "Enviada"
+                "value": "PREPARADA",
+                "label": "Preparada"
             },
             {
                 "value": "CONFIRMADA",

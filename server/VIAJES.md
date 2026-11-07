@@ -68,7 +68,7 @@ Ejemplo: `GET /api/viajes?id_gasolinera=2&fecha_desde=2026-10-01&fecha_hasta=202
 
 Los filtros por gasolinera y terminal seleccionan viajes que contienen una entrega coincidente con ambos. No recortan los totales del viaje; la consulta individual siempre devuelve todas sus entregas. Los nombres descriptivos son los actuales de los catálogos, mientras que tarifas e importes son los valores históricos guardados.
 
-La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación vigente (BORRADOR, ENVIADA o CONFIRMADA). Las asociaciones a liquidaciones ANULADAS se conservan como historial y no bloquean por sí solas la anulación del viaje. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje válido se utiliza la edición siguiente.
+La anulación exige motivo (máximo 150 caracteres), conserva tramos, entregas e importes y registra estado ANULADO, fecha automática y motivo. No elimina ni revierte inventario. Devuelve 200 con el viaje completo; 404 si no existe; 409 si ya está anulado o cualquier entrega pertenece a una liquidación vigente (BORRADOR, PREPARADA o CONFIRMADA). Las asociaciones a liquidaciones ANULADAS se conservan como historial y no bloquean por sí solas la anulación del viaje. La asociación debe resolverse desde el futuro módulo de liquidaciones. Para corregir un viaje válido se utiliza la edición siguiente.
 
 ## Edición completa y auditoría (etapa 5)
 
@@ -101,7 +101,7 @@ la entrega, como en la creación.
   identidad. Deben pertenecer al viaje y no pueden repetirse.
 - Filas nuevas: omitir el ID, sin enviarlo como null. Las filas existentes ausentes
   del arreglo se eliminan, salvo entregas con historial de liquidación.
-- Un viaje ANULADO o con alguna entrega en liquidación BORRADOR, ENVIADA o CONFIRMADA
+- Un viaje ANULADO o con alguna entrega en liquidación BORRADOR, PREPARADA o CONFIRMADA
   no se puede editar. Una liquidación ANULADA permite corregir la entrega conservando
   su ID, pero impide eliminarla. Su detalle de liquidación conserva sus copias históricas.
 - Los kilómetros de un tramo conservado se mantienen si no cambia el trayecto.
