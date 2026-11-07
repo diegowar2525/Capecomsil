@@ -97,3 +97,5 @@ La creación de viajes sigue verificando recorrido, capacidad y tarifa por fecha
 Los costos automáticos de combustible, peajes y viáticos ya están integrados en el registro
 de viajes; sus reglas se describen en [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
 Los pagos a choferes siguen pendientes y no se generan al calcular la remuneración.
+
+La consulta GET permite omitir id_chofer para listar todos los choferes del período (fechas obligatorias, máximo 366 días). La consulta /cobertura acepta los mismos filtros y devuelve choferes_sin_fecha y dias_pendientes para el conjunto consultado. Consultar no registra pagos ni genera remuneraciones.
