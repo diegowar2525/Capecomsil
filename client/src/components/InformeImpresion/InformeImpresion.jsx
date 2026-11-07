@@ -4,12 +4,15 @@ import { Printer } from 'lucide-react';
 import logo from '../../assets/brand/capecomsil.png';
 import icono from '../../assets/brand/icono.jpeg';
 
-export function TablaInforme({ columns, rows, empty = 'No hay registros para este período.' }) {
+export function TablaInforme({ columns, rows, totals, empty = 'No hay registros para este período.' }) {
     return <div className="informe-tabla-scroll"><table className="informe-tabla">
         <thead><tr>{columns.map(column => <th key={column.key} scope="col" className={column.numeric ? 'importe' : ''}>{column.label}</th>)}</tr></thead>
         <tbody>{rows.length ? rows.map((row, index) => <tr key={row.id_factura ?? row.id_gasolinera ?? index}>
             {columns.map(column => <td key={column.key} className={column.numeric ? 'importe' : ''}>{column.format ? column.format(row[column.key], row) : row[column.key] ?? '—'}</td>)}
         </tr>) : <tr><td colSpan={columns.length}>{empty}</td></tr>}</tbody>
+        {totals && <tfoot className="reporte-totales"><tr>{columns.map((column, index) => <td key={column.key} className={column.numeric ? 'importe' : ''}>
+            {index === 0 ? 'Total' : totals[column.key] != null ? (column.format ? column.format(totals[column.key], totals) : totals[column.key]) : '—'}
+        </td>)}</tr></tfoot>}
     </table></div>;
 }
 
