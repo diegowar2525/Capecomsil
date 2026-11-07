@@ -39,7 +39,7 @@ window.fetch = async (input, options = {}) => {
  else if (resource === 'informes' && id === 'viaticos') data = [{id_viatico_chofer:1,nombre:'Chofer de prueba',fecha:'2026-10-26',estimado:'10'}];
  else if (method === 'GET') data = id ? records[resource]?.find(row => String(Object.values(row)[0]) === id) ?? {} : records[resource] ?? [];
  else if (method === 'DELETE') { records[resource] = records[resource].filter(row => String(Object.values(row)[0]) !== id); data = {eliminado:true}; }
- else if (action === 'enviar') { records.liquidaciones[0].estado='ENVIADA'; records.liquidaciones[0].version++; data=records.liquidaciones[0]; }
+ else if (action === 'enviar') { records.liquidaciones[0].estado='PREPARADA'; records.liquidaciones[0].version++; data=records.liquidaciones[0]; }
  else { data = {...body}; if (resource==='liquidaciones' && id) Object.assign(records.liquidaciones[0],body); }
  return Response.json(data);
 };
