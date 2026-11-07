@@ -16,7 +16,7 @@ export function FormField({ name, label, type = 'text', options = [], searchable
                     {visibles.map((option) => <option key={option.value} value={option.value} disabled={option.disabled}>{option.label}</option>)}
                 </select>
                 {searchable && !visibles.length && <small role="status">No hay trayectos que coincidan.</small>}
-                </>
+            </>
             ) : type === 'textarea' ? (
                 <textarea id={id} name={name} className="form-control" placeholder={ejemploCampo(name, type)} {...props} />
             ) : (
