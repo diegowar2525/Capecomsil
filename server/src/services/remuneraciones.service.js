@@ -27,7 +27,7 @@ const generar = async (data) => {
 };
 
 const findAll = async (query) => {
-    return remuneracionChoferModel.findAll(validatePeriodo(query));
+    return remuneracionChoferModel.findAll(validatePeriodo(query, { choferOpcional: true }));
 };
 
 const findById = async (id) => {
@@ -60,7 +60,7 @@ const completarPendientes = async () => {
 };
 
 const cobertura = async query => {
-    const result = await remuneracionChoferModel.findCobertura(validatePeriodo(query));
+    const result = await remuneracionChoferModel.findCobertura(validatePeriodo(query, { choferOpcional: true }));
     if (!result) throw createHttpError('Chofer no encontrado',404);
     return result;
 };

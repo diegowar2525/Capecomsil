@@ -3,7 +3,7 @@ export const fields = [
         "name": "id_chofer",
         "label": "Chofer",
         "type": "select",
-        "required": true,
+        "required": false,
         "source": "id_chofer"
     },
     {

@@ -34,7 +34,7 @@ const consulta = `
 
 const findAll = async (filtros, client = pool) => {
     const result = await client.query(
-        `${consulta} WHERE r.id_chofer=$1 AND r.fecha BETWEEN $2 AND $3 ORDER BY r.fecha`,
+        `${consulta} WHERE ($1::integer IS NULL OR r.id_chofer=$1) AND r.fecha BETWEEN $2 AND $3 ORDER BY r.fecha, r.id_chofer, r.id_remuneracion_chofer`,
         [filtros.id_chofer, filtros.fecha_desde, filtros.fecha_hasta]
     );
 
@@ -79,7 +79,8 @@ const findPendientes = async (id, client = pool) => (await client.query(`
     ORDER BY d.fecha LIMIT 366
 `, [id])).rows;
 
-const findCobertura = async (filtros, client = pool) => (await client.query(`
+const findCobertura = async (filtros, client = pool) => {
+    const result = await client.query(`
     SELECT c.fecha_inicio_trabajo::text, c.fecha_fin_trabajo::text,
         ((CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1)::text AS hasta_procesable,
         (SELECT COUNT(*)::integer FROM generate_series(
@@ -87,8 +88,19 @@ const findCobertura = async (filtros, client = pool) => (await client.query(`
             LEAST(COALESCE(c.fecha_fin_trabajo,$3::date),$3::date,(CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1),
             interval '1 day') d(fecha)
          WHERE c.fecha_inicio_trabajo IS NOT NULL AND NOT EXISTS (SELECT 1 FROM remuneracion_chofer r WHERE r.id_chofer=c.id_chofer AND r.fecha=d.fecha::date)) AS dias_pendientes
-    FROM chofer c WHERE c.id_chofer=$1
-`, [filtros.id_chofer,filtros.fecha_desde,filtros.fecha_hasta])).rows[0] ?? null;
+    FROM chofer c WHERE ($1::integer IS NULL OR c.id_chofer=$1)
+`, [filtros.id_chofer,filtros.fecha_desde,filtros.fecha_hasta]);
+    if (filtros.id_chofer != null) {
+        const row = result.rows[0];
+        return row ? { ...row, choferes_sin_fecha: row.fecha_inicio_trabajo ? 0 : 1 } : null;
+    }
+    const corte = await client.query(`SELECT ((CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date - 1)::text AS hasta_procesable`);
+    return {
+        hasta_procesable: corte.rows[0].hasta_procesable,
+        choferes_sin_fecha: result.rows.filter(row => !row.fecha_inicio_trabajo).length,
+        dias_pendientes: result.rows.reduce((total, row) => total + Number(row.dias_pendientes), 0)
+    };
+};
 
 module.exports = {
     findChoferesAutomaticos, findPendientes, findCobertura,

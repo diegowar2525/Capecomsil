@@ -1,3 +1,4 @@
+const dinero = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
 export const columns = [
     {
         "key": "id_remuneracion_chofer",
@@ -13,14 +14,17 @@ export const columns = [
     },
     {
         "key": "total",
+        render: row => dinero.format(Number(row.total ?? 0)),
         "label": "Total"
     },
     {
         "key": "costo_asignado",
+        render: row => dinero.format(Number(row.costo_asignado ?? 0)),
         "label": "Distribuido en viajes"
     },
     {
         "key": "costo_sin_asignar",
+        render: row => dinero.format(Number(row.costo_sin_asignar ?? 0)),
         "label": "Sin distribuir en viajes"
     }
 ];

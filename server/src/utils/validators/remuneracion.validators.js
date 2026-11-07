@@ -12,9 +12,9 @@ const validateObject = (data) => {
     }
 };
 
-const validatePeriodo = (data) => {
+const validatePeriodo = (data, { choferOpcional = false } = {}) => {
     validateObject(data);
-    const id_chofer = validateId(data.id_chofer);
+    const id_chofer = choferOpcional && data.id_chofer === undefined ? null : validateId(data.id_chofer);
     const fecha_desde = validateDate(data.fecha_desde);
     const fecha_hasta = validateDate(data.fecha_hasta);
     const dias = (Date.parse(fecha_hasta) - Date.parse(fecha_desde)) / 86400000;
