@@ -1,0 +1,6 @@
+.produccion-desgloses {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+    min-width: 0;
+}
