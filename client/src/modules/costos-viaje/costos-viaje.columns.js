@@ -1,3 +1,4 @@
+const dinero = new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' });
 export const columns = [
     {
         "key": "id_costo",
@@ -13,6 +14,7 @@ export const columns = [
     },
     {
         "key": "valor",
+        render: row => dinero.format(Number(row.valor ?? 0)),
         "label": "Valor"
     },
     {
