@@ -7,9 +7,30 @@ import { actions as declaredActions } from './facturas-proveedores.actions.js';
 import { api } from './services/facturas-proveedores.api.js';
 import { prepare } from './domain/facturas-proveedores.js';
 import { useFacturasProveedores } from './hooks/useFacturasProveedores.js';
-const permissions = { annul: 'compras.anular', finish: 'mantenimientos.finalizar', fulfill: 'mantenimientos.registrar_cumplimientos', payments: 'pagos_proveedor.consultar', receipts: 'recepciones.consultar', pending: 'recepciones.consultar', receive: 'recepciones.crear' };
-const actions = declaredActions.map(action => ({ ...action, permission: permissions[action.id] ?? action.permission }));
-const definition = { filters, fields, columns, page, actions, api, prepare, rowKey: page.rowKey, permissionResource: 'compras',  };
+const permissions = {
+    annul: 'compras.anular',
+    finish: 'mantenimientos.finalizar',
+    fulfill: 'mantenimientos.registrar_cumplimientos',
+    payments: 'pagos_proveedor.consultar',
+    receipts: 'recepciones.consultar',
+    pending: 'recepciones.consultar',
+    receive: 'recepciones.crear'
+};
+const actions = declaredActions.map((action) => ({
+    ...action,
+    permission: permissions[action.id] ?? action.permission
+}));
+const definition = {
+    filters,
+    fields,
+    columns,
+    page,
+    actions,
+    api,
+    prepare,
+    rowKey: page.rowKey,
+    permissionResource: 'compras'
+};
 export function FacturasProveedoresPage() {
     return <CatalogoConectado definition={definition} controller={useFacturasProveedores()} />;
 }

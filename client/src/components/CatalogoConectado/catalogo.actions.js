@@ -1,4 +1,3 @@
-
 export const crudActions = [
     {
         id: 'detail',
@@ -16,6 +15,7 @@ export const crudActions = [
         id: 'delete',
         label: 'Eliminar',
         icon: 'trash',
-        message: 'Se solicitará eliminar este registro. El servidor comprobará si tiene dependencias.'
+        message:
+            'Se solicitará eliminar este registro. El servidor comprobará si tiene dependencias.'
     }
 ];

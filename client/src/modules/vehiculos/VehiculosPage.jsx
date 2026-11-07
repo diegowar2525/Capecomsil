@@ -12,14 +12,27 @@ import { prepararVehiculo } from './domain/vehiculo.js';
 import { fotoVehiculoApi } from '../../services/fotos.api.js';
 
 const definition = {
-    renderForm: props => <MarcaModeloForm {...props} fields={fields} ambito="VEHICULO" />,
-    detailFields: fields.filter(field => !['id_marca','id_modelo'].includes(field.name)),
-    page, columns, fields, filters, api, rowKey: 'id_vehiculo', prepare: prepararVehiculo, foto: fotoVehiculoApi,
-    actions: [...crudActions, {
-        ...relatedAction, parent: 'detail', query: true,
-        message: 'Deja la fecha vacía para consultar el kilometraje hasta el momento actual.'
-    }],
-    formMessage: 'Indica juntos el kilometraje base y la fecha de inicio del control, o deja ambos vacíos.'
+    renderForm: (props) => <MarcaModeloForm {...props} fields={fields} ambito="VEHICULO" />,
+    detailFields: fields.filter((field) => !['id_marca', 'id_modelo'].includes(field.name)),
+    page,
+    columns,
+    fields,
+    filters,
+    api,
+    rowKey: 'id_vehiculo',
+    prepare: prepararVehiculo,
+    foto: fotoVehiculoApi,
+    actions: [
+        ...crudActions,
+        {
+            ...relatedAction,
+            parent: 'detail',
+            query: true,
+            message: 'Deja la fecha vacía para consultar el kilometraje hasta el momento actual.'
+        }
+    ],
+    formMessage:
+        'Indica juntos el kilometraje base y la fecha de inicio del control, o deja ambos vacíos.'
 };
 
 export function VehiculosPage() {

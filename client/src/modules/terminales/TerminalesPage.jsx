@@ -10,8 +10,16 @@ import { useTerminales } from './hooks/useTerminales.js';
 import { UbicacionForm } from '../../components/UbicacionForm/UbicacionForm.jsx';
 
 const definition = {
-    renderForm: props => <UbicacionForm {...props} fields={fields} />,
-    detailFields: fields.filter(field => !['id_ciudad', 'id_provincia'].includes(field.name)), filters, fields, columns, page, api, prepare, rowKey: 'id_terminal' };
+    renderForm: (props) => <UbicacionForm {...props} fields={fields} />,
+    detailFields: fields.filter((field) => !['id_ciudad', 'id_provincia'].includes(field.name)),
+    filters,
+    fields,
+    columns,
+    page,
+    api,
+    prepare,
+    rowKey: 'id_terminal'
+};
 
 export function TerminalesPage() {
     const controller = useTerminales();

@@ -4,7 +4,8 @@ import { LimiteIntentos } from './components/LimiteIntentos.jsx';
 export function LoginPage({ onLoginSuccess, message = '' }) {
     const form = useLogin(onLoginSuccess);
     const isLoading = form.saving;
-    if (form.failure?.status === 429) return <LimiteIntentos segundos={form.failure.retryAfter} onRetry={form.clearError} />;
+    if (form.failure?.status === 429)
+        return <LimiteIntentos segundos={form.failure.retryAfter} onRetry={form.clearError} />;
     const invalidCredentials = form.failure?.code === 'INVALID_CREDENTIALS';
     const userError = form.failure?.field === 'nombre_usuario' ? form.error : '';
     const passwordError = form.failure?.field === 'password' ? form.error : '';
@@ -33,13 +34,9 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                     <h1 className="lock-company-name">
                         CAPECOMSIL <span className="lock-company-suffix">S.A.</span>
                     </h1>
-                    <p className="lock-subtitle">
-                        Sistema de Gestión y Transporte de Combustible
-                    </p>
+                    <p className="lock-subtitle">Sistema de Gestión y Transporte de Combustible</p>
 
-                    <span className="lock-status-pill">
-                        Acceso Bloqueado
-                    </span>
+                    <span className="lock-status-pill">Acceso Bloqueado</span>
                 </div>
 
                 {/* Formulario de Desbloqueo / Login */}
@@ -50,7 +47,8 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                         </label>
                         <input
                             id="usuario"
-                            name="nombre_usuario" autoComplete="username"
+                            name="nombre_usuario"
+                            autoComplete="username"
                             type="text"
                             className="lock-input"
                             placeholder="Ingrese su usuario"
@@ -58,10 +56,20 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                             onChange={form.change}
                             disabled={isLoading}
                             aria-invalid={Boolean(userError || invalidCredentials) || undefined}
-                            aria-describedby={userError ? 'usuario-error' : invalidCredentials ? 'password-error' : undefined}
+                            aria-describedby={
+                                userError
+                                    ? 'usuario-error'
+                                    : invalidCredentials
+                                      ? 'password-error'
+                                      : undefined
+                            }
                             required
                         />
-                        {userError && <p id="usuario-error" className="lock-field-error" role="alert">{userError}</p>}
+                        {userError && (
+                            <p id="usuario-error" className="lock-field-error" role="alert">
+                                {userError}
+                            </p>
+                        )}
                     </div>
 
                     <div className="lock-field">
@@ -71,7 +79,8 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                         <input
                             id="password"
                             name="password"
-                            type="password" autoComplete="current-password"
+                            type="password"
+                            autoComplete="current-password"
                             className="lock-input"
                             placeholder="••••••••"
                             value={form.values.password}
@@ -81,15 +90,19 @@ export function LoginPage({ onLoginSuccess, message = '' }) {
                             aria-describedby={passwordError ? 'password-error' : undefined}
                             required
                         />
-                        {passwordError && <p id="password-error" className="lock-field-error" role="alert">{passwordError}</p>}
+                        {passwordError && (
+                            <p id="password-error" className="lock-field-error" role="alert">
+                                {passwordError}
+                            </p>
+                        )}
                     </div>
 
-                    {form.error && !userError && !passwordError && <p className="lock-field-error" role="alert">{form.error}</p>}
-                    <button
-                        type="submit"
-                        className="lock-submit-btn"
-                        disabled={isLoading}
-                    >
+                    {form.error && !userError && !passwordError && (
+                        <p className="lock-field-error" role="alert">
+                            {form.error}
+                        </p>
+                    )}
+                    <button type="submit" className="lock-submit-btn" disabled={isLoading}>
                         {isLoading ? 'Verificando acceso...' : 'Desbloquear'}
                     </button>
                 </form>

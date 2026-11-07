@@ -6,7 +6,18 @@ import { page } from './configuraciones-remuneracion.config.js';
 import { api } from './services/configuraciones-remuneracion.api.js';
 import { prepare } from './domain/configuraciones-remuneracion.js';
 import { useConfiguracionesRemuneracion } from './hooks/useConfiguracionesRemuneracion.js';
-const definition = { filters, fields, columns, page, api, prepare, rowKey: page.rowKey, permissionResource: 'configuraciones' };
+const definition = {
+    filters,
+    fields,
+    columns,
+    page,
+    api,
+    prepare,
+    rowKey: page.rowKey,
+    permissionResource: 'configuraciones'
+};
 export function ConfiguracionesRemuneracionPage() {
-    return <CatalogoConectado definition={definition} controller={useConfiguracionesRemuneracion()} />;
+    return (
+        <CatalogoConectado definition={definition} controller={useConfiguracionesRemuneracion()} />
+    );
 }

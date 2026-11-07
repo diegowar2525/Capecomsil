@@ -6,7 +6,18 @@ import { page } from './configuraciones-combustible.config.js';
 import { api } from './services/configuraciones-combustible.api.js';
 import { prepare } from './domain/configuraciones-combustible.js';
 import { useConfiguracionesCombustible } from './hooks/useConfiguracionesCombustible.js';
-const definition = { filters, fields, columns, page, api, prepare, rowKey: page.rowKey, permissionResource: 'configuraciones' };
+const definition = {
+    filters,
+    fields,
+    columns,
+    page,
+    api,
+    prepare,
+    rowKey: page.rowKey,
+    permissionResource: 'configuraciones'
+};
 export function ConfiguracionesCombustiblePage() {
-    return <CatalogoConectado definition={definition} controller={useConfiguracionesCombustible()} />;
+    return (
+        <CatalogoConectado definition={definition} controller={useConfiguracionesCombustible()} />
+    );
 }

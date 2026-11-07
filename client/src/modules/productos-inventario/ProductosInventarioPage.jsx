@@ -10,8 +10,28 @@ import { useProductosInventario } from './hooks/useProductosInventario.js';
 import { fotoProductoApi } from '../../services/fotos.api.js';
 
 const definition = {
-    renderForm: props => <MarcaModeloForm {...props} fields={formFields(props.form.values, props.catalogos)} ambito="PRODUCTO" />,
-    detailFields: [...fields.filter(field => !['id_marca','id_modelo'].includes(field.name)), {name:'marca',label:'Marca'}, {name:'modelo',label:'Modelo'}], filters, fields, columns, page, api, prepare, rowKey: 'id_producto', formFields, foto: fotoProductoApi };
+    renderForm: (props) => (
+        <MarcaModeloForm
+            {...props}
+            fields={formFields(props.form.values, props.catalogos)}
+            ambito="PRODUCTO"
+        />
+    ),
+    detailFields: [
+        ...fields.filter((field) => !['id_marca', 'id_modelo'].includes(field.name)),
+        { name: 'marca', label: 'Marca' },
+        { name: 'modelo', label: 'Modelo' }
+    ],
+    filters,
+    fields,
+    columns,
+    page,
+    api,
+    prepare,
+    rowKey: 'id_producto',
+    formFields,
+    foto: fotoProductoApi
+};
 
 export function ProductosInventarioPage() {
     const controller = useProductosInventario();

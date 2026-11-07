@@ -21,24 +21,37 @@ const permissions = {
     receive: 'recepciones.crear'
 };
 
-const actions = declaredActions.map(action => ({
+const actions = declaredActions.map((action) => ({
     ...action,
     permission: permissions[action.id] ?? action.permission
 }));
 
 const detailFields = [
-    ...fields.filter(field => !['planes_cumplidos','factura'].includes(field.name)).map(field => field.name === 'modalidad_pago'
-        ? {...field,options:[{value:'DIRECTO',label:'Sin factura'},{value:'EXISTENTE',label:'Con factura'},{value:'NUEVA',label:'Con factura'}]} : field),
+    ...fields
+        .filter((field) => !['planes_cumplidos', 'factura'].includes(field.name))
+        .map((field) =>
+            field.name === 'modalidad_pago'
+                ? {
+                      ...field,
+                      options: [
+                          { value: 'DIRECTO', label: 'Sin factura' },
+                          { value: 'EXISTENTE', label: 'Con factura' },
+                          { value: 'NUEVA', label: 'Con factura' }
+                      ]
+                  }
+                : field
+        ),
     { name: 'total_pagado', label: 'Total pagado' },
     { name: 'saldo_pendiente', label: 'Saldo pendiente' }
 ];
 
 const definition = {
     initial,
-    renderForm: props => <MantenimientoForm {...props} fields={fields} />,
-    renderActionForm: props => <MantenimientoForm {...props} />,
+    renderForm: (props) => <MantenimientoForm {...props} fields={fields} />,
+    renderActionForm: (props) => <MantenimientoForm {...props} />,
     detailFields,
-    formMessage: 'Los productos propios se descuentan desde Movimientos de inventario. Los materiales externos se detallan en la factura. Con factura, registra los abonos desde Pagos a proveedores. Sin factura, el gasto se genera al guardar el trabajo.',
+    formMessage:
+        'Los productos propios se descuentan desde Movimientos de inventario. Los materiales externos se detallan en la factura. Con factura, registra los abonos desde Pagos a proveedores. Sin factura, el gasto se genera al guardar el trabajo.',
     filters,
     fields,
     columns,
@@ -47,7 +60,7 @@ const definition = {
     api,
     prepare,
     rowKey: page.rowKey,
-    permissionResource: 'mantenimientos',
+    permissionResource: 'mantenimientos'
 };
 
 export function MantenimientoPage() {
