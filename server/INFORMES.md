@@ -130,3 +130,25 @@ El método presupone que todas las cargas fueron registradas, las lecturas son c
 ## Verificación
 
 `test/informes.test.js` comprueba las consultas HTTP con PostgreSQL aislado: agregaciones con varios detalles y gastos, sumas históricas, ausencia de datos, viáticos diarios, paginación, períodos, cargas parciales, cierres fuera del inicio del filtro, anulaciones, odómetro sin avance y viajes que cruzan los límites. No modifica la base de trabajo.
+
+
+## Producción por vehículos y terminales
+`GET /api/informes/produccion`, permiso `informes.consultar` (JEFE y OPERADOR).
+Requiere `fecha_desde` y `fecha_hasta` (hasta 366 días). Admite `id_vehiculo`,
+`id_terminal`, `limit` (1–200), `offset`. Devuelve una fila por vehículo: placa,
+viajes distintos, entregas, galones, ingresos, costo_estimado, margen_estimado,
+participacion y terminales (desglose de ingresos), gasolineras atendidas.
+Excluye viajes anulados, agrupa por fecha de inicio. Los costos se suman una vez
+por viaje, independientemente de cuántas entregas tenga. Con filtro de terminal,
+costo y margen son null: no se imputa arbitrariamente el costo de un viaje compartido.
+La participación corresponde a los ingresos de todo el conjunto consultado antes
+de paginar. No es el resultado mensual ni incluye recargos de liquidaciones.
+
+## Desgloses adicionales del resumen mensual
+`resumen-mensual` incluye `galones`, `produccion` por gasolinera y `proveedores`
+(pagos vigentes a proveedores). Los gastos operativos se desglosan por nombre de tipo.
+Las tablas y sus porcentajes se muestran también al imprimir. Un viaje con varias
+estaciones se cuenta una vez en cada estación; no se suman esos contadores.
+Los pagos a proveedores son movimientos de dinero: no se vuelven a restar del resultado.
+Los ingresos de este resumen siguen siendo transporte de viajes, no facturación;
+las retenciones y recargos se reflejan en liquidaciones, facturas y cuentas por cobrar.
