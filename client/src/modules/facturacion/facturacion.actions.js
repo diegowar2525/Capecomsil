@@ -5,6 +5,7 @@ export const actions = [
         "label": "Ver detalle",
         "readOnly": true,
         "tables": [
+            { name: 'recargos', label: 'Recargos facturados', columns: [{key:'concepto',label:'Concepto'},{key:'importe',label:'Importe'},{key:'id_viaje',label:'Viaje anulado'}] },
             {
                 "name": "cobros",
                 "label": "Historial de cobros",

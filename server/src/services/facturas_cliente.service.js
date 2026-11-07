@@ -17,7 +17,7 @@ const findById = async (id) => {
         if (!factura) {
             throw createHttpError("Factura no encontrada", 404);
         }
-        const result = { ...factura, cobros: await cobroModel.findByFactura(id, client), entregas: await detalleLiquidacionModel.findByLiquidacion(factura.id_liquidacion, client) };
+        const result = { ...factura, recargos: (await liquidacionModel.findById(factura.id_liquidacion, client)).recargos, cobros: await cobroModel.findByFactura(id, client), entregas: await detalleLiquidacionModel.findByLiquidacion(factura.id_liquidacion, client) };
         await client.query("COMMIT");
         return result;
     } catch (error) {
