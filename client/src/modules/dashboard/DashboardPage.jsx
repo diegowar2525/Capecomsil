@@ -6,7 +6,6 @@ import { DataTable } from '../../components/DataTable/DataTable';
 export function Dashboard() {
     const { stats, recentTrips, loading, error } = useDashboard();
 
-
     return (
         <div>
             <PageHeader
@@ -36,8 +35,16 @@ export function Dashboard() {
             </section>
 
             <section className="surface-card">
-                <h3 style={{ marginBottom: '16px', fontSize: '1rem' }}>Actividad Reciente de Viajes</h3>
-                <DataTable rowKey="id_viaje" columns={columns} data={recentTrips} loading={loading} error={error} />
+                <h3 style={{ marginBottom: '16px', fontSize: '1rem' }}>
+                    Actividad Reciente de Viajes
+                </h3>
+                <DataTable
+                    rowKey="id_viaje"
+                    columns={columns}
+                    data={recentTrips}
+                    loading={loading}
+                    error={error}
+                />
             </section>
         </div>
     );
