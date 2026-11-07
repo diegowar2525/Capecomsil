@@ -228,7 +228,7 @@ Los informes comparan estimaciones y valores reales y analizan consumo entre car
 
 ## Liquidaciones, facturación y cobros
 
-El esquema actual contempla liquidaciones por gasolinera y período, con estados BORRADOR, ENVIADA, CONFIRMADA y ANULADA, fechas e importes. `detalle_liquidacion` relaciona liquidaciones con entregas de viajes y conserva galones, tarifa e importe históricos. Sustituye la antigua columna física `detalle_viaje.id_liquidacion`. Las consultas de entregas conservan `id_liquidacion` como campo calculado para la liquidación vigente.
+El esquema actual contempla liquidaciones por gasolinera y período, con estados BORRADOR, PREPARADA, CONFIRMADA y ANULADA, fechas e importes. `detalle_liquidacion` relaciona liquidaciones con entregas de viajes y conserva galones, tarifa e importe históricos. Sustituye la antigua columna física `detalle_viaje.id_liquidacion`. Las consultas de entregas conservan `id_liquidacion` como campo calculado para la liquidación vigente.
 
 La migración `013_liquidaciones_detalles.sql` corresponde a esta transición y requiere revisar sus precondiciones sobre los datos existentes. La API permite consultar entregas disponibles, listar liquidaciones, crear o editar borradores, enviar, confirmar, anular con motivo y eliminar borradores, para jefe y operadores. Conserva valores históricos, reserva las entregas y controla operaciones simultáneas mediante una versión. Retención y recargo permanecen en cero. Anular conserva detalles y libera entregas; una factura vigente impide la anulación; si todas están anuladas, se permite. Enviar solo registra el estado, sin envío de correos. Reemplazos y auditoría de cambios quedan pospuestos. Ver [LIQUIDACIONES.md](LIQUIDACIONES.md).
 
