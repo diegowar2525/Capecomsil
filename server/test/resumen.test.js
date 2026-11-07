@@ -56,10 +56,21 @@ test('Resumen SQL: abonos, anulaciones, períodos y pagos reflejados no duplican
             INSERT INTO factura_proveedor VALUES(1,'REGISTRADA'),(2,'REGISTRADA');
             INSERT INTO pago_proveedor VALUES(1,'2026-10-02',30,'REGISTRADO'),(2,'2026-10-03',20,'REGISTRADO'),(1,'2026-10-03',99,'ANULADO');
         `);
+        await client.query(`
+            ALTER TABLE detalle_viaje ADD COLUMN id_gasolinera int DEFAULT 1, ADD COLUMN galones numeric DEFAULT 10;
+            ALTER TABLE gasto_clasificado ADD COLUMN nombre_tipo_gasto text DEFAULT 'Adicional';
+            ALTER TABLE factura_proveedor ADD COLUMN id_proveedor int DEFAULT 1;
+            CREATE TEMP TABLE proveedor(id_proveedor int,nombre text);
+            INSERT INTO proveedor VALUES(1,'Taller');
+        `);
         const model = require('../src/models/resumen.model');
         const data = await model.mensual(validateMes({ mes: '2026-10' }), client);
         assert.equal(data.ingresos_viajes, '1700.00');
         assert.equal(data.cantidad_viajes, 2);
+        assert.equal(Number(data.galones),30);
+        assert.equal(data.produccion[0].viajes,2);
+        assert.equal(data.produccion[0].entregas,3);
+        assert.equal(Number(data.proveedores[0].importe),50);
         assert.equal(data.total_costos, '270.00');
         assert.equal(data.resultado, '1430.00');
         assert.equal(data.cobros, '100.00');

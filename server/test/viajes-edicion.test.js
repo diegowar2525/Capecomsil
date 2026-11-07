@@ -84,6 +84,8 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/029_origen_gastos_mantenimientos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/030_edicion_mantenimiento.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query("INSERT INTO tipo_gasto(nombre) VALUES ('Otro')");
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/035_liquidaciones_preparadas.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -169,7 +171,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         await isolated.query("INSERT INTO detalle_liquidacion(id_liquidacion,id_detalle_viaje) VALUES ($1,$2)", [liquidacion, actual.detalles[0].id_detalle_viaje]);
         assert.equal((await editar(payload(actual))).status, 409);
         await require('../src/models/liquidacion.model').recalcularTotales(isolated, liquidacion);
-        await isolated.query("UPDATE liquidacion SET estado='ENVIADA',fecha_envio=CURRENT_TIMESTAMP,version=version+1 WHERE id_liquidacion=$1", [liquidacion]);
+        await isolated.query("UPDATE liquidacion SET estado='PREPARADA',fecha_envio=CURRENT_TIMESTAMP,version=version+1 WHERE id_liquidacion=$1", [liquidacion]);
         await isolated.query("UPDATE liquidacion SET estado='ANULADA',fecha_anulacion=CURRENT_TIMESTAMP,motivo_anulacion='Corrección',version=version+1 WHERE id_liquidacion=$1", [liquidacion]);
         const copiaLiquidacion = (await isolated.query("SELECT * FROM detalle_liquidacion WHERE id_liquidacion=$1", [liquidacion])).rows;
         assert.equal((await editar({ ...payload(actual), detalles: [payload(actual).detalles[1]] })).status, 409);

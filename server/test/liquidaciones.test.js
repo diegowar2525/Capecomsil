@@ -15,7 +15,7 @@ test("Liquidaciones: validadores de período, selección, versión y campos no e
     assert.equal(validators.validateCreacion(periodo).id_detalles_viaje, null);
     assert.deepEqual(validators.validateTransicion({ version: "2" }), { version: 2 });
     assert.equal(validators.validateAnulacion({ version: 1, motivo: " Corrección " }).motivo, "Corrección");
-    for (const data of [{}, { version: 0 }, { version: 1, estado: "ENVIADA" }, { version: 1, fecha_envio: "2026-10-21" }]) {
+    for (const data of [{}, { version: 0 }, { version: 1, estado: "PREPARADA" }, { version: 1, fecha_envio: "2026-10-21" }]) {
         assert.throws(() => validators.validateTransicion(data), { status: 400 });
     }
     for (const motivo of [null, " ", 123, "x".repeat(151)]) {
@@ -71,10 +71,14 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         await admin.query(capacidadMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const facturacionMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/028_facturas_cobros_cliente.sql"), "utf8");
         await admin.query(facturacionMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
+        const preparadaMigration = fs.readFileSync(path.join(__dirname, "../../database/migrations/035_liquidaciones_preparadas.sql"), "utf8");
+        await admin.query(preparadaMigration.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const geografia = fs.readFileSync(path.join(__dirname, "../../database/migrations/031_provincias_ciudades.sql"), "utf8");
         await admin.query(geografia.replace(/^BEGIN;\s*/, "").replace(/COMMIT;\s*$/, ""));
         const marcas = fs.readFileSync(path.join(__dirname,'../../database/migrations/032_marcas_modelos.sql'),'utf8');
         await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/037_liquidaciones_recargos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -130,6 +134,25 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         for (const idEntrega of [idOtra, fuera.detalles[0].id_detalle_viaje, anulado.detalles[0].id_detalle_viaje, 9999]) {
             assert.equal((await create({ ...periodo, id_detalles_viaje: [idEntrega] })).status, 409);
         }
+        await isolated.query('UPDATE gasolinera SET agente_retencion=true WHERE id_gasolinera=1');
+        const ajustes = await create({ ...periodo, recargos: [{ concepto: 'Sin cupo', importe: '20.00', id_viaje: anulado.id_viaje }] });
+        assert.equal(ajustes.status, 201, JSON.stringify(ajustes.body));
+        assert.equal(ajustes.body.retencion, '0.02');
+        assert.equal(ajustes.body.recargo, '20.00');
+        assert.equal(ajustes.body.total_liquidacion, '22.43');
+        const ajusteRuta = '/liquidaciones/' + ajustes.body.id_liquidacion;
+        const invalido = await request(ajusteRuta, 'PUT', { ...periodo, version: ajustes.body.version, id_detalles_viaje: [idA], recargos: [{ concepto:'No anulado',importe:'1',id_viaje:primero.id_viaje }] });
+        assert.equal(invalido.status,400);
+        const preparadaAjuste = await request(ajusteRuta+'/enviar','POST',{version:ajustes.body.version});
+        assert.equal(preparadaAjuste.status,200,JSON.stringify(preparadaAjuste.body));
+        const confirmadaAjuste = await request(ajusteRuta+'/confirmar','POST',{version:preparadaAjuste.body.version});
+        const facturaAjuste = await request('/facturas-cliente','POST',{ id_liquidacion:ajustes.body.id_liquidacion, numero_factura:'AJUSTES-1',fecha_emision:'2026-10-10' });
+        assert.equal(facturaAjuste.status,201,JSON.stringify(facturaAjuste.body));
+        assert.equal(facturaAjuste.body.subtotal,'22.45');
+        assert.equal(facturaAjuste.body.valor_neto,'22.43');
+        await request('/facturas-cliente/'+facturaAjuste.body.id_factura+'/anular','POST',{motivo:'Prueba terminada'});
+        await request(ajusteRuta+'/anular','POST',{version:confirmadaAjuste.body.version,motivo:'Prueba terminada'});
+        await isolated.query('UPDATE gasolinera SET agente_retencion=false WHERE id_gasolinera=1');
         const creada = await create();
         assert.equal(creada.status, 201, JSON.stringify(creada.body));
         let actual = creada.body;
@@ -201,7 +224,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         const envios = await Promise.all([action("enviar"), action("enviar")]);
         assert.deepEqual(envios.map((r) => r.status).sort(), [200, 409]);
         actual = await get();
-        assert.equal(actual.estado, "ENVIADA");
+        assert.equal(actual.estado, "PREPARADA");
         assert.equal(actual.version, antesEnvio.version + 1);
         assert.ok(actual.fecha_envio);
         assert.deepEqual(actual.detalles, antesEnvio.detalles);
@@ -210,6 +233,22 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         assert.equal((await action("enviar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         assert.equal((await preview({ ...periodo, id_gasolinera: 2, id_liquidacion: id })).status, 409);
+        const preparada = actual;
+        const reaperturas = await Promise.all([action('reabrir'), action('reabrir')]);
+        assert.deepEqual(reaperturas.map(r => r.status).sort(), [200, 409]);
+        actual = await get();
+        assert.equal(actual.estado, 'BORRADOR');
+        assert.equal(actual.fecha_envio, null);
+        assert.deepEqual(actual.detalles, preparada.detalles);
+        assert.equal(actual.historial[0].estado_anterior, 'PREPARADA');
+        assert.equal(actual.historial[0].estado_nuevo, 'BORRADOR');
+        assert.ok(actual.historial[0].id_usuario);
+        assert.equal((await action('reabrir')).status, 409);
+        assert.equal((await action('enviar', { version: preparada.version })).status, 409);
+        const reparada = await action('enviar');
+        assert.equal(reparada.status, 200, JSON.stringify(reparada.body));
+        actual = reparada.body;
+        assert.equal(actual.historial.length, 3);
         // Si falla la lectura de respuesta, la transición completa se revierte.
         const falloConsulta = t.mock.method(liquidacionModel, "findById", async () => { throw new Error("Fallo tras transición"); });
         assert.equal((await action("confirmar")).status, 500);
@@ -219,6 +258,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         assert.equal(confirmada.status, 200, JSON.stringify(confirmada.body));
         actual = confirmada.body;
         assert.equal(actual.estado, "CONFIRMADA");
+        assert.equal((await action("reabrir")).status, 409);
         assert.ok(new Date(actual.fecha_confirmacion) >= new Date(actual.fecha_envio));
         assert.equal((await action("confirmar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);

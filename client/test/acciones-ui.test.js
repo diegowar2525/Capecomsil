@@ -21,12 +21,12 @@ test('Viajes presenta tres íconos; historial queda en detalle y anular tiene í
  assert.equal(viajes.find(action=>action.id==='history').parent,undefined,'No mutar las declaraciones originales');
 });
 
-test('Liquidaciones conserva eliminar borrador y anular enviada como operaciones distintas', () => {
+test('Liquidaciones conserva eliminar borrador y anular preparada como operaciones distintas', () => {
  const actions=organizarAcciones(liquidaciones,'liquidaciones');
  const permisos=['consultar','editar','eliminar','anular'].map(action=>`liquidaciones.${action}`);
  assert.deepEqual(accionesDeFila(actions,{estado:'BORRADOR'},permisos).map(action=>[action.id,action.icon]),[['detail','eye'],['edit','pencil'],['delete','trash']]);
- assert.deepEqual(accionesDeFila(actions,{estado:'ENVIADA'},permisos).map(action=>[action.id,action.icon]),[['detail','eye'],['annul','ban']]);
- for(const id of ['send','confirm']) assert.equal(actions.find(action=>action.id===id).parent,'detail');
+ assert.deepEqual(accionesDeFila(actions,{estado:'PREPARADA'},permisos).map(action=>[action.id,action.icon]),[['detail','eye'],['annul','ban']]);
+ for(const id of ['send','confirm']) assert.equal(actions.find(action=>action.id===id).parent,'state');
  assert.equal(actions.find(action=>action.id==='available').global,true);
 });
 
@@ -50,4 +50,23 @@ test('El modal de detalle ofrece historial y respeta el permiso de la acción se
   assert.match(render(['viajes.consultar']),/>Historial<\/span>/);
   assert.doesNotMatch(render([]),/>Historial<\/span>/);
  } finally {await server.close();}
+});
+
+test('Estado de liquidación: íconos accesibles y reapertura únicamente desde preparada', async () => {
+ const server=await createServer({server:{middlewareMode:true,watch:null,hmr:false},appType:'custom'});
+ try {
+  const { LiquidacionEstado }=await server.ssrLoadModule('/src/modules/liquidaciones/components/LiquidacionEstado.jsx');
+  for(const estado of ['BORRADOR','PREPARADA','CONFIRMADA','ANULADA']) {
+   const html=renderToStaticMarkup(createElement(LiquidacionEstado,{estado,onClick:()=>{}}));
+   assert.match(html, /<button/);
+   assert.match(html, /aria-label="Ver estado:/);
+   assert.match(html, /<svg/);
+   assert.doesNotMatch(html, />BORRADOR<|>PREPARADA<|>CONFIRMADA<|>ANULADA</);
+  }
+  const actions=organizarAcciones(liquidaciones,'liquidaciones');
+  const reopen=actions.find(action=>action.id==='reopen');
+  assert.equal(reopen.parent,'state');
+  assert.deepEqual(reopen.states,['PREPARADA']);
+  assert.equal(reopen.permission,'liquidaciones.editar');
+ } finally { await server.close(); }
 });

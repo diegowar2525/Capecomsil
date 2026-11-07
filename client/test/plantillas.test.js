@@ -44,9 +44,9 @@ test('Las rutas y formularios conectados se renderizan sin advertencias', async 
 
 test('La plantilla de liquidaciones respeta sus transiciones y los estados de compras son femeninos', async () => {
     const { actions } = await import('../src/modules/liquidaciones/liquidaciones.actions.js');
-    assert.deepEqual(actions.find((action) => action.id === 'annul').states, ['ENVIADA', 'CONFIRMADA']);
+    assert.deepEqual(actions.find((action) => action.id === 'annul').states, ['PREPARADA', 'CONFIRMADA']);
     assert.deepEqual(actions.find((action) => action.id === 'edit').states, ['BORRADOR']);
-    assert.deepEqual(actions.find((action) => action.id === 'confirm').states, ['ENVIADA']);
+    assert.deepEqual(actions.find((action) => action.id === 'confirm').states, ['PREPARADA']);
     assert.deepEqual(actions.find((action) => action.id === 'delete').states, ['BORRADOR']);
     for (const slug of ['facturas-proveedores', 'recepciones-compra']) {
         const { actions: purchaseActions } = await import(`../src/modules/${slug}/${slug}.actions.js`);

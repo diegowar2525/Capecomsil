@@ -1,0 +1,54 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { validateConsulta } = require('../src/utils/validators/produccion.validators');
+const { validateCreacion } = require('../src/utils/validators/liquidacion.validators');
+test('Producción y recargos: validación de filtros, importes y vínculos', () => {
+    const dates = {fecha_desde:'2026-10-01',fecha_hasta:'2026-10-31'};
+    assert.equal(validateConsulta({...dates,id_terminal:'2'}).id_terminal,2);
+    assert.throws(()=>validateConsulta({...dates,id_terminal:'x'}),{status:400});
+    assert.throws(()=>validateConsulta({...dates,desconocido:1}),{status:400});
+    const base={id_gasolinera:1,periodo_inicio:'2026-10-01',periodo_fin:'2026-10-31'};
+    for(const importe of ['-1','0','1.001',true,{},'Infinity']) assert.throws(()=>validateCreacion({...base,recargos:[{concepto:'Prueba',importe}]}),{status:400});
+    assert.throws(()=>validateCreacion({...base,recargos:[{concepto:' ',importe:'1'}]}),{status:400});
+    assert.throws(()=>validateCreacion({...base,recargos:[{concepto:'Prueba',importe:'1',id_viaje:0}]}),{status:400});
+    assert.equal(validateCreacion({...base,recargos:[{concepto:'Prueba',importe:'20'}]}).recargos[0].importe,'20.00');
+});
+test('Producción SQL: múltiples entregas no multiplican costos y el cruce coincide con ingresos', async () => {
+    const pool = require('../src/config/database');
+    assert.ok(['localhost','127.0.0.1','::1'].includes(pool.options.host));
+    const client = await pool.connect();
+    try {
+        await client.query(`BEGIN;
+            CREATE TEMP TABLE viaje(id_viaje int,id_vehiculo int,estado text,fecha_inicio timestamp);
+            CREATE TEMP TABLE detalle_viaje(id_viaje int,id_terminal int,id_gasolinera int,galones numeric,valor_transporte numeric);
+            CREATE TEMP TABLE costo_viaje(id_viaje int,valor numeric);
+            CREATE TEMP TABLE vehiculo(id_vehiculo int,placa text);
+            CREATE TEMP TABLE gasolinera(id_gasolinera int,nombre text);
+            CREATE TEMP TABLE terminal(id_terminal int,nombre text);
+            INSERT INTO vehiculo VALUES(1,'AAA'),(2,'BBB');
+            INSERT INTO gasolinera VALUES(1,'A'),(2,'B');
+            INSERT INTO terminal VALUES(1,'T1'),(2,'T2');
+            INSERT INTO viaje VALUES(1,1,'REGISTRADO','2026-10-01'),(2,1,'ANULADO','2026-10-01'),(3,2,'REGISTRADO','2026-11-01'),(4,2,'REGISTRADO','2026-10-31 23:59:59');
+            INSERT INTO detalle_viaje VALUES(1,1,1,100,10),(1,2,2,200,20),(2,1,1,999,999),(3,1,1,999,999),(4,1,1,100,10);
+            INSERT INTO costo_viaje VALUES(1,3),(1,2),(4,4);
+        `);
+        const model = require('../src/models/produccion.model');
+        const params=validateConsulta({fecha_desde:'2026-10-01',fecha_hasta:'2026-10-31'});
+        const rows=await model.findAll(params,client);
+        assert.equal(rows.length,2);
+        assert.equal(rows[0].viajes,1);
+        assert.equal(rows[0].entregas,2);
+        assert.equal(Number(rows[0].ingresos),30);
+        assert.equal(Number(rows[0].costo_estimado),5);
+        assert.equal(Number(rows[0].margen_estimado),25);
+        assert.equal(rows[0].terminales.reduce((n,t)=>n+Number(t.ingresos),0),30);
+        assert.equal(Number(rows[0].participacion),75);
+        const filtered=await model.findAll({...params,id_terminal:2},client);
+        assert.equal(filtered.length,1);
+        assert.equal(Number(filtered[0].ingresos),20);
+        assert.equal(filtered[0].costo_estimado,null);
+        assert.equal(filtered[0].gasolineras,'B');
+        assert.equal((await model.findAll({...params,id_vehiculo:99},client)).length,0);
+        assert.equal((await model.findAll({...params,limit:1,offset:1},client))[0].placa,'BBB');
+    } finally {await client.query('ROLLBACK');client.release();await pool.end();}
+});

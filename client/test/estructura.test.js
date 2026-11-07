@@ -14,10 +14,10 @@ test('Errores identifican el campo sin depender del mensaje y no envían confirm
 });
 
 test('Acciones y rutas combinan estados y permisos; anular no equivale a eliminar', () => {
-    const action = { id: 'anular', permission: 'liquidaciones.anular', states: ['ENVIADA'] };
-    assert.equal(accionDisponible(action, { estado: 'ENVIADA' }, ['liquidaciones.anular']), true);
+    const action = { id: 'anular', permission: 'liquidaciones.anular', states: ['PREPARADA'] };
+    assert.equal(accionDisponible(action, { estado: 'PREPARADA' }, ['liquidaciones.anular']), true);
     assert.equal(accionDisponible(action, { estado: 'BORRADOR' }, ['liquidaciones.anular']), false);
-    assert.equal(accionDisponible(action, { estado: 'ENVIADA' }, []), false);
+    assert.equal(accionDisponible(action, { estado: 'PREPARADA' }, []), false);
     assert.equal(puedeVerRuta({ path: '/liquidaciones' }, []), false);
     assert.equal(puedeVerRuta({ path: '/liquidaciones' }, ['liquidaciones.consultar']), true);
 });
