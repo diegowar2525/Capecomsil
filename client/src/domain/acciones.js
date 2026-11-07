@@ -15,7 +15,7 @@ export function organizarAcciones(actions, resource = 'catalogos', single = fals
         ...action,
         permission: action.permission ?? (single ? undefined : `${resource}.${operaciones[action.id] ?? 'consultar'}`),
         ...(iconosPrincipales[action.id] ? { icon: iconosPrincipales[action.id] } : {}),
-        ...(!action.global && !action.parent && !iconosPrincipales[action.id] ? { parent: 'detail' } : {})
+        ...(!action.global && !action.parent && !action.placement && !iconosPrincipales[action.id] ? { parent: 'detail' } : {})
     }));
 }
 

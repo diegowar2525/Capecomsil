@@ -1,3 +1,4 @@
+import { ProduccionPage } from '../modules/produccion/ProduccionPage.jsx';
 import { TiposGastoPage } from '../modules/tipos-gasto/TiposGastoPage.jsx';
 import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
 import { TarifasCapacidadPage } from '../modules/tarifas-capacidad/TarifasCapacidadPage.jsx';
@@ -77,6 +78,7 @@ export const routes = [
     { path: '/recepciones-compra', label: 'Recepciones de compra', section: 'Inventario', Component: RecepcionesCompraPage },
     { path: '/inventario', label: 'Inventario', section: 'Inventario', Component: InventarioPage },
     { path: '/informes', label: 'Resumen', Component: ResumenPage },
+    { path: '/produccion', label: 'Producción por vehículos y terminales', section: 'Consultas e informes', Component: ProduccionPage },
     { path: '/consulta-viajes', label: 'Consulta de viajes', section: 'Consultas e informes', Component: ConsultaViajesPage },
     { path: '/consulta-viaticos', label: 'Consulta de viáticos', section: 'Consultas e informes', Component: ConsultaViaticosPage },
     { path: '/consulta-combustible', label: 'Consumo de combustible', section: 'Consultas e informes', Component: ConsultaCombustiblePage },
