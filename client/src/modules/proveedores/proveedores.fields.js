@@ -8,7 +8,7 @@ export const fields = [
     {
         "name": "ruc",
         "label": "RUC",
-        "required": true
+        "required": false
     },
     {
         "name": "direccion",

@@ -10,7 +10,7 @@ export const fields = [
     {
         "name": "cedula",
         "label": "Cédula",
-        "required": true
+        "required": false
     },
     {
         "name": "telefono",

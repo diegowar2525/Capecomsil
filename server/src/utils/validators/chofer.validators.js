@@ -9,12 +9,13 @@ const validateData = (data) => {
     if (
         typeof nombre !== "string" ||
         !nombre.trim() ||
-        typeof cedula !== "string" ||
-        !cedula.trim() ||
         typeof tipo_remuneracion !== "string" ||
         !tipo_remuneracion.trim()
     ) {
-        throw createHttpError("Nombre, cédula y tipo de remuneración son obligatorios.", 400);
+        throw createHttpError("Nombre y tipo de remuneración son obligatorios.", 400);
+    }
+    if (cedula != null && typeof cedula !== "string") {
+        throw createHttpError("La cédula debe ser texto.", 400);
     }
     const tipoRemuneracionValidado = tipo_remuneracion.trim().toUpperCase();
     if (!["DIARIO_FIJO", "DIA_TRABAJADO"].includes(tipoRemuneracionValidado)) {
@@ -36,7 +37,7 @@ const validateData = (data) => {
         fecha_fin_trabajo,
         imagen_url: validateImagenUrl(data.imagen_url),
         nombre: nombre.trim(),
-        cedula: cedula.trim(),
+        cedula: cedula?.trim() || null,
         telefono: telefono?.trim() || null,
         tipo_remuneracion: tipoRemuneracionValidado,
         estado: estado ?? true

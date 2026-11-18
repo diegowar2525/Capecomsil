@@ -8,8 +8,8 @@ const validateData = (data) => {
     if (typeof nombre !== "string" || nombre.trim() === "") {
         throw createHttpError("El nombre del proveedor es obligatorio", 400);
     }
-    if (typeof ruc !== "string" || ruc.trim() === "") {
-        throw createHttpError("El RUC del proveedor es obligatorio", 400);
+    if (ruc != null && typeof ruc !== "string") {
+        throw createHttpError("El RUC del proveedor debe ser texto", 400);
     }
     if (estado !== undefined && typeof estado !== "boolean") {
         throw createHttpError("El campo estado debe ser booleano", 400);
@@ -33,7 +33,7 @@ const validateData = (data) => {
     }
     return {
         nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
+        ruc: data.ruc?.trim() || null,
         direccion: data.direccion?.trim() || null,
         telefono: data.telefono?.trim() || null,
         correo: data.correo?.trim() || null,

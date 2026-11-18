@@ -49,7 +49,7 @@ CREATE TABLE chofer (
     imagen_url VARCHAR(2048),
     id_chofer INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
-    cedula VARCHAR(20) NOT NULL UNIQUE,
+    cedula VARCHAR(20) UNIQUE,
     telefono VARCHAR(20),
     tipo_remuneracion VARCHAR(50) NOT NULL,
     estado BOOLEAN NOT NULL DEFAULT TRUE,
@@ -65,7 +65,7 @@ CREATE TABLE chofer (
 CREATE TABLE gasolinera (
     id_gasolinera INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nombre VARCHAR(150) NOT NULL,
-    ruc VARCHAR(20) UNIQUE,
+    ruc VARCHAR(20),
     direccion VARCHAR(255),
     telefono VARCHAR(20),
     correo VARCHAR(150),
