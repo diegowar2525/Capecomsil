@@ -79,7 +79,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/037_liquidaciones_recargos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
-        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','038_fechas_operativas.sql']) {
+        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','038_fechas_operativas.sql','041_empresas_facturacion_agrupada.sql','042_documentos_historicos.sql']) {
             await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations',archivo),'utf8').replace(/BEGIN;/,'').replace(/COMMIT;\s*$/,''));
         }
         await admin.query("COMMIT");
@@ -149,7 +149,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         const preparadaAjuste = await request(ajusteRuta+'/enviar','POST',{version:ajustes.body.version});
         assert.equal(preparadaAjuste.status,200,JSON.stringify(preparadaAjuste.body));
         const confirmadaAjuste = await request(ajusteRuta+'/confirmar','POST',{version:preparadaAjuste.body.version});
-        const facturaAjuste = await request('/facturas-cliente','POST',{ id_liquidacion:ajustes.body.id_liquidacion, numero_factura:'AJUSTES-1',fecha_emision:'2026-10-10' });
+        const facturaAjuste = await request('/facturas-cliente','POST',{ id_empresa:1, id_liquidaciones:[ajustes.body.id_liquidacion], numero_factura:'AJUSTES-1',fecha_emision:'2026-10-10' });
         assert.equal(facturaAjuste.status,201,JSON.stringify(facturaAjuste.body));
         assert.equal(facturaAjuste.body.subtotal,'22.45');
         assert.equal(facturaAjuste.body.valor_neto,'22.43');
@@ -266,7 +266,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         assert.equal((await action("confirmar")).status, 409);
         assert.equal((await update([idOtra], { id_gasolinera: 2 })).status, 409);
         const copia = (await request(route)).body.detalles;
-        const datosFactura = { id_liquidacion: id, numero_factura: 'LIQ-TEST', fecha_emision: '2026-10-10', fecha_vencimiento: '2026-11-10' };
+        const datosFactura = { id_empresa:actual.id_empresa, id_liquidaciones:[id], numero_factura: 'LIQ-TEST', fecha_emision: '2026-10-10', fecha_vencimiento: '2026-11-10' };
         const facturar = (data = datosFactura) => request('/facturas-cliente', 'POST', data, operador);
         const facturasSimultaneas = await Promise.all([facturar(), facturar({ ...datosFactura, numero_factura: 'LIQ-DUP' })]);
         assert.deepEqual(facturasSimultaneas.map(r => r.status).sort(), [201,409]);

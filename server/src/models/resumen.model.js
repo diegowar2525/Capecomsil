@@ -65,25 +65,32 @@ const cuentasPorCobrar = async (client = pool) => {
     const result = await client.query(`
         WITH pendientes AS (
             SELECT f.id_factura, f.numero_factura, f.fecha_emision::text, f.fecha_vencimiento::text,
-                l.id_gasolinera, g.nombre gasolinera, f.valor_neto, COALESCE(p.cobrado,0) cobrado,
-                f.valor_neto-COALESCE(p.cobrado,0) saldo,
+                e.id_empresa, e.nombre empresa, f.historico,f.importe_pagado_previo,f.archivo_origen,f.hoja_origen,f.fila_origen,f.valor_neto,
+                COALESCE((SELECT json_agg(json_build_object('fecha',p2.fecha_pago::text,'importe',p2.monto::text,
+                    'comprobante',p2.numero_comprobante,'estado',p2.estado) ORDER BY p2.fecha_pago)
+                    FROM pago p2 WHERE p2.id_factura=f.id_factura),'[]') cobros,
+                COALESCE((SELECT json_agg(json_build_object('id_liquidacion',l.id_liquidacion,'gasolinera',g.nombre,
+                    'desde',l.periodo_inicio::text,'hasta',l.periodo_fin::text,'total',l.total_liquidacion::text) ORDER BY g.nombre,l.id_liquidacion)
+                    FROM factura_liquidacion fl JOIN liquidacion l USING(id_liquidacion) JOIN gasolinera g USING(id_gasolinera)
+                    WHERE fl.id_factura=f.id_factura),'[]') liquidaciones, (f.importe_pagado_previo+COALESCE(p.cobrado,0)) cobrado,
+                f.valor_neto-(f.importe_pagado_previo+COALESCE(p.cobrado,0)) saldo,
                 COALESCE(f.fecha_vencimiento < (CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date,false) vencida
-            FROM factura f JOIN liquidacion l USING(id_liquidacion) JOIN gasolinera g USING(id_gasolinera)
+            FROM factura f JOIN empresa e USING(id_empresa)
             LEFT JOIN LATERAL (SELECT SUM(monto) cobrado FROM pago WHERE id_factura=f.id_factura AND estado='REGISTRADO') p ON true
-            WHERE f.estado<>'ANULADA' AND f.valor_neto>COALESCE(p.cobrado,0)
+            WHERE f.estado<>'ANULADA' AND f.valor_neto>(f.importe_pagado_previo+COALESCE(p.cobrado,0))
         ), clientes AS (
-            SELECT id_gasolinera, gasolinera, COUNT(*)::int cantidad_facturas,
+            SELECT id_empresa, empresa, COUNT(*)::int cantidad_facturas,
                 SUM(valor_neto)::text neto_facturas_pendientes, SUM(cobrado)::text cobrado,
                 SUM(saldo)::text saldo, COALESCE(SUM(saldo) FILTER(WHERE vencida),0)::text vencido,
                 json_agg(json_build_object('id_factura',id_factura,'numero_factura',numero_factura,
                     'fecha_emision',fecha_emision,'fecha_vencimiento',fecha_vencimiento,'valor_neto',valor_neto::text,
-                    'cobrado',cobrado::text,'saldo',saldo::text,'vencida',vencida) ORDER BY fecha_emision,id_factura) facturas
-            FROM pendientes GROUP BY id_gasolinera,gasolinera
+                    'historico',historico,'importe_pagado_previo',importe_pagado_previo::text,'archivo_origen',archivo_origen,'hoja_origen',hoja_origen,'fila_origen',fila_origen,'cobros',cobros,'liquidaciones',liquidaciones,'cobrado',cobrado::text,'saldo',saldo::text,'vencida',vencida) ORDER BY fecha_emision,id_factura) facturas
+            FROM pendientes GROUP BY id_empresa,empresa
         ) SELECT COALESCE((SELECT SUM(saldo) FROM pendientes),0) total_pendiente,
             COALESCE((SELECT SUM(saldo) FROM pendientes WHERE vencida),0) total_vencido,
             (SELECT COUNT(*)::int FROM pendientes) cantidad_facturas,
             (SELECT COUNT(*)::int FROM clientes) cantidad_clientes,
-            COALESCE((SELECT json_agg(clientes ORDER BY saldo::numeric DESC,gasolinera) FROM clientes),'[]') clientes,
+            COALESCE((SELECT json_agg(clientes ORDER BY saldo::numeric DESC,empresa) FROM clientes),'[]') clientes,
             to_char(CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil','YYYY-MM-DD"T"HH24:MI:SS') generado_en
     `);
     return result.rows[0] ?? null;

@@ -1231,4 +1231,8 @@ BEGIN
         VALUES(vehiculo_id,gasto_id,r.fecha,r.odometro,r.galones,combustible.precio_por_galon,r.lleno,'SEED: lectura ficticia para informes');
     END LOOP;
 END $$;
+-- Relaciones iniciales de empresas. Revisar la razón social antes de uso real.
+INSERT INTO empresa(nombre,ruc)
+SELECT min(nombre),btrim(ruc) FROM gasolinera WHERE NULLIF(btrim(ruc),'') IS NOT NULL GROUP BY btrim(ruc);
+UPDATE gasolinera g SET id_empresa=e.id_empresa FROM empresa e WHERE btrim(g.ruc)=e.ruc;
 COMMIT;

@@ -8,12 +8,12 @@ export const columns = [
         "label": "N.º factura"
     },
     {
-        "key": "nombre_gasolinera",
-        "label": "Gasolinera"
+        "key": "nombre_empresa",
+        "label": "Empresa"
     },
     {
-        "key": "id_liquidacion",
-        "label": "Liquidación"
+        "key": "liquidaciones_resumen",
+        "label": "Liquidaciones"
     },
     {
         "key": "fecha_emision",

@@ -7,7 +7,7 @@ const validateCampos = (data, campos) => {
     }
 };
 const validateData = (data) => {
-    validateCampos(data, ["id_liquidacion", "numero_factura", "fecha_emision", "fecha_vencimiento", "observacion"]);
+    validateCampos(data, ["id_empresa", "id_liquidaciones", "numero_factura", "fecha_emision", "fecha_vencimiento", "observacion"]);
     const numero_factura = validateOptionalText(data.numero_factura, "numero_factura", 50);
     if (!numero_factura) {
         throw createHttpError("El número de factura es obligatorio", 400);
@@ -17,7 +17,12 @@ const validateData = (data) => {
     if (fecha_vencimiento && fecha_vencimiento < fecha_emision) {
         throw createHttpError("El vencimiento no puede preceder a la emisión", 400);
     }
-    return { id_liquidacion: validateId(data.id_liquidacion), numero_factura, fecha_emision, fecha_vencimiento,
+    if (!Array.isArray(data.id_liquidaciones) || !data.id_liquidaciones.length || data.id_liquidaciones.length > 200) {
+        throw createHttpError("Seleccione entre 1 y 200 liquidaciones", 400);
+    }
+    const id_liquidaciones = data.id_liquidaciones.map(validateId);
+    if (new Set(id_liquidaciones).size !== id_liquidaciones.length) throw createHttpError("No repita liquidaciones", 400);
+    return { id_empresa: validateId(data.id_empresa), id_liquidaciones, numero_factura, fecha_emision, fecha_vencimiento,
         observacion: validateOptionalText(data.observacion, "observacion") };
 };
 const validateAnulacion = (data) => {
@@ -29,7 +34,7 @@ const validateAnulacion = (data) => {
     return { motivo };
 };
 const validateFiltros = (query = {}, cobros = false) => {
-    const campos = ["id_gasolinera", "fecha_desde", "fecha_hasta", "estado", "limit", "offset", ...(cobros ? ["id_factura"] : ["id_liquidacion", "estado_cobro"])];
+    const campos = ["id_empresa", "id_gasolinera", "fecha_desde", "fecha_hasta", "estado", "limit", "offset", ...(cobros ? ["id_factura"] : ["id_liquidacion", "estado_cobro"])];
     validateCampos(query, campos);
     const result = {};
     for (const key of campos.filter(key => key.startsWith("id_"))) {

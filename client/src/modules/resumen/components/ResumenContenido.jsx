@@ -35,17 +35,52 @@ export function CuentasContenido({ data, print = false }) {
     return <>
         <Kpis items={[
             ['Total por cobrar', dinero(data.total_pendiente)], ['Saldo vencido', dinero(data.total_vencido)],
-            ['Facturas pendientes', data.cantidad_facturas], ['Gasolineras con deuda', data.cantidad_clientes]
+            ['Facturas pendientes', data.cantidad_facturas], ['Empresas con deuda', data.cantidad_clientes]
         ]} />
-        <section className="resumen-panel"><h2>Saldo por gasolinera</h2>
-            <TablaInforme columns={columnasClientes} rows={data.clientes} empty="No hay facturas pendientes de cobro." />
+        <section className="resumen-panel"><h2>Saldo por empresa</h2>
+            <TablaInforme columns={columnasClientes} rows={data.clientes} totals={{ saldo: data.total_pendiente, vencido: data.total_vencido, cantidad_facturas: data.cantidad_facturas }} empty="No hay facturas pendientes de cobro." />
         </section>
-        <p className="resumen-nota">Saldo actual de todas las facturas vigentes: neto cobrable menos cobros registrados. Incluye abonos parciales; excluye anulaciones. Una factura sin fecha de vencimiento no se marca como vencida.</p>
-        {data.clientes.map(cliente => print ? <section key={cliente.id_gasolinera}>
-            <h3>{cliente.gasolinera} · Pendiente: {dinero(cliente.saldo)}</h3><TablaInforme columns={columnasFacturas} rows={cliente.facturas} />
-        </section> : <details className="resumen-panel resumen-cliente" key={cliente.id_gasolinera}>
-            <summary>{cliente.gasolinera}<span>{cliente.cantidad_facturas} facturas · {dinero(cliente.saldo)}</span></summary>
-            <TablaInforme columns={columnasFacturas} rows={cliente.facturas} />
+        <p className="resumen-nota">Saldo actual de todas las facturas vigentes: neto cobrable menos cobros registrados y pagos previos reconocidos. Los abonos no se reparten entre gasolineras. Incluye abonos parciales; excluye anulaciones. Una factura sin fecha de vencimiento no se marca como vencida.</p>
+        {data.clientes.map(cliente => print ? <section key={cliente.id_empresa}>
+            <h3>{cliente.empresa} · Pendiente: {dinero(cliente.saldo)}</h3><FacturasEmpresa facturas={cliente.facturas} print={print} />
+        </section> : <details className="resumen-panel resumen-cliente" key={cliente.id_empresa}>
+            <summary>{cliente.empresa}<span>{cliente.cantidad_facturas} facturas · {dinero(cliente.saldo)}</span></summary>
+            <FacturasEmpresa facturas={cliente.facturas} print={print} />
+        </details>)}
+    </>;
+}
+
+function DetalleFacturaCuenta({ factura }) {
+    return <>
+        {factura.historico && <p className="resumen-nota">Documento histórico · {factura.archivo_origen} · {factura.hoja_origen}, fila {factura.fila_origen}. Sin liquidaciones del sistema.</p>}
+        {Number(factura.importe_pagado_previo)>0 && <p>Pagado antes del período migrado: <strong>{dinero(factura.importe_pagado_previo)}</strong></p>}
+        <h4>Cobros de la factura</h4>
+        <TablaInforme columns={[
+            { key: 'fecha', label: 'Fecha' }, { key: 'comprobante', label: 'Comprobante' },
+            { key: 'estado', label: 'Estado' }, { key: 'importe', label: 'Importe', numeric: true, format: dinero }
+        ]} rows={factura.cobros ?? []} empty="Sin cobros registrados en el sistema." />
+        {!factura.historico && <>
+            <h4>Liquidaciones por gasolinera</h4>
+            <TablaInforme columns={[
+                { key: 'id_liquidacion', label: 'Liquidación' }, { key: 'gasolinera', label: 'Gasolinera' },
+                { key: 'desde', label: 'Desde' }, { key: 'hasta', label: 'Hasta' },
+                { key: 'total', label: 'Neto liquidado', numeric: true, format: dinero }
+            ]} rows={factura.liquidaciones ?? []} />
+        </>}
+    </>;
+}
+function FacturasEmpresa({ facturas, print }) {
+    return <>
+        <TablaInforme columns={columnasFacturas} rows={facturas} totals={{
+            valor_neto: facturas.reduce((s,f) => s+Number(f.valor_neto),0),
+            cobrado: facturas.reduce((s,f) => s+Number(f.cobrado),0),
+            saldo: facturas.reduce((s,f) => s+Number(f.saldo),0)
+        }} />
+        {facturas.map(factura => print ? <section key={factura.id_factura}>
+            <h4>Factura {factura.numero_factura}</h4><DetalleFacturaCuenta factura={factura} />
+        </section> : <details className="resumen-panel" key={factura.id_factura}>
+            <summary>Factura {factura.numero_factura} · Cobros y liquidaciones</summary>
+            <DetalleFacturaCuenta factura={factura} />
         </details>)}
     </>;
 }

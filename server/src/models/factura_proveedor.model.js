@@ -8,11 +8,11 @@ const resumenPagos = `LEFT JOIN LATERAL (
     WHERE id_factura_proveedor=f.id_factura_proveedor AND estado='REGISTRADO'
 ) pagos ON true`;
 
-const camposPago = `pagos.total_pagado::text AS total_pagado,
-    (f.total-pagos.total_pagado)::text AS saldo_pendiente,
-    CASE WHEN f.total=pagos.total_pagado THEN 'PAGADA'
-         WHEN pagos.total_pagado>0 THEN 'PARCIAL' ELSE 'PENDIENTE' END AS estado_pago,
-    (f.estado <> 'ANULADA' AND f.total>pagos.total_pagado
+const camposPago = `(f.importe_pagado_previo+pagos.total_pagado)::text AS total_pagado,
+    (f.total-(f.importe_pagado_previo+pagos.total_pagado))::text AS saldo_pendiente,
+    CASE WHEN f.total=(f.importe_pagado_previo+pagos.total_pagado) THEN 'PAGADA'
+         WHEN (f.importe_pagado_previo+pagos.total_pagado)>0 THEN 'PARCIAL' ELSE 'PENDIENTE' END AS estado_pago,
+    (f.estado <> 'ANULADA' AND f.total>(f.importe_pagado_previo+pagos.total_pagado)
      AND COALESCE(f.fecha_vencimiento < (CURRENT_TIMESTAMP AT TIME ZONE 'America/Guayaquil')::date,false)) AS vencida`;
 
 const findAll = async (client = pool) => {
@@ -120,7 +120,7 @@ const findCuentasPorPagar = async (id, client = pool) => {
     const result = await client.query(
         `SELECT f.*, pr.nombre AS nombre_proveedor, ${camposPago}
         FROM factura_proveedor f JOIN proveedor pr ON pr.id_proveedor=f.id_proveedor ${resumenPagos}
-        WHERE f.id_proveedor=$1 AND f.estado <> 'ANULADA' AND f.total>pagos.total_pagado
+        WHERE f.id_proveedor=$1 AND f.estado <> 'ANULADA' AND f.total>(f.importe_pagado_previo+pagos.total_pagado)
         ORDER BY f.fecha_vencimiento NULLS LAST, f.id_factura_proveedor`,
         [id]
     );

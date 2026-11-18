@@ -5,6 +5,11 @@ export const actions = [
         "label": "Ver detalle",
         "readOnly": true,
         "tables": [
+            { name: 'liquidaciones', label: 'Liquidaciones facturadas', rowKey: 'id_liquidacion', columns: [
+                { key: 'id_liquidacion', label: 'Liquidación' }, { key: 'nombre_gasolinera', label: 'Gasolinera' },
+                { key: 'periodo_inicio', label: 'Desde' }, { key: 'periodo_fin', label: 'Hasta' },
+                { key: 'total_liquidacion', label: 'Neto' }
+            ] },
             { name: 'recargos', label: 'Recargos facturados', columns: [{key:'concepto',label:'Concepto'},{key:'importe',label:'Importe'},{key:'id_viaje',label:'Viaje anulado'}] },
             {
                 "name": "cobros",
@@ -20,8 +25,8 @@ export const actions = [
                         "label": "Factura"
                     },
                     {
-                        "key": "nombre_gasolinera",
-                        "label": "Gasolinera"
+                        "key": "nombre_empresa",
+                        "label": "Empresa"
                     },
                     {
                         "key": "fecha_pago",

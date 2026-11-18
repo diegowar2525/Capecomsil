@@ -16,9 +16,9 @@ test('Geografía: validaciones y referencias opcionales', () => {
     for (const nombre of ['', ' ', 'x'.repeat(101), 42]) assert.throws(() => validarProvincia({nombre}), {status:400});
     for (const id_provincia of [null, 0, -1, 'abc']) assert.throws(() => validarCiudad({nombre:'Cuenca', id_provincia}), {status:400});
     assert.equal(validarCiudad({nombre:'Cuenca',id_provincia:'1'}).id_provincia, 1);
-    assert.equal(validarGasolinera({nombre:'Estación',ruc:'123'}).id_ciudad,null);
+    assert.equal(validarGasolinera({nombre:'Estación',id_empresa:1}).id_ciudad,null);
     assert.equal(validarTerminal({nombre:'Terminal',ubicacion:'Dirección'}).id_ciudad,null);
-    assert.throws(() => validarGasolinera({nombre:'Estación',ruc:'123',id_ciudad:'abc'}),{status:400});
+    assert.throws(() => validarGasolinera({nombre:'Estación',id_empresa:1,id_ciudad:'abc'}),{status:400});
 });
 
 test('Geografía: migración conserva datos y relaciones protegen el historial', async () => {
@@ -31,13 +31,15 @@ test('Geografía: migración conserva datos y relaciones protegen el historial',
         await client.query(fs.readFileSync(path.join(__dirname,'../../database/schema.sql'),'utf8').split('-- Provincias y ciudades (031).')[0]);
         await client.query("INSERT INTO terminal(nombre,ubicacion) VALUES ('Anterior','Dirección anterior')");
         await client.query(fs.readFileSync(path.join(__dirname,'../../database/migrations/031_provincias_ciudades.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await client.query(fs.readFileSync(path.join(__dirname,'../../database/schema.sql'),'utf8').split('-- Marcas y modelos normalizados (032).')[1]);
+        await client.query("INSERT INTO empresa(nombre) VALUES ('Empresa de prueba')");
         assert.equal((await terminal.findAll(client))[0].id_ciudad, null);
         const a = await provincia.create(validarProvincia({nombre:'Azuay'}),client);
         const b = await provincia.create(validarProvincia({nombre:'Loja'}),client);
         const c = await ciudad.create(validarCiudad({nombre:'Cuenca',id_provincia:a.id_provincia}),client);
         const other = await ciudad.create(validarCiudad({nombre:'Cuenca',id_provincia:b.id_provincia}),client);
         assert.equal((await ciudad.findById(c.id_ciudad,client)).provincia,'Azuay');
-        const g = await gasolinera.create(validarGasolinera({nombre:'Estación',ruc:'123',id_ciudad:c.id_ciudad}),client);
+        const g = await gasolinera.create(validarGasolinera({nombre:'Estación',id_empresa:1,id_ciudad:c.id_ciudad}),client);
         const t = await terminal.create(validarTerminal({nombre:'Nueva',ubicacion:'Dirección',id_ciudad:c.id_ciudad}),client);
         assert.equal((await gasolinera.findById(g.id_gasolinera,client)).provincia,'Azuay');
         assert.equal((await terminal.findById(t.id_terminal,client)).ciudad,'Cuenca');

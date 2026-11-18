@@ -12,7 +12,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
         const base = `http://127.0.0.1:${server.httpServer.address().port}`;
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
-        const liquidacion = { id_liquidacion: 1, id_gasolinera: 1, nombre_gasolinera: 'Mechita', periodo_inicio: '2026-10-01', periodo_fin: '2026-10-30', total_liquidacion: '100.00', estado: 'CONFIRMADA', version: 3, detalles: [] };
+        const liquidacion = { id_liquidacion: 1, id_empresa: 1, id_gasolinera: 1, nombre_gasolinera: 'Mechita', periodo_inicio: '2026-10-01', periodo_fin: '2026-10-30', total_liquidacion: '100.00', estado: 'CONFIRMADA', version: 3, detalles: [] };
         let factura;
         let entregasDisponibles = [];
         const cobros = [];
@@ -25,6 +25,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
             if (path === '/api/auth/me') return json({ usuario: { id_usuario: 1, nombre: 'Operador', nombre_usuario: 'operador', rol: 'OPERADOR', activo: true, requiere_cambio_password: false }, permisos: ['liquidaciones','facturas_cliente','cobros_cliente'].flatMap(mod => ['consultar','crear','anular'].map(action => `${mod}.${action}`)), fecha_expiracion: '2099-01-01' });
             if (req.method() === 'GET') {
                 if (path === '/api/liquidaciones/entregas-disponibles') return json({ cantidad: entregasDisponibles.length, total_galones: '100.00', valor_transporte: '12.00', entregas: entregasDisponibles });
+                if (path === '/api/empresas') return json([{id_empresa:1,nombre:'Empresa de prueba',estado:true}]);
                 if (path === '/api/gasolineras') return json([{ id_gasolinera: 1, nombre: 'Mechita' }]);
                 if (path.startsWith('/api/liquidaciones')) return json(path.endsWith('/1') ? liquidacion : [liquidacion]);
                 if (path.startsWith('/api/facturas-cliente')) return json(path.endsWith('/1') ? { ...factura, cobros, entregas: [] } : factura ? [factura] : []);
@@ -34,9 +35,10 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
             const data = req.postDataJSON();
             mutations.push({ path, data });
             if (path === '/api/facturas-cliente') {
-                assert.equal(data.id_liquidacion, 1);
+                assert.deepEqual(data.id_liquidaciones.map(Number), [1]);
+                assert.equal(Number(data.id_empresa), 1);
                 assert.equal(data.version, undefined);
-                factura = { ...data, id_factura: 1, id_gasolinera: 1, nombre_gasolinera: 'Mechita', estado: 'REGISTRADA', valor_neto: '100.00', subtotal: '100.00', retencion: '0.00', saldo: '100.00', total_cobrado: '0.00', estado_cobro: 'PENDIENTE' };
+                factura = { ...data, id_factura: 1, id_gasolinera: 1, nombre_empresa: 'Empresa de prueba', estado: 'REGISTRADA', valor_neto: '100.00', subtotal: '100.00', retencion: '0.00', saldo: '100.00', total_cobrado: '0.00', estado_cobro: 'PENDIENTE' };
                 return json(factura, 201);
             }
             if (path === '/api/cobros-cliente') {
@@ -113,7 +115,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
         await page.getByRole('dialog').getByText('PARCIAL', { exact: true }).waitFor();
         await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
         await page.getByRole('button', { name: /Registrar factura/, exact: false }).click();
-        assert.equal(await page.getByLabel('Liquidación confirmada').locator('option[value="1"]').isDisabled(), true);
+        await page.getByLabel('Empresa / Cliente', {exact:true}).selectOption('1');
+        await page.getByText('No hay liquidaciones confirmadas disponibles para esta empresa.').waitFor();
         await page.getByRole('button', { name: 'Cerrar', exact: true }).click();
         await page.goto(`${base}/#/pagos`);
         assert.equal(await page.getByRole('button', { name: 'Editar', exact: true }).count(), 0);

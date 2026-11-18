@@ -3,7 +3,7 @@ import { fields as facturaFields } from '../facturacion/facturacion.fields.js';
 export const actions = [
     { id: 'state', label: 'Estado de la liquidación', placement: 'state', readOnly: true },
     { id: 'reopen', label: 'Volver a borrador', parent: 'state', direct: true, direction: 'back', states: ['PREPARADA'], permission: 'liquidaciones.editar', message: 'Se habilitará la edición. Las entregas seguirán reservadas y el cambio quedará en el historial.' },
-    { id: 'invoice', label: 'Registrar factura externa', states: ['CONFIRMADA'], permission: 'facturas_cliente.crear', message: 'Registre el documento emitido por otro medio. Los importes se tomarán de esta liquidación.', fields: facturaFields.filter(field => field.name !== 'id_liquidacion') },
+    { id: 'invoice', label: 'Registrar factura externa', states: ['CONFIRMADA'], permission: 'facturas_cliente.crear', message: 'Registre el documento emitido por otro medio. Los importes se tomarán de esta liquidación.', fields: facturaFields.filter(field => !['id_empresa', 'id_liquidaciones'].includes(field.name)) },
     {
         "id": "detail",
         "label": "Ver detalle",

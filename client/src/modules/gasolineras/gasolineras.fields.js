@@ -1,15 +1,11 @@
 export const fields = [
+    { name: 'id_empresa', label: 'Empresa / Cliente', type: 'select', source: 'id_empresa', required: true },
     { name: 'id_provincia', label: 'Provincia', type: 'select', source: 'id_provincia' },
     { name: 'id_ciudad', label: 'Ciudad', type: 'select', source: 'id_ciudad' },
     {
         "name": "nombre",
         "placeholder": "Ej.: Estación de servicio Central",
         "label": "Gasolinera",
-        "required": true
-    },
-    {
-        "name": "ruc",
-        "label": "RUC",
         "required": true
     },
     {

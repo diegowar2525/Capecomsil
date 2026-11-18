@@ -55,7 +55,7 @@ test('Capacidad HTTP: migración con historial, terminal independiente, edición
         assert.equal((await admin.query('SELECT tarifa_aplicada FROM detalle_liquidacion WHERE id_liquidacion=1')).rows[0].tarifa_aplicada,'0.1000');
         const marcas = fs.readFileSync(path.join(__dirname,'../../database/migrations/032_marcas_modelos.sql'),'utf8');
         await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
-        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','035_liquidaciones_preparadas.sql','036_liquidaciones_reapertura.sql','037_liquidaciones_recargos.sql','038_fechas_operativas.sql']) {
+        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','035_liquidaciones_preparadas.sql','036_liquidaciones_reapertura.sql','037_liquidaciones_recargos.sql','038_fechas_operativas.sql','028_facturas_cobros_cliente.sql','041_empresas_facturacion_agrupada.sql','042_documentos_historicos.sql']) {
             await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations',archivo),'utf8').replace(/BEGIN;/,'').replace(/COMMIT;\s*$/,''));
         }
         await admin.query('COMMIT');

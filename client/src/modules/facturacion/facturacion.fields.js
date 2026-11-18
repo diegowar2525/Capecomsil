@@ -1,11 +1,6 @@
 export const fields = [
-    {
-        "name": "id_liquidacion",
-        "label": "Liquidación confirmada",
-        "type": "select",
-        "required": true,
-        "source": "id_liquidacion"
-    },
+    { name: 'id_empresa', label: 'Empresa / Cliente', type: 'select', required: true, source: 'id_empresa' },
+    { name: 'id_liquidaciones', label: 'Liquidaciones confirmadas', type: 'select', multiple: true, required: true, source: 'id_liquidaciones' },
     {
         "name": "numero_factura",
         "label": "Número de factura",

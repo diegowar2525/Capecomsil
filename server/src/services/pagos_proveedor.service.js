@@ -55,6 +55,9 @@ const createPago = async (data) => {
         if (factura.estado === "ANULADA") {
             throw createHttpError("No se puede pagar una factura anulada", 409);
         }
+        if (factura.historico && datosValidados.fecha_pago < new Date(factura.fecha_corte).toISOString().slice(0,10)) {
+            throw createHttpError("El pago anterior al corte pertenece al saldo previo", 400);
+        }
         const pago = await pagoModel.create(client, datosValidados);
         if (!pago) {
             throw createHttpError("El monto supera el saldo pendiente de la factura", 409);

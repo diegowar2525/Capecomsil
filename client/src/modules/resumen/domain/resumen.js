@@ -4,7 +4,7 @@ export const mesActual = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Ame
 export const nombreMes = mes => new Intl.DateTimeFormat('es-EC', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${mes}-01T12:00:00Z`));
 export const columnasConceptos = [{ key: 'concepto', label: 'Concepto' }, { key: 'importe', label: 'Importe', numeric: true, format: dinero }];
 export const columnasClientes = [
-    { key: 'gasolinera', label: 'Gasolinera' }, { key: 'cantidad_facturas', label: 'Facturas', numeric: true },
+    { key: 'empresa', label: 'Empresa' }, { key: 'cantidad_facturas', label: 'Facturas', numeric: true },
     { key: 'cobrado', label: 'Abonado a estas facturas', numeric: true, format: dinero },
     { key: 'saldo', label: 'Saldo pendiente', numeric: true, format: dinero },
     { key: 'vencido', label: 'Vencido', numeric: true, format: dinero }

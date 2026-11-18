@@ -1,3 +1,4 @@
+import { EmpresasPage } from '../modules/empresas/EmpresasPage.jsx';
 import { ProduccionPage } from '../modules/produccion/ProduccionPage.jsx';
 import { TiposGastoPage } from '../modules/tipos-gasto/TiposGastoPage.jsx';
 import { PerfilPage } from '../modules/perfil/PerfilPage.jsx';
@@ -41,6 +42,7 @@ import { CiudadesPage } from '../modules/ciudades/CiudadesPage.jsx';
 
 export const routes = [
     { path: '/ciudades', label: 'Ciudades', section: 'Catálogos', Component: CiudadesPage },
+    { path: '/empresas', label: 'Empresas / Clientes', section: 'Catálogos', Component: EmpresasPage },
     { path: '/provincias', label: 'Provincias', section: 'Catálogos', Component: ProvinciasPage },
     {path:'/tipos-gasto',label:'Tipos de gasto operativo',section:'Catálogos',Component:TiposGastoPage},
     { path: '/perfil', label: 'Mi perfil', Component: PerfilPage },
@@ -57,7 +59,7 @@ export const routes = [
     { path: '/gastos', label: "Gastos Operativos", section: "Finanzas y Facturación", Component: GastosPage },
     { path: '/vehiculos', label: "Vehículos / Tanqueros", section: "Catálogos", Component: VehiculosPage },
     { path: '/choferes', label: "Choferes", section: "Catálogos", Component: ChoferesPage },
-    { path: '/gasolineras', label: "Gasolineras / Clientes", section: "Catálogos", Component: GasolinerasPage },
+    { path: '/gasolineras', label: "Gasolineras", section: "Catálogos", Component: GasolinerasPage },
     { path: '/terminales', label: "Terminales de Carga", section: "Catálogos", Component: TerminalesPage },
     { path: '/productos', label: "Productos transportados", section: "Catálogos", Component: ProductosPage },
     { path: '/proveedores', label: "Proveedores", section: "Catálogos", Component: ProveedoresPage },

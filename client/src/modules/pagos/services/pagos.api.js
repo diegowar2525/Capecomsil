@@ -6,7 +6,7 @@ export const api = {
     ...crearCatalogoApi(path),
     listar: signal => listarPaginas(path, {}, signal),
     opciones: async signal => ({ id_factura: (await listarPaginas('/api/facturas-cliente', {}, signal)).map(row => ({
-        value: String(row.id_factura), label: `${row.numero_factura} · ${row.nombre_gasolinera} · Saldo $${row.saldo}${row.estado === 'ANULADA' ? ' (anulada)' : ''}`,
+        value: String(row.id_factura), label: `${row.numero_factura} · ${row.nombre_empresa} · Saldo $${row.saldo}${row.estado === 'ANULADA' ? ' (anulada)' : ''}`,
         disabled: row.estado === 'ANULADA' || Number(row.saldo) <= 0, registro: row
     })) }),
     ejecutar: (action, id, data) => {

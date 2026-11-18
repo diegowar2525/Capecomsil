@@ -26,6 +26,7 @@ const create = async (data, usuario) => {
         if (factura.estado === "ANULADA") {
             throw createHttpError("No se admiten cobros de una factura anulada", 409);
         }
+        if (factura.historico && datosValidados.fecha_pago < factura.fecha_corte) throw createHttpError("El cobro anterior al corte pertenece al saldo previo", 400);
         if (datosValidados.fecha_pago < factura.fecha_emision) {
             throw createHttpError("El cobro no puede preceder a la emisión", 400);
         }

@@ -1,3 +1,5 @@
+import { camposDocumentoHistorico } from '../../components/CatalogoConectado/documento-historico.fields.js';
+import { FacturaClienteForm } from './components/FacturaClienteForm.jsx';
 import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
 import { page } from './facturacion.config.js';
 import { fields } from './facturacion.fields.js';
@@ -8,7 +10,7 @@ import { api } from './services/facturacion.api.js';
 import { prepare } from './domain/facturacion.js';
 import { useFacturacion } from './hooks/useFacturacion.js';
 const detailFields = [
-    ...fields,
+    ...fields.filter(field => field.name !== 'id_liquidaciones'),
     { name: 'subtotal', label: 'Subtotal (transporte + recargo)' },
     { name: 'retencion', label: 'Retención' },
     { name: 'vencida', label: 'Vencida' },
@@ -16,7 +18,8 @@ const detailFields = [
     { name: 'fecha_anulacion', label: 'Fecha de anulación' }
 ];
 const definition = {
-    detailFields,
+    renderForm: props => <FacturaClienteForm {...props} />,
+    detailFields: row => [...detailFields, ...(row.historico ? camposDocumentoHistorico : [])],
     page,
     fields,
     columns,

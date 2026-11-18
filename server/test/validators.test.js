@@ -5,7 +5,7 @@ const cases = [
     ["categoria_producto", "categorias_producto", "CategoriaProducto", { nombre: " Categoría ", descripcion: " Detalle " }],
     ["producto_transportado", "productos_transportados", "ProductoTransportado", { nombre: " Diésel ", unidad_medida: " galón " }],
     ["proveedor", "proveedores", "Proveedor", { nombre: " Proveedor ", ruc: " 123 ", telefono: " 099 " }],
-    ["gasolinera", "gasolineras", "Gasolinera", { nombre: " Gasolinera ", ruc: " 123 ", agente_retencion: false }],
+    ["gasolinera", "gasolineras", "Gasolinera", { nombre: " Gasolinera ", id_empresa: 1, agente_retencion: false }],
     ["chofer", "choferes", "Chofer", { nombre: " Chofer ", cedula: " 123 ", fecha_inicio_trabajo: "2026-01-01", tipo_remuneracion: " diario_fijo " }],
     ["terminal", "terminales", "Terminal", { nombre: " Terminal ", ubicacion: " Ubicación " }],
     ["vehiculo", "vehiculos", "Vehiculo", { placa: " abc ", id_marca: 1, id_modelo: 1, anio: "2026", capacidad_galones: "100" }],
@@ -34,6 +34,14 @@ for (const [entity, serviceName, suffix, data] of cases) {
                 assert.equal(id, 1);
                 return value;
             };
+
+            if (entity === 'gasolinera') {
+                let stored;
+                t.mock.method(require('../src/models/empresa.model'), 'findById', async () => ({ id_empresa: 1, ruc: '123' }));
+                model.findById = async () => stored ?? { id_gasolinera: 1 };
+                model.create = async value => (stored = { ...value, id_gasolinera: 1 });
+                model.update = async (id, value) => { assert.equal(id, 1); return (stored = { ...value, id_gasolinera: 1 }); };
+            }
 
             for (const [input, expected] of [[undefined, true], [true, true], [false, false]]) {
                 const payload = { ...data, estado: input };

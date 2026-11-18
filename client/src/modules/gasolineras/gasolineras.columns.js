@@ -1,4 +1,5 @@
 export const columns = [
+    { key: 'nombre_empresa', label: 'Empresa' },
     {
         "key": "id_gasolinera",
         "label": "ID"
@@ -8,7 +9,7 @@ export const columns = [
         "label": "Gasolinera"
     },
     {
-        "key": "ruc",
+        "key": "ruc_empresa",
         "label": "RUC"
     },
     {

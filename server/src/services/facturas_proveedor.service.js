@@ -133,6 +133,7 @@ const anularFacturaProveedor = async (id, data) => {
         if (factura.estado === "ANULADA") {
             throw createHttpError("La factura ya está anulada", 409);
         }
+        if (Number(factura.importe_pagado_previo)>0) throw createHttpError("La factura tiene pagos previos reconocidos", 409);
         const dependencias = await facturaProveedorModel.getDependenciasVigentes(client, id);
         if (dependencias.tiene_pagos || dependencias.tiene_recepciones) {
             const pendientes = [];

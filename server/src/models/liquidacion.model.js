@@ -2,7 +2,7 @@ const pool = require("../config/database");
 
 const consulta = `
     SELECT l.*, l.periodo_inicio::text AS periodo_inicio, l.periodo_fin::text AS periodo_fin,
-        l.fecha_limite_confirmacion::text AS fecha_limite_confirmacion, g.nombre AS nombre_gasolinera
+        l.fecha_limite_confirmacion::text AS fecha_limite_confirmacion, g.nombre AS nombre_gasolinera, g.id_empresa
     FROM liquidacion l JOIN gasolinera g USING(id_gasolinera)
 `;
 
@@ -75,7 +75,7 @@ const cambiarEstado = async (client, id, estado, motivo) => {
 };
 
 const tieneFactura = async (client, id) => {
-    const result = await client.query("SELECT EXISTS(SELECT 1 FROM factura WHERE id_liquidacion=$1 AND estado<>'ANULADA') AS existe", [id]);
+    const result = await client.query("SELECT EXISTS(SELECT 1 FROM factura_liquidacion WHERE id_liquidacion=$1 AND vigente) AS existe", [id]);
     return result.rows[0].existe;
 };
 

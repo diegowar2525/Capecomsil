@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const factura = require("../src/utils/validators/factura_cliente.validators");
 const cobro = require("../src/utils/validators/cobro_cliente.validators");
 test("Facturación externa: fechas, importes inmutables y filtros estrictos", () => {
-    const data = { id_liquidacion: 1, numero_factura: " 001-001-00001 ", fecha_emision: "2026-10-01" };
+    const data = { id_empresa: 1, id_liquidaciones: [1], numero_factura: " 001-001-00001 ", fecha_emision: "2026-10-01" };
     assert.equal(factura.validateData(data).numero_factura, "001-001-00001");
     for (const changes of [{ numero_factura: " " }, { fecha_vencimiento: false }, { fecha_vencimiento: "2026-09-30" }, { fecha_emision: "2026-02-30" }, { subtotal: "1" }, { estado: "ANULADA" }, { id_usuario_creacion: 1 }]) {
         assert.throws(() => factura.validateData({ ...data, ...changes }), { status: 400 });
@@ -19,4 +19,12 @@ test("Cobros: monto positivo preciso y comprobante para transferencia o cheque",
         assert.throws(() => cobro.validateData({ ...data, ...changes }), { status: 400 });
     }
     assert.equal(cobro.validateData({ ...data, forma_pago: "CHEQUE", numero_comprobante: "123" }).numero_comprobante, "123");
+});
+
+test("Factura agrupada: exige empresa, selección no vacía y sin duplicados", () => {
+    const data = { id_empresa: 1, id_liquidaciones: [1,2], numero_factura: "F-1", fecha_emision: "2026-01-01" };
+    assert.deepEqual(factura.validateData(data).id_liquidaciones,[1,2]);
+    for (const changes of [{id_empresa:null},{id_liquidaciones:[]},{id_liquidaciones:[1,"1"]},{id_liquidaciones:[true]},{id_liquidaciones:null},{id_liquidacion:1}]) {
+        assert.throws(() => factura.validateData({...data,...changes}), {status:400});
+    }
 });

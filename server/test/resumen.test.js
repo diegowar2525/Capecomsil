@@ -20,8 +20,10 @@ test('Resumen SQL: abonos, anulaciones, períodos y pagos reflejados no duplican
         await client.query(`
             CREATE TEMP TABLE viaje(id_viaje int,fecha_inicio timestamp,estado text);
             CREATE TEMP TABLE detalle_viaje(id_viaje int,valor_transporte numeric(14,2));
-            CREATE TEMP TABLE factura(id_factura int,id_liquidacion int,numero_factura text,fecha_emision date,fecha_vencimiento date,subtotal numeric(14,2),retencion numeric(14,2),valor_neto numeric(14,2),estado text);
+            CREATE TEMP TABLE factura(id_factura int,id_empresa int,numero_factura text,fecha_emision date,fecha_vencimiento date,subtotal numeric(14,2),retencion numeric(14,2),valor_neto numeric(14,2),estado text);
             CREATE TEMP TABLE pago(id_factura int,fecha_pago date,monto numeric(14,2),estado text);
+            CREATE TEMP TABLE empresa(id_empresa int,nombre text);
+            INSERT INTO empresa VALUES(1,'Empresa de prueba'),(2,'Otra empresa');
             CREATE TEMP TABLE liquidacion(id_liquidacion int,id_gasolinera int);
             CREATE TEMP TABLE gasolinera(id_gasolinera int,nombre text);
             CREATE TEMP TABLE gasto_clasificado(fecha date,estado text,origen text,tipo_gasto text,monto numeric(14,2),id_pago_proveedor int);
@@ -36,9 +38,9 @@ test('Resumen SQL: abonos, anulaciones, períodos y pagos reflejados no duplican
             INSERT INTO liquidacion VALUES(1,1),(2,1),(3,2),(4,2);
             INSERT INTO factura VALUES
                 (1,1,'FAC-1','2026-10-01','2000-01-01',1000,100,900,'PENDIENTE'),
-                (2,2,'FAC-2','2026-10-31',NULL,200,0,200,'PENDIENTE'),
-                (3,3,'FAC-3','2026-10-15','2000-01-01',999,0,999,'ANULADA'),
-                (4,4,'FAC-4','2026-11-01',NULL,300,0,300,'PENDIENTE');
+                (2,1,'FAC-2','2026-10-31',NULL,200,0,200,'PENDIENTE'),
+                (3,2,'FAC-3','2026-10-15','2000-01-01',999,0,999,'ANULADA'),
+                (4,2,'FAC-4','2026-11-01',NULL,300,0,300,'PENDIENTE');
             INSERT INTO pago VALUES(1,'2026-10-15',100,'REGISTRADO'),(1,'2026-11-01',200,'REGISTRADO'),
                 (1,'2026-10-20',90,'ANULADO'),(4,'2026-11-01',300,'REGISTRADO');
             INSERT INTO gasto_clasificado VALUES
@@ -62,6 +64,13 @@ test('Resumen SQL: abonos, anulaciones, períodos y pagos reflejados no duplican
             ALTER TABLE factura_proveedor ADD COLUMN id_proveedor int DEFAULT 1;
             CREATE TEMP TABLE proveedor(id_proveedor int,nombre text);
             INSERT INTO proveedor VALUES(1,'Taller');
+        `);
+        await client.query(`
+            ALTER TABLE factura ADD COLUMN historico boolean DEFAULT false, ADD COLUMN importe_pagado_previo numeric DEFAULT 0,
+                ADD COLUMN archivo_origen text, ADD COLUMN hoja_origen text, ADD COLUMN fila_origen int;
+            ALTER TABLE pago ADD COLUMN numero_comprobante text;
+            ALTER TABLE liquidacion ADD COLUMN periodo_inicio date, ADD COLUMN periodo_fin date, ADD COLUMN total_liquidacion numeric;
+            CREATE TEMP TABLE factura_liquidacion(id_factura int,id_liquidacion int);
         `);
         const model = require('../src/models/resumen.model');
         const data = await model.mensual(validateMes({ mes: '2026-10' }), client);

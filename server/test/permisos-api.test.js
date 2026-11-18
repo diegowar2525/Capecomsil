@@ -8,6 +8,7 @@ const { createAuthenticatedFetch } = require("./helpers/authenticated-fetch");
 const { exigirPermiso } = require("../src/middlewares/auth.middleware");
 
 const mounts = {
+    empresas: "empresas",
     marcas: "marcas", modelos: "modelos",
     provincias: "provincias", ciudades: "ciudades",
     facturas_cliente: "facturas-cliente", cobros_cliente: "cobros-cliente",

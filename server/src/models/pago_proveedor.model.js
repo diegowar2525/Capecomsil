@@ -100,8 +100,8 @@ const create = async (client, data) => {
             factura_proveedor f
         WHERE
             f.id_factura_proveedor = $1
-            AND f.estado <> 'ANULADA'
-            AND $3::numeric <= f.total - (
+            AND f.estado <> 'ANULADA' AND (NOT f.historico OR $2::date>=f.fecha_corte)
+            AND $3::numeric <= f.total - f.importe_pagado_previo - (
                 SELECT
                     COALESCE(SUM(monto), 0)
                 FROM

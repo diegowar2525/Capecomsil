@@ -1,4 +1,5 @@
 const { createHttpError } = require("../utils/errors/http.error");
+const empresaModel = require("../models/empresa.model");
 const gasolineraModel = require("../models/gasolinera.model");
 const { validateId } = require("../utils/validators/common.validators");
 const { validateData } = require("../utils/validators/gasolinera.validators");
@@ -18,17 +19,25 @@ const getGasolineraById = async (id) => {
 
 const createGasolinera = async (data) => {
     const datosValidados = validateData(data);
-    return await gasolineraModel.create(datosValidados);
+    const empresa = await empresaModel.findById(datosValidados.id_empresa);
+    if (!empresa) throw createHttpError("Empresa no encontrada", 400);
+    datosValidados.ruc = empresa.ruc;
+    const creada = await gasolineraModel.create(datosValidados);
+    return await gasolineraModel.findById(creada.id_gasolinera);
 };
 
 const updateGasolinera = async (id, data) => {
     const idNumerico = validateId(id);
     const datosValidados = validateData(data);
+    const empresa = await empresaModel.findById(datosValidados.id_empresa);
+    if (!empresa) throw createHttpError("Empresa no encontrada", 400);
+    datosValidados.ruc = empresa.ruc;
     const existingGasolinera = await gasolineraModel.findById(idNumerico);
     if (!existingGasolinera) {
         throw createHttpError("Gasolinera no encontrada", 404);
     }
-    return await gasolineraModel.update(idNumerico, datosValidados);
+    await gasolineraModel.update(idNumerico, datosValidados);
+    return await gasolineraModel.findById(idNumerico);
 };
 
 const deleteGasolinera = async (id) => {

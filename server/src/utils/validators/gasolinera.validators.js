@@ -6,12 +6,9 @@ const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos deben ser un objeto válido", 400);
     }
-    const { nombre, ruc, agente_retencion, estado } = data;
+    const { nombre, agente_retencion, estado } = data;
     if (typeof nombre !== "string" || nombre.trim() === "") {
         throw createHttpError("El nombre de la gasolinera es obligatorio", 400);
-    }
-    if (typeof ruc !== "string" || ruc.trim() === "") {
-        throw createHttpError("El RUC de la gasolinera es obligatorio", 400);
     }
     if (agente_retencion !== undefined && typeof agente_retencion !== "boolean") {
         throw createHttpError("El campo agente_retencion debe ser booleano", 400);
@@ -44,9 +41,10 @@ const validateData = (data) => {
         throw createHttpError("El campo representante_legal debe ser texto", 400);
     }
     return {
+        id_empresa: validateId(data.id_empresa),
         id_ciudad: data.id_ciudad == null || data.id_ciudad === "" ? null : validateId(data.id_ciudad),
         nombre: data.nombre.trim(),
-        ruc: data.ruc.trim(),
+        ruc: null,
         direccion: data.direccion?.trim() || null,
         telefono: data.telefono?.trim() || null,
         correo: data.correo?.trim() || null,

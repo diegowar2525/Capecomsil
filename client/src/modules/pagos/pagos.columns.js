@@ -8,8 +8,8 @@ export const columns = [
         "label": "Factura"
     },
     {
-        "key": "nombre_gasolinera",
-        "label": "Gasolinera"
+        "key": "nombre_empresa",
+        "label": "Empresa"
     },
     {
         "key": "fecha_pago",

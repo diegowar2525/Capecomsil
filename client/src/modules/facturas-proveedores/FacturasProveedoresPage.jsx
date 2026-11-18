@@ -1,3 +1,4 @@
+import { camposDocumentoHistorico } from '../../components/CatalogoConectado/documento-historico.fields.js';
 import { filters } from './facturas-proveedores.filters.js';
 import { CatalogoConectado } from '../../components/CatalogoConectado/CatalogoConectado.jsx';
 import { fields } from './facturas-proveedores.fields.js';
@@ -21,6 +22,7 @@ const actions = declaredActions.map((action) => ({
     permission: permissions[action.id] ?? action.permission
 }));
 const definition = {
+    detailFields: row => [...fields, ...(row.historico ? camposDocumentoHistorico : [])],
     filters,
     fields,
     columns,

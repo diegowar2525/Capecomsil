@@ -17,7 +17,15 @@ const findById = async (id) => {
         if (!factura) {
             throw createHttpError("Factura no encontrada", 404);
         }
-        const result = { ...factura, recargos: (await liquidacionModel.findById(factura.id_liquidacion, client)).recargos, cobros: await cobroModel.findByFactura(id, client), entregas: await detalleLiquidacionModel.findByLiquidacion(factura.id_liquidacion, client) };
+        const liquidaciones = await facturaModel.findLiquidaciones(id, client);
+        const entregas = [];
+        for (const liquidacion of liquidaciones) {
+            const detalles = await detalleLiquidacionModel.findByLiquidacion(liquidacion.id_liquidacion, client);
+            entregas.push(...detalles.map(detalle => ({ ...detalle, nombre_gasolinera: liquidacion.nombre_gasolinera })));
+        }
+        const result = { ...factura, liquidaciones, entregas,
+            recargos: liquidaciones.flatMap(l => (l.recargos ?? []).map(r => ({ ...r, nombre_gasolinera: l.nombre_gasolinera }))),
+            cobros: await cobroModel.findByFactura(id, client) };
         await client.query("COMMIT");
         return result;
     } catch (error) {
@@ -33,15 +41,12 @@ const create = async (data, usuario) => {
     try {
         await client.query("BEGIN");
         await lock(client);
-        const liquidacion = await liquidacionModel.findByIdForUpdate(client, datosValidados.id_liquidacion);
-        if (!liquidacion) {
-            throw createHttpError("Liquidación no encontrada", 404);
-        }
-        if (liquidacion.estado !== "CONFIRMADA") {
-            throw createHttpError("Solo se facturan liquidaciones confirmadas", 409);
-        }
-        if (await liquidacionModel.tieneFactura(client, datosValidados.id_liquidacion)) {
-            throw createHttpError("La liquidación ya tiene una factura vigente", 409);
+        for (const idLiquidacion of [...datosValidados.id_liquidaciones].sort((a,b) => a-b)) {
+            const liquidacion = await liquidacionModel.findByIdForUpdate(client, idLiquidacion);
+            if (!liquidacion) throw createHttpError("Liquidación no encontrada", 404);
+            if (liquidacion.estado !== "CONFIRMADA") throw createHttpError("Solo se facturan liquidaciones confirmadas", 409);
+            if (liquidacion.id_empresa !== datosValidados.id_empresa) throw createHttpError("Todas las liquidaciones deben pertenecer a la empresa seleccionada", 409);
+            if (await liquidacionModel.tieneFactura(client, idLiquidacion)) throw createHttpError("Una liquidación ya tiene una factura vigente", 409);
         }
         const created = await facturaModel.create(client, datosValidados, usuario);
         const result = await facturaModel.findById(created.id_factura, client);
@@ -71,6 +76,7 @@ const anular = async (id, data, usuario) => {
         if (factura.estado === "ANULADA") {
             throw createHttpError("La factura ya está anulada", 409);
         }
+        if (Number(factura.importe_pagado_previo)>0) throw createHttpError("La factura tiene cobros previos reconocidos", 409);
         if ((await cobroModel.findByFactura(id, client)).some(p => p.estado === "REGISTRADO")) {
             throw createHttpError("Anule primero los cobros vigentes de esta factura", 409);
         }
