@@ -2,7 +2,7 @@ const { validateId, validateDate, validateDecimal, validateOptionalText } = requ
 const { createHttpError } = require("../errors/http.error");
 const { validateCampos, validateAnulacion, validateFiltros: filtros } = require("./factura_cliente.validators");
 const validateData = (data) => {
-    validateCampos(data, ["id_factura", "fecha_pago", "monto", "forma_pago", "banco", "numero_comprobante", "observacion"]);
+    validateCampos(data, ["id_factura", "fecha_pago", "monto", "forma_pago", "banco", "id_banco", "numero_comprobante", "observacion"]);
     const monto = validateDecimal(data.monto, "monto", 12, 2);
     if (Number(monto) <= 0) {
         throw createHttpError("El monto debe ser mayor que cero", 400);
@@ -16,6 +16,7 @@ const validateData = (data) => {
         throw createHttpError("Indique el comprobante o número de cheque", 400);
     }
     return { id_factura: validateId(data.id_factura), fecha_pago: validateDate(data.fecha_pago), monto, forma_pago,
+        id_banco: data.id_banco == null || data.id_banco === "" ? null : validateId(data.id_banco),
         banco: validateOptionalText(data.banco, "banco", 100), numero_comprobante,
         observacion: validateOptionalText(data.observacion, "observacion") };
 };

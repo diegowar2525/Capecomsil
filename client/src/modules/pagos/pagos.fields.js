@@ -45,9 +45,10 @@ export const fields = [
         ]
     },
     {
-        "name": "banco",
-        "label": "Banco (opcional)",
-        "type": "text",
+        "name": "id_banco",
+        "label": "Banco",
+        "type": "select",
+        "source": "id_banco",
         "required": false
     },
     {

@@ -20,10 +20,10 @@ const findByFactura = async (id, client = pool) => {
 };
 const create = async (client, data, usuario) => {
     const result = await client.query(`INSERT INTO pago
-    (id_factura,fecha_pago,monto,forma_pago,banco,numero_comprobante,observacion,id_usuario_creacion)
-    SELECT f.id_factura,$2,$3,$4,$5,$6,$7,$8 FROM factura f WHERE f.id_factura=$1
+    (id_factura,fecha_pago,monto,forma_pago,banco,numero_comprobante,observacion,id_usuario_creacion,id_banco)
+    SELECT f.id_factura,$2,$3,$4,$5,$6,$7,$8,$9 FROM factura f WHERE f.id_factura=$1
     AND $3::numeric <= f.valor_neto-f.importe_pagado_previo-COALESCE((SELECT sum(monto) FROM pago WHERE id_factura=f.id_factura AND estado='REGISTRADO'),0)
-    RETURNING id_pago`, [data.id_factura,data.fecha_pago,data.monto,data.forma_pago,data.banco,data.numero_comprobante,data.observacion,usuario]);
+    RETURNING id_pago`, [data.id_factura,data.fecha_pago,data.monto,data.forma_pago,data.banco,data.numero_comprobante,data.observacion,usuario,data.id_banco ?? null]);
     return result.rows[0] ?? null;
 };
 const anular = async (client, id, motivo, usuario) => {

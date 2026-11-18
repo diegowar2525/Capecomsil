@@ -8,3 +8,9 @@
 .marca-modelo__admin .record-actions { flex-wrap: wrap; }
 .marca-modelo [role="alert"] { color: #b42318; }
 @media (max-width: 640px) { .marca-modelo__grid { grid-template-columns: minmax(0,1fr); } }
+
+.marca-modelo__selection { display: flex; align-items: center; gap: .35rem; }
+.marca-modelo__selection select { flex: 1; min-width: 0; }
+.marca-modelo__selection .record-action-btn { flex-shrink: 0; }
+.marca-modelo__selector { padding: .65rem .75rem .75rem; gap: .5rem; }
+.marca-modelo__admin { display: flex; flex-direction: column; gap: .5rem; }

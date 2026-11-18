@@ -25,6 +25,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
             if (path === '/api/auth/me') return json({ usuario: { id_usuario: 1, nombre: 'Operador', nombre_usuario: 'operador', rol: 'OPERADOR', activo: true, requiere_cambio_password: false }, permisos: ['liquidaciones','facturas_cliente','cobros_cliente'].flatMap(mod => ['consultar','crear','anular'].map(action => `${mod}.${action}`)), fecha_expiracion: '2099-01-01' });
             if (req.method() === 'GET') {
                 if (path === '/api/liquidaciones/entregas-disponibles') return json({ cantidad: entregasDisponibles.length, total_galones: '100.00', valor_transporte: '12.00', entregas: entregasDisponibles });
+                if (path === '/api/bancos') return json([]);
                 if (path === '/api/empresas') return json([{id_empresa:1,nombre:'Empresa de prueba',estado:true}]);
                 if (path === '/api/gasolineras') return json([{ id_gasolinera: 1, nombre: 'Mechita' }]);
                 if (path.startsWith('/api/liquidaciones')) return json(path.endsWith('/1') ? liquidacion : [liquidacion]);

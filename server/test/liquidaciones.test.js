@@ -79,7 +79,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/037_liquidaciones_recargos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
-        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','038_fechas_operativas.sql','041_empresas_facturacion_agrupada.sql','042_documentos_historicos.sql']) {
+        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','038_fechas_operativas.sql','041_empresas_facturacion_agrupada.sql','042_documentos_historicos.sql','043_bancos.sql']) {
             await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations',archivo),'utf8').replace(/BEGIN;/,'').replace(/COMMIT;\s*$/,''));
         }
         await admin.query("COMMIT");

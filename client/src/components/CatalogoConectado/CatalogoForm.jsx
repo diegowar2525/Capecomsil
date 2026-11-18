@@ -1,7 +1,7 @@
 import { FormField } from '../FormField/FormField.jsx';
 import { campoVisible, valoresIniciales } from '../../domain/catalogo.js';
 
-export function CatalogoForm({ fields, values, change, saving, catalogos = {} }) {
+export function CatalogoForm({ fields, values, change, saving, catalogos = {}, renderField }) {
     const set = (name, value) => change({ target: { name, value } });
     const updateChild = (field, index, event) => {
         const { name, value, type, checked, multiple, selectedOptions } = event.target;
@@ -23,6 +23,8 @@ export function CatalogoForm({ fields, values, change, saving, catalogos = {} })
             {fields
                 .filter((field) => campoVisible(field, values))
                 .map((field) => {
+                    const custom = renderField?.(field);
+                    if (custom) return <div key={field.name} className="form-field-wrapper">{custom}</div>;
                     if (field.type === 'rows' || field.type === 'group')
                         return (
                             <fieldset key={field.name} className="form-section" disabled={saving}>

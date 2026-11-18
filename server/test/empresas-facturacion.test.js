@@ -29,6 +29,7 @@ test('Empresas y facturación agrupada: migración, cobros, restricciones y conc
             INSERT INTO factura(id_liquidacion,numero_factura,fecha_emision,subtotal,retencion,valor_neto) VALUES (4,'ANTERIOR','2025-12-31',10,0,10);`);
         await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations/041_empresas_facturacion_agrupada.sql'),'utf8'));
         await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations/042_documentos_historicos.sql'),'utf8'));
+        await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations/043_bancos.sql'),'utf8'));
         const empresa = (await admin.query("SELECT id_empresa FROM empresa WHERE ruc='0991234567001'")).rows[0].id_empresa;
         assert.equal((await admin.query('SELECT count(*) FROM empresa')).rows[0].count,'2');
         assert.equal((await admin.query('SELECT id_liquidacion FROM factura_liquidacion WHERE id_factura=1')).rows[0].id_liquidacion,4);

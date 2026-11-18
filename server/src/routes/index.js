@@ -43,6 +43,7 @@ router.use("/trayectos", trayectosRoutes);
 router.use("/choferes", choferesRoutes);
 router.use("/marcas", require("./marcas.routes"));
 router.use("/modelos", require("./modelos.routes"));
+router.use("/bancos", require("./bancos.routes"));
 router.use("/provincias", require("./provincias.routes"));
 router.use("/ciudades", require("./ciudades.routes"));
 router.use("/terminales", terminalesRoutes);
