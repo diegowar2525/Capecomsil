@@ -2,9 +2,9 @@ const pool = require('../config/database');
 
 const update = async (client, id, data) => {
     const result = await client.query(`UPDATE mantenimiento SET id_vehiculo=$2,id_proveedor=$3,
-        fecha_inicio=$4,fecha_fin=$5,tipo=$6,monto=$7,descripcion=$8,observacion=$9,clase=$10
+        fecha_inicio=$4,tipo=$5,monto=$6,descripcion=$7,observacion=$8,clase=$9
         WHERE id_mantenimiento=$1 RETURNING *`, [id,data.id_vehiculo,data.id_proveedor,data.fecha_inicio,
-        data.fecha_fin,data.tipo,data.monto,data.descripcion,data.observacion,data.clase]);
+        data.tipo,data.monto,data.descripcion,data.observacion,data.clase]);
     return result.rows[0] ?? null;
 };
 const marcarPagoAutomatico = async (client,id) => {

@@ -43,7 +43,7 @@ test("Informes: agregación sin duplicados, datos pendientes e intervalos de tan
         };
         const detalle = {id_terminal:1,id_gasolinera:1,id_producto_transportado:1,galones:"50"};
         const viaje = async (dia,hora,detalles=[detalle]) => req("/viajes","POST",{
-            id_vehiculo:1,id_chofer:1,fecha_inicio:`2026-10-${dia}T${hora}:00`,fecha_fin:`2026-10-${dia}T${hora}:59`,
+            id_vehiculo:1,id_chofer:1,fecha_inicio:`2026-10-${dia}`,
             tramos:[{orden:1,id_trayecto:1}],detalles
         },201);
         // Dos conceptos en el primer viaje; dos gastos de peaje: sus joins no deben multiplicar importes.

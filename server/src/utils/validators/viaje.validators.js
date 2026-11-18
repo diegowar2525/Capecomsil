@@ -1,6 +1,5 @@
 const {
     validateId,
-    validateDateTime,
     validateDate,
     validateOptionalText,
     validateDecimal
@@ -11,7 +10,7 @@ const { createHttpError } = require("../errors/http.error");
 
 const validateEdicion = (data) => {
     const resultado = validateData(data);
-    const permitidos = ["fecha_inicio", "fecha_fin", "id_vehiculo", "id_chofer", "detalles", "tramos", "version", "motivo"];
+    const permitidos = ["fecha_inicio", "id_vehiculo", "id_chofer", "detalles", "tramos", "version", "motivo"];
     if (Object.keys(data).some((campo) => !permitidos.includes(campo))) {
         throw createHttpError("Campo de edición de viaje no admitido", 400);
     }
@@ -40,20 +39,10 @@ const validateData = (data) => {
     if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw createHttpError("Los datos del viaje son obligatorios", 400);
     }
-    if (data.fecha !== undefined) {
-        throw createHttpError("Use fecha_inicio y fecha_fin con fecha y hora", 400);
+    if (data.fecha_fin !== undefined || data.fecha !== undefined) {
+        throw createHttpError("Use únicamente fecha_inicio con formato YYYY-MM-DD", 400);
     }
-    const fecha_inicio = validateDateTime(data.fecha_inicio);
-    const fecha_fin = validateDateTime(data.fecha_fin);
-    if (data.fecha_inicio.length <= 10 || data.fecha_fin.length <= 10) {
-        throw createHttpError("Indique la hora de inicio y fin", 400);
-    }
-    if (fecha_fin <= fecha_inicio || fecha_inicio.slice(0, 10) !== fecha_fin.slice(0, 10)) {
-        throw createHttpError(
-            "El viaje debe terminar después del inicio y dentro del mismo día",
-            400
-        );
-    }
+    const fecha_inicio = validateDate(data.fecha_inicio);
     const id_vehiculo = validateId(data.id_vehiculo);
     const id_chofer = validateId(data.id_chofer);
     if (!Array.isArray(data.detalles) || !data.detalles.length) {
@@ -89,7 +78,6 @@ const validateData = (data) => {
     const tramos = validateTramos(data.tramos, detalles);
     return {
         fecha_inicio,
-        fecha_fin,
         id_vehiculo,
         id_chofer,
         detalles,

@@ -7,7 +7,6 @@ export function MantenimientoForm({ form, registro, catalogos, saving, fields, a
     const creando = action.id === 'create' || action.id === 'edit';
     const trabajo = creando ? form.values : registro;
     const permitePlanes = trabajo?.clase === 'PREVENTIVO';
-    const finalizado = Boolean(creando || action.id === 'finish' ? form.values.fecha_fin : registro?.fecha_fin);
     const vinculados = new Set((registro?.cumplimientos ?? []).map(row => String(row.id_plan_mantenimiento_vehiculo)));
     const opciones = (catalogos.planes_cumplidos ?? []).filter(({ registro: plan, value }) =>
         plan.estado && String(plan.id_vehiculo) === String(trabajo?.id_vehiculo) && !vinculados.has(String(value)));
@@ -24,7 +23,7 @@ export function MantenimientoForm({ form, registro, catalogos, saving, fields, a
             const servicio = {...servicioInicial(event.target.value),...factura.detalles?.[0],tipo_concepto:'SERVICIO',descripcion:event.target.value};
             form.change({target:{name:'factura',value:{...factura,detalles:[servicio,...(factura.detalles ?? []).slice(1)]}}});
         }
-        if (['clase', 'id_vehiculo', 'fecha_fin'].includes(event.target.name)) {
+        if (['clase', 'id_vehiculo'].includes(event.target.name)) {
             form.change({ target: { name: 'planes_cumplidos', value: [] } });
         }
         form.change(event);
@@ -33,12 +32,12 @@ export function MantenimientoForm({ form, registro, catalogos, saving, fields, a
         <CatalogoForm fields={formFields} values={form.values} change={change} saving={saving} catalogos={catalogos} />
         {creando && form.values.modalidad_pago === 'NUEVA' && <FacturaMantenimientoForm field={fields.find(field=>field.name==='factura')}
             factura={form.values.factura} trabajo={form.values.tipo} change={change} saving={saving} catalogos={catalogos} />}
-        {creando && form.values.modalidad_pago === 'DIRECTO' && <p>El total se registra como gasto pagado en el día de inicio del mantenimiento.</p>}
+        {creando && form.values.modalidad_pago === 'DIRECTO' && <p>El total se registra como gasto pagado en el día del mantenimiento.</p>}
         {creando && form.values.modalidad_pago === 'EXISTENTE' && <p>El importe del trabajo será el total de la factura seleccionada. Los abonos se registran en Pagos a proveedores.</p>}
         {permitePlanes && fields.some(field => field.name === 'planes_cumplidos') && <fieldset className="planes-cumplidos" disabled={saving}>
             <legend>Vincular planes realizados{action.id === 'fulfill' ? '' : ' (opcional)'}</legend>
             <p>Marca únicamente las tareas realizadas en este trabajo. Al guardar se actualizará el próximo vencimiento del plan.</p>
-            {!trabajo.id_vehiculo ? <p>Selecciona primero el vehículo.</p> : !finalizado ? <p>Podrás vincular los planes cuando indiques la fecha de finalización.</p> : <>
+            {!trabajo.id_vehiculo ? <p>Selecciona primero el vehículo.</p> : <>
                 {!opciones.length && <p role="status">No hay planes activos pendientes de vincular para este vehículo.</p>}
                 <div className="planes-cumplidos__lista">{opciones.map(({ value, registro: plan }) => <label key={value} className="planes-cumplidos__opcion">
                     <input type="checkbox" checked={seleccion.includes(String(value))} onChange={event => form.change({

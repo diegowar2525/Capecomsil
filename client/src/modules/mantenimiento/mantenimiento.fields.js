@@ -38,15 +38,9 @@ export const fields = [
     },
     {
         "name": "fecha_inicio",
-        "label": "Inicio",
-        "type": "datetime-local",
+        "label": "Fecha",
+        "type": "date",
         "required": true
-    },
-    {
-        "name": "fecha_fin",
-        "label": "Fin",
-        "type": "datetime-local",
-        "required": false
     },
     {
         "name": "tipo",

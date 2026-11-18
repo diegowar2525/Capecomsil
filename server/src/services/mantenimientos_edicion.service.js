@@ -36,8 +36,8 @@ const updateMantenimiento = async (id,data,idActor) => {
             throw createHttpError('El proveedor indicado no existe',400);
         }
         const anterior = await getMantenimientoById(id,client);
-        if (anterior.cumplimientos.length && (datos.clase !== 'PREVENTIVO' || !datos.fecha_fin || datos.id_vehiculo !== actual.id_vehiculo)) {
-            throw createHttpError('Con planes cumplidos conserve la clase preventiva, el vehículo y la finalización',409);
+        if (anterior.cumplimientos.length && (datos.clase !== 'PREVENTIVO' || datos.id_vehiculo !== actual.id_vehiculo)) {
+            throw createHttpError('Con planes cumplidos conserve la clase preventiva, el vehículo',409);
         }
         if (actual.id_factura_proveedor && (datos.id_proveedor !== actual.id_proveedor || Number(datos.monto) !== Number(actual.monto))) {
             throw createHttpError('El proveedor y el importe deben conservar los de la factura vinculada',409);

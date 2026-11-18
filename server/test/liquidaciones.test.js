@@ -79,6 +79,9 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         await admin.query(marcas.replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/037_liquidaciones_recargos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        for (const archivo of ['025_tipos_gasto.sql','029_origen_gastos_mantenimientos.sql','030_edicion_mantenimiento.sql','038_fechas_operativas.sql']) {
+            await admin.query(fs.readFileSync(path.join(__dirname,'../../database/migrations',archivo),'utf8').replace(/BEGIN;/,'').replace(/COMMIT;\s*$/,''));
+        }
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -105,7 +108,7 @@ test("Liquidaciones y facturación HTTP: jefe/operador, disponibilidad, borrador
         assert.equal(badCsrf.status, 403);
         const viaje = async (fecha, hora, detalles) => {
             const res = await request("/viajes", "POST", { id_vehiculo: 1, id_chofer: 1,
-                fecha_inicio: `${fecha}T${hora}:00:00`, fecha_fin: `${fecha}T${hora}:30:00`,
+                fecha_inicio: fecha,
                 tramos: [{ orden: 1, id_trayecto: 1 }, { orden: 2, id_trayecto: 2 }],
                 detalles: detalles ?? [{ id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "10" }] });
             assert.equal(res.status, 201, JSON.stringify(res.body));

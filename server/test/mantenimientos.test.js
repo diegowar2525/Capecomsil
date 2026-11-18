@@ -6,7 +6,7 @@ const path = require("node:path");
 const { Pool } = require("pg");
 const { validateData } = require("../src/utils/validators/mantenimiento.validators");
 
-const body = { id_vehiculo: 1, fecha_inicio: "2026-10-05T08:00:00", fecha_fin: "2026-10-05T12:00:00", clase: "PREVENTIVO", tipo: "Cambio de filtros", monto: "25.00", detalles: [] };
+const body = { id_vehiculo: 1, fecha_inicio: "2026-10-05", clase: "PREVENTIVO", tipo: "Cambio de filtros", monto: "25.00", detalles: [] };
 
 test("Mantenimiento: cantidades, referencias y datos obligatorios", () => {
     for (const detalle of [
@@ -52,7 +52,7 @@ test("Mantenimiento: gasto, facturas, historial e inventario manual", async () =
         let dia = 1;
         const post = async data => {
             const fecha = '2026-10-' + String(dia++).padStart(2,'0');
-            data = { ...data, fecha_inicio: fecha+'T08:00:00', fecha_fin: fecha+'T09:00:00' };
+            data = { ...data, fecha_inicio: fecha };
             const response = await authenticatedFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
             return { status: response.status, body: await response.json() };
         };
@@ -76,7 +76,7 @@ test("Mantenimiento: gasto, facturas, historial e inventario manual", async () =
         assert.equal(trabajo.pago_directo_automatico,true);
         assert.equal((await request(pagoRuta,'POST',{fecha:'2026-10-30',monto:'10'})).status,409);
         assert.equal((await request('/gastos/'+trabajo.pagos[0].id_gasto+'/anular','POST',{motivo:'Corrección'})).status,409);
-        const editData = {...body,clase:'CORRECTIVO',detalles:[],fecha_inicio:trabajo.fecha_inicio,fecha_fin:trabajo.fecha_fin,version:trabajo.version,monto:'30',descripcion:'Corregido'};
+        const editData = {...body,clase:'CORRECTIVO',detalles:[],fecha_inicio:trabajo.fecha_inicio,version:trabajo.version,monto:'30',descripcion:'Corregido'};
         const edited = await request('/mantenimientos/'+trabajo.id_mantenimiento,'PUT',editData);
         assert.equal(edited.status,200,JSON.stringify(edited.body));
         assert.equal(edited.body.total_pagado,'30.00');
@@ -128,7 +128,7 @@ test("Mantenimiento: gasto, facturas, historial e inventario manual", async () =
         assert.ok(conNueva.body.id_factura_proveedor);
         const cambiarFactura = await request('/mantenimientos/'+conNueva.body.id_mantenimiento,'PUT',{
             ...body,detalles:[],id_proveedor:proveedor,monto:'116',version:conNueva.body.version,
-            fecha_inicio:conNueva.body.fecha_inicio,fecha_fin:conNueva.body.fecha_fin
+            fecha_inicio:conNueva.body.fecha_inicio
         });
         assert.equal(cambiarFactura.status,409);
         const fallida = await post({...body,id_vehiculo:9999,id_proveedor:proveedor,modalidad_pago:'NUEVA',factura:{...facturaNueva,numero_factura:'ROLLBACK-TALLER'}});
@@ -139,7 +139,7 @@ test("Mantenimiento: gasto, facturas, historial e inventario manual", async () =
         const manual = await post({...body,monto:'10'});
         assert.equal(manual.status,201);
         const rutaManual = '/mantenimientos/'+manual.body.id_mantenimiento;
-        const editarManual = {...body,version:manual.body.version,fecha_inicio:manual.body.fecha_inicio,fecha_fin:manual.body.fecha_fin};
+        const editarManual = {...body,version:manual.body.version,fecha_inicio:manual.body.fecha_inicio};
         assert.equal((await request(rutaManual,'PUT',{...editarManual,detalles:[{id_producto:1,cantidad:'1'}]})).status,400);
         const simultaneas = await Promise.all([1,2].map(()=>request(rutaManual,'PUT',editarManual)));
         assert.deepEqual(simultaneas.map(r=>r.status).sort(),[200,409]);
@@ -151,7 +151,7 @@ test("Mantenimiento: gasto, facturas, historial e inventario manual", async () =
         await isolated.query("INSERT INTO movimiento_inventario(id_producto,tipo_movimiento,cantidad,motivo,id_detalle_mantenimiento) VALUES(1,'SALIDA',1,'Histórico',$1)",[detalleLegacy.id_detalle_mantenimiento]);
         const movimientosLegacy = (await isolated.query('SELECT * FROM movimiento_inventario ORDER BY id_movimiento')).rows;
         const legacyEdit = await request('/mantenimientos/'+legacy.body.id_mantenimiento,'PUT',{
-            ...body,version:legacy.body.version,fecha_inicio:legacy.body.fecha_inicio,fecha_fin:legacy.body.fecha_fin,descripcion:'Texto corregido'
+            ...body,version:legacy.body.version,fecha_inicio:legacy.body.fecha_inicio,descripcion:'Texto corregido'
         });
         assert.equal(legacyEdit.status,200,JSON.stringify(legacyEdit.body));
         assert.equal(legacyEdit.body.detalles.length,1);

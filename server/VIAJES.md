@@ -8,7 +8,7 @@ Todas las operaciones requieren sesión y su permiso. Las escrituras requieren
 
 ## VIAJE
 
-`id_viaje` (PK), `id_vehiculo` (FK), `id_chofer` (FK), `fecha_inicio` y `fecha_fin` (TIMESTAMP), `estado` (REGISTRADO/ANULADO), `fecha_anulacion`, `motivo_anulacion`.
+`id_viaje` (PK), `id_vehiculo` (FK), `id_chofer` (FK), `fecha_inicio` (DATE, YYYY-MM-DD), `estado` (REGISTRADO/ANULADO), `fecha_anulacion`, `motivo_anulacion`.
 
 ## DETALLE_VIAJE
 
@@ -30,8 +30,7 @@ La relación con liquidaciones se almacena en `detalle_liquidacion`, que conserv
 
 ```json
 {
-  "fecha_inicio": "2026-10-08T08:00:00",
-  "fecha_fin": "2026-10-08T12:00:00",
+  "fecha_inicio": "2026-10-08",
   "id_vehiculo": 1,
   "id_chofer": 1,
   "tramos": [
@@ -80,9 +79,8 @@ no enviar el GET completo, estado, importes, tarifas ni identidad del autor.
 ```json
 {
   "version": 1,
-  "motivo": "Corrección de galones y horario",
-  "fecha_inicio": "2026-10-08T08:00:00",
-  "fecha_fin": "2026-10-08T12:00:00",
+  "motivo": "Corrección de galones y fecha",
+  "fecha_inicio": "2026-10-08",
   "id_vehiculo": 1,
   "id_chofer": 1,
   "detalles": [
@@ -107,13 +105,14 @@ la entrega, como en la creación.
 - Los kilómetros de un tramo conservado se mantienen si no cambia el trayecto.
   Un tramo nuevo o cuyo trayecto cambia toma los kilómetros actuales del catálogo.
   Un trayecto inactivo solo puede conservarse en el tramo que ya lo utilizaba.
-- Tarifas y configuraciones corresponden a la fecha final del viaje. La tarifa y
+- Tarifas y configuraciones corresponden a la fecha del viaje. La tarifa y
   el importe se calculan en el servidor; cambiar de fecha puede cambiar sus valores.
 - Cambiar vehículo se bloquea si existen gastos vinculados, incluso anulados.
   La edición no cambia los gastos ni los abastecimientos ni sus fechas.
 
-Se validan capacidad, referencias, continuidad del recorrido, horario, cruces con
-viajes y mantenimientos, vigencias y liquidaciones dentro de la misma transacción.
+Se validan capacidad, referencias, continuidad del recorrido, vigencias y liquidaciones
+dentro de la misma transacción. No se validan solapamientos: varios viajes del mismo
+vehículo o chofer y mantenimientos pueden compartir fecha.
 Fecha y tarifas pueden cambiar juntas: su coherencia se verifica al final, antes
 de confirmar. La comprobación de tarifas sigue siendo inmediata para otros usos
 SQL, salvo que se difieran expresamente esos constraints.

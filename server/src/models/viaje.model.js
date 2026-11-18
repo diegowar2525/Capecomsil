@@ -3,8 +3,7 @@ const pool = require("../config/database");
 const consulta = `
         SELECT
             v.*,
-            to_char(v.fecha_inicio, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-            to_char(v.fecha_fin, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin,
+            to_char(v.fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio,
             veh.placa,
             ch.nombre AS nombre_chofer,
             COALESCE(t.total_galones, 0)::text AS total_galones,
@@ -72,8 +71,7 @@ const findByIdForUpdate = async (client, id) => {
         `
         SELECT
             *,
-            to_char(fecha_inicio, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-            to_char(fecha_fin, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin
+            to_char(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio
         FROM
             viaje
         WHERE
@@ -97,7 +95,7 @@ const anular = async (client, id, motivo) => {
         WHERE
             id_viaje = $1
         RETURNING
-            *
+            *, fecha_inicio::text AS fecha_inicio
     `,
         [id, motivo]
     );
@@ -109,15 +107,14 @@ const create = async (client, data) => {
     const result = await client.query(
         `
         INSERT INTO
-            viaje (id_vehiculo, id_chofer, fecha_inicio, fecha_fin)
+            viaje (id_vehiculo, id_chofer, fecha_inicio)
         VALUES
-            ($1, $2, $3, $4)
+            ($1, $2, $3)
         RETURNING
             *,
-            to_char(fecha_inicio, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-            to_char(fecha_fin, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin
+            to_char(fecha_inicio, 'YYYY-MM-DD') AS fecha_inicio
     `,
-        [data.id_vehiculo, data.id_chofer, data.fecha_inicio, data.fecha_fin]
+        [data.id_vehiculo, data.id_chofer, data.fecha_inicio]
     );
 
     return result.rows[0] ?? null;
@@ -168,9 +165,9 @@ const countRegistradosByChoferFecha = async (client, idChofer, fecha) => {
 
 const update = async (client, id, data) => {
     const result = await client.query(
-        `UPDATE viaje SET id_vehiculo=$2, id_chofer=$3, fecha_inicio=$4, fecha_fin=$5,
+        `UPDATE viaje SET id_vehiculo=$2, id_chofer=$3, fecha_inicio=$4,
          version=version+1 WHERE id_viaje=$1 RETURNING id_viaje`,
-        [id, data.id_vehiculo, data.id_chofer, data.fecha_inicio, data.fecha_fin]
+        [id, data.id_vehiculo, data.id_chofer, data.fecha_inicio]
     );
     return result.rows[0] ?? null;
 };

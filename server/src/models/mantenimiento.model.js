@@ -1,7 +1,6 @@
 const pool = require("../config/database");
 
-const fechas = `to_char(fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-    to_char(fecha_fin,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin`;
+const fechas = `fecha_inicio::text AS fecha_inicio`;
 
 const findAll = async (client = pool) => {
     const result = await client.query(`
@@ -34,16 +33,15 @@ const create = async (client, data) => {
     const result = await client.query(
         `
         INSERT INTO mantenimiento (
-            id_vehiculo, id_proveedor, fecha_inicio, fecha_fin, tipo, monto, descripcion, observacion, clase, id_factura_proveedor
+            id_vehiculo, id_proveedor, fecha_inicio, tipo, monto, descripcion, observacion, clase, id_factura_proveedor
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *, ${fechas}
         `,
         [
             data.id_vehiculo,
             data.id_proveedor,
             data.fecha_inicio,
-            data.fecha_fin,
             data.tipo,
             data.monto,
             data.descripcion,
@@ -74,17 +72,8 @@ const anular = async (client, id, motivo) => {
     return result.rows[0] ?? null;
 };
 
-const finalizar = async (client, id, fecha) => {
-    const result = await client.query(
-        `UPDATE mantenimiento SET fecha_fin=$2 WHERE id_mantenimiento=$1 RETURNING *, ${fechas}`,
-        [id, fecha]
-    );
-
-    return result.rows[0] ?? null;
-};
 
 module.exports = {
-    finalizar,
     findByIdForUpdate,
     anular,
     findAll,

@@ -43,7 +43,7 @@ test("Remuneración diaria: calendario, centavos, concurrencia e importes histó
         const generar = (id, desde, hasta=desde) => request("/remuneraciones-chofer/generar", "POST", { id_chofer: id, fecha_desde: desde, fecha_hasta: hasta });
         const horarios = new Map();
         const hora = fecha => { const h = (horarios.get(fecha) ?? 7) + 1; horarios.set(fecha,h); return String(h).padStart(2,'0'); };
-        const viaje = (id, fecha, h = hora(fecha)) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha_inicio: fecha+"T"+h+":00:00", fecha_fin: fecha+"T"+h+":30:00",
+        const viaje = (id, fecha, h = hora(fecha)) => request("/viajes", "POST", { id_vehiculo: 1, id_chofer: id, fecha_inicio: fecha,
             tramos: [{ orden: 1, id_trayecto: 1 }], detalles: [{ id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "50" }] });
         const anular = id => request(`/viajes/${id}/anular`, "POST", { motivo: "Prueba" });
         for (const fecha of ["2026-10-11", "2026-10-12"]) {

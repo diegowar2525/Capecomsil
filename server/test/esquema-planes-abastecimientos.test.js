@@ -20,8 +20,8 @@ test("Esquema: planes independientes, cumplimiento único y gasto por abastecimi
             await client.query("RELEASE SAVEPOINT invalido");
         };
         assert.equal((await client.query("SELECT count(*)::int n FROM plan_mantenimiento_vehiculo")).rows[0].n, 16);
-        await client.query(`INSERT INTO mantenimiento(id_vehiculo,fecha_inicio,fecha_fin,tipo,monto)
-            VALUES (1,'2026-10-16 08:00','2026-10-16 12:00','Ambos servicios',100)`);
+        await client.query(`INSERT INTO mantenimiento(id_vehiculo,fecha_inicio,tipo,monto)
+            VALUES (1,'2026-10-16','Ambos servicios',100)`);
         await client.query(`INSERT INTO cumplimiento_plan_mantenimiento
             (id_mantenimiento,id_plan_mantenimiento_vehiculo,kilometraje_aplicado)
             VALUES (1,1,80000),(1,2,80000)`);

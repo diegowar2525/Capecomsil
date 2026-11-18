@@ -22,11 +22,8 @@ export function construirRecorrido({ origen, paradas, destinoFinal, trayectos = 
 
 export function prepararViaje({ cabecera, origen, paradas, recorrido }) {
     if (!origen.startsWith('terminal:')) throw new Error('Seleccione el terminal de carga inicial.');
-    if (!cabecera.id_vehiculo || !cabecera.id_chofer || !cabecera.fecha_inicio || !cabecera.fecha_fin) {
+    if (!cabecera.id_vehiculo || !cabecera.id_chofer || !cabecera.fecha_inicio) {
         throw new Error('Complete los datos del viaje.');
-    }
-    if (cabecera.fecha_fin <= cabecera.fecha_inicio || cabecera.fecha_fin.slice(0, 10) !== cabecera.fecha_inicio.slice(0, 10)) {
-        throw new Error('El fin debe ser posterior al inicio y dentro del mismo día.');
     }
     if (!paradas.length || recorrido.some((tramo) => tramo.error) || !recorrido.length) throw new Error('Complete el recorrido.');
     const combinaciones = new Set();
@@ -47,7 +44,7 @@ export function prepararViaje({ cabecera, origen, paradas, recorrido }) {
         });
     });
     return {
-        ...cabecera, id_vehiculo: Number(cabecera.id_vehiculo), id_chofer: Number(cabecera.id_chofer), detalles,
+        fecha_inicio: cabecera.fecha_inicio, id_vehiculo: Number(cabecera.id_vehiculo), id_chofer: Number(cabecera.id_chofer), detalles,
         tramos: recorrido.map(({ orden, id_trayecto }) => ({ orden, id_trayecto }))
     };
 }

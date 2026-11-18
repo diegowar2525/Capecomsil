@@ -4,7 +4,7 @@ const montos = new Set(['ingreso_transporte', 'costo_estimado_total', 'margen_es
 const estados = {
     SIN_GASTOS_REGISTRADOS: 'Sin desembolso', REGISTRADO: 'Registrado', COMPARABLE: 'Comparable',
     SIN_CARGA_INICIAL: 'Sin carga inicial', ODOMETRO_SIN_AVANCE: 'Odómetro sin avance',
-    VIAJES_CRUZAN_LIMITES: 'Viajes cruzan el intervalo', SIN_REFERENCIA_VIAJES: 'Sin referencia de viajes'
+    VIAJES_CRUZAN_LIMITES: 'Viajes en días de carga: sin horario para comparar', SIN_REFERENCIA_VIAJES: 'Sin referencia de viajes'
 };
 export const formatearColumnaInforme = column => {
     const format = value => {

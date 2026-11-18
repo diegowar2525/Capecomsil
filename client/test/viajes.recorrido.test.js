@@ -15,7 +15,7 @@ test('Encadena entregas y termina en la última; retorno opcional sin entrega ad
     assert.deepEqual(recorrido.map((t) => [t.orden, t.id_trayecto]), [[1, 1], [2, 2]]);
     const retorno = construirRecorrido({ ...datos, destinoFinal: 'terminal:1' });
     assert.equal(retorno[2].id_trayecto, 3);
-    const payload = prepararViaje({ ...datos, recorrido: retorno, cabecera: { id_vehiculo: '1', id_chofer: '2', fecha_inicio: '2026-10-22T08:00', fecha_fin: '2026-10-22T10:00' } });
+    const payload = prepararViaje({ ...datos, recorrido: retorno, cabecera: { id_vehiculo: '1', id_chofer: '2', fecha_inicio: '2026-10-22' } });
     assert.equal(payload.detalles.length, 2);
     assert.equal(payload.tramos.length, 3);
     assert.ok(payload.detalles.every((d) => d.id_terminal === 1));

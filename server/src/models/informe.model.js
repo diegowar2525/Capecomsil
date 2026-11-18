@@ -13,8 +13,7 @@ const viajes = async (filtros, client = pool) => {
     const result = await client.query(
         `WITH ${viajesPeriodo}
     SELECT v.id_viaje,v.id_vehiculo,ve.placa,v.id_chofer,
-        to_char(v.fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-        to_char(v.fecha_fin,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin,
+        to_char(v.fecha_inicio,'YYYY-MM-DD') AS fecha_inicio,
         COALESCE(d.ingreso,0)::text AS ingreso_transporte,
         COALESCE(c.total,0)::text AS costo_estimado_total,
         (COALESCE(d.ingreso,0)-COALESCE(c.total,0))::text AS margen_estimado,
@@ -194,12 +193,7 @@ const combustible = async (filtros, client = pool) => {
                         WHERE
                             v.id_vehiculo = a.id_vehiculo
                             AND v.estado = 'REGISTRADO'
-                            AND v.fecha_inicio < a.fecha_hora
-                            AND v.fecha_fin > a.inicio
-                            AND (
-                                v.fecha_inicio < a.inicio
-                                OR v.fecha_fin > a.fecha_hora
-                            )
+                            AND (v.fecha_inicio = a.inicio::date OR v.fecha_inicio = a.fecha_hora::date)
                     ) AS viajes_cruzan_limites
                 FROM
                     completas a
@@ -231,8 +225,8 @@ const combustible = async (filtros, client = pool) => {
                         WHERE
                             v.id_vehiculo = a.id_vehiculo
                             AND v.estado = 'REGISTRADO'
-                            AND v.fecha_inicio >= a.inicio
-                            AND v.fecha_fin <= a.fecha_hora
+                            AND v.fecha_inicio > a.inicio::date
+                            AND v.fecha_inicio < a.fecha_hora::date
                     ) t ON true
                 WHERE
                     a.fecha_hora >= $1::date

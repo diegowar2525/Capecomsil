@@ -41,7 +41,7 @@ test("Anulaciones: historial, stock, pendientes, rollback y doble reversión con
         });
         assert.equal(invoice.status, 201);
         const receiptRoute = "/recepciones-compra/" + invoice.body.recepcion_inicial.id_recepcion_compra + "/anular";
-        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha_inicio: "2026-10-02T08:00:00", fecha_fin: "2026-10-02T09:00:00", tipo: "Filtros", clase: "PREVENTIVO", monto: "1", detalles: [] });
+        const maintenance = await request("/mantenimientos", { id_vehiculo: 1, fecha_inicio: "2026-10-02", tipo: "Filtros", clase: "PREVENTIVO", monto: "1", detalles: [] });
         assert.equal(maintenance.status, 201);
         // Simula consumo histórico anterior al flujo manual actual.
         const legacy = (await isolated.query("INSERT INTO detalle_mantenimiento(id_mantenimiento,id_producto,cantidad,origen_producto) VALUES ($1,1,2,'INVENTARIO') RETURNING id_detalle_mantenimiento",[maintenance.body.id_mantenimiento])).rows[0];

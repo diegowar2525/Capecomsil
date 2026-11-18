@@ -1154,14 +1154,14 @@ BEGIN
     SELECT * INTO STRICT viatico FROM configuracion_viatico WHERE DATE '2026-10-05' BETWEEN fecha_inicio AND fecha_fin;
 
     FOR r IN SELECT * FROM (VALUES
-        (TIMESTAMP '2026-10-05 08:00',TIMESTAMP '2026-10-05 10:00',5000, FALSE),
-        (TIMESTAMP '2026-10-05 13:00',TIMESTAMP '2026-10-05 15:00',4000, FALSE),
-        (TIMESTAMP '2026-10-06 08:00',TIMESTAMP '2026-10-06 10:00',6000, FALSE),
-        (TIMESTAMP '2026-10-07 08:00',TIMESTAMP '2026-10-07 10:00',3000, TRUE)
-    ) AS escenarios(inicio,fin,galones,anulado)
+        (DATE '2026-10-05',5000, FALSE),
+        (DATE '2026-10-05',4000, FALSE),
+        (DATE '2026-10-06',6000, FALSE),
+        (DATE '2026-10-07',3000, TRUE)
+    ) AS escenarios(inicio,galones,anulado)
     LOOP
-        INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin,estado,fecha_anulacion,motivo_anulacion)
-        VALUES(vehiculo_id,chofer_id,r.inicio,r.fin,CASE WHEN r.anulado THEN 'ANULADO' ELSE 'REGISTRADO' END,
+        INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,estado,fecha_anulacion,motivo_anulacion)
+        VALUES(vehiculo_id,chofer_id,r.inicio,CASE WHEN r.anulado THEN 'ANULADO' ELSE 'REGISTRADO' END,
             CASE WHEN r.anulado THEN TIMESTAMP '2026-10-07 12:00' END,
             CASE WHEN r.anulado THEN 'SEED: viaje de prueba anulado' END) RETURNING id_viaje INTO viaje_id;
         viajes_ids := array_append(viajes_ids,viaje_id);

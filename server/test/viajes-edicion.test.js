@@ -9,13 +9,13 @@ const { validateEdicion } = require("../src/utils/validators/viaje.validators");
 const historialModel = require("../src/models/viaje_historial.model");
 
 const baseData = {
-    fecha_inicio: "2026-10-08T08:00:00", fecha_fin: "2026-10-08T09:00:00", id_vehiculo: 1, id_chofer: 1,
+    fecha_inicio: "2026-10-08", id_vehiculo: 1, id_chofer: 1,
     tramos: [{ orden: 1, id_trayecto: 1 }, { orden: 2, id_trayecto: 2 }],
     detalles: [{ id_gasolinera: 1, id_terminal: 1, id_producto_transportado: 1, galones: "60" },
         { id_gasolinera: 2, id_terminal: 1, id_producto_transportado: 1, galones: "40" }]
 };
 const payload = (viaje) => ({
-    fecha_inicio: viaje.fecha_inicio, fecha_fin: viaje.fecha_fin, id_vehiculo: viaje.id_vehiculo, id_chofer: viaje.id_chofer,
+    fecha_inicio: viaje.fecha_inicio, id_vehiculo: viaje.id_vehiculo, id_chofer: viaje.id_chofer,
     version: viaje.version,
     detalles: viaje.detalles.map(({ id_detalle_viaje, id_gasolinera, id_terminal, id_producto_transportado, galones }) =>
         ({ id_detalle_viaje, id_gasolinera, id_terminal, id_producto_transportado, galones })),
@@ -86,6 +86,9 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         await admin.query("INSERT INTO tipo_gasto(nombre) VALUES ('Otro')");
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/035_liquidaciones_preparadas.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/036_liquidaciones_reapertura.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        await admin.query(fs.readFileSync(path.join(__dirname, '../../database/migrations/037_liquidaciones_recargos.sql'),'utf8').replace(/^BEGIN;\s*/, '').replace(/COMMIT;\s*$/, ''));
+        const fechasSql = fs.readFileSync(path.join(__dirname,'../../database/migrations/038_fechas_operativas.sql'),'utf8');
+        await admin.query(fechasSql.replace(/BEGIN;/, '').replace(/COMMIT;\s*$/, ''));
         await admin.query("COMMIT");
         pool.query = isolated.query.bind(isolated);
         pool.connect = isolated.connect.bind(isolated);
@@ -103,7 +106,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         const id = creado.body.id_viaje;
         const route = "/viajes/" + id;
         const get = async () => (await request(route)).body;
-        const segundo = await request("/viajes", "POST", { ...baseData, fecha_inicio: "2026-10-08T10:00:00", fecha_fin: "2026-10-08T11:00:00" });
+        const segundo = await request("/viajes", "POST", { ...baseData, fecha_inicio: "2026-10-08" });
         assert.equal(segundo.status, 201);
         let actual = await get();
         const editar = (data) => request(route, "PUT", data);
@@ -119,7 +122,6 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
             [{ detalles: [{ ...payload(actual).detalles[0], id_detalle_viaje: segundo.body.detalles[0].id_detalle_viaje }] }, 400],
             [{ tramos: [{ ...payload(actual).tramos[0], id_tramo_viaje: segundo.body.tramos[0].id_tramo_viaje }] }, 400],
             [{ tramos: [payload(actual).tramos[0]] }, 400],
-            [{ fecha_inicio: "2026-10-08T10:30:00", fecha_fin: "2026-10-08T11:30:00" }, 409]
         ]) {
             assert.equal((await editar({ ...payload(actual), ...patch })).status, status);
             assert.deepEqual(await get(), actual);
@@ -145,7 +147,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         assert.equal(historial[0].posterior.version, 2);
         // Cambiar fecha atraviesa la vigencia y conserva el ID de la entrega.
         const movido = await editar({ ...payload(actual), id_chofer: 2, id_vehiculo: 2,
-            fecha_inicio: "2026-10-09T08:00:00", fecha_fin: "2026-10-09T09:00:00" });
+            fecha_inicio: "2026-10-09" });
         assert.equal(movido.status, 200, JSON.stringify(movido.body));
         actual = movido.body;
         assert.equal(actual.detalles[0].tarifa_aplicada, "0.2000");
@@ -154,7 +156,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         const remanente = (await request("/viajes/" + segundo.body.id_viaje)).body;
         assert.equal(remanente.costos.find((c) => c.tipo_costo === "CHOFER").valor, "35.00");
         assert.equal(remanente.costos.find((c) => c.tipo_costo === "VIATICO").valor, "12.00");
-        const otroDia = await editar({ ...payload(actual), fecha_inicio: "2026-10-10T08:00:00", fecha_fin: "2026-10-10T09:00:00" });
+        const otroDia = await editar({ ...payload(actual), fecha_inicio: "2026-10-10" });
         assert.equal(otroDia.status, 200);
         actual = otroDia.body;
         assert.equal((await isolated.query("SELECT total FROM remuneracion_chofer WHERE id_chofer=2 AND fecha='2026-10-09'")).rows[0].total, "0.00");
@@ -162,7 +164,7 @@ test("Edición HTTP: historial, tarifas entre fechas, recálculos, liquidaciones
         // Fallo posterior a los recálculos debe revertir toda la operación.
         const antesRemuneraciones = (await isolated.query("SELECT * FROM remuneracion_chofer ORDER BY id_remuneracion_chofer")).rows;
         const mock = t.mock.method(historialModel, "create", async () => { throw new Error("Fallo de auditoría simulado"); });
-        assert.equal((await editar({ ...payload(actual), fecha_inicio: "2026-10-11T08:00:00", fecha_fin: "2026-10-11T09:00:00" })).status, 500);
+        assert.equal((await editar({ ...payload(actual), fecha_inicio: "2026-10-11" })).status, 500);
         mock.mock.restore();
         assert.deepEqual(await get(), actual);
         assert.deepEqual((await isolated.query("SELECT * FROM remuneracion_chofer ORDER BY id_remuneracion_chofer")).rows, antesRemuneraciones);

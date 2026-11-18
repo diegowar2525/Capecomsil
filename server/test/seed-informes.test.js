@@ -47,13 +47,13 @@ test("Seed: escenario económico reproducible y consumo entre cargas completas",
         assert.equal(sinDesembolso.estado_comparacion,"SIN_GASTOS_REGISTRADOS");
         const cargas = await informes.getCombustible(filtros);
         assert.equal(cargas.length,2);
-        assert.equal(cargas[0].estado_comparacion,"COMPARABLE");
+        assert.equal(cargas[0].estado_comparacion,"VIAJES_CRUZAN_LIMITES");
         assert.equal(cargas[0].kilometros_odometro,"66.00");
         assert.equal(cargas[0].galones_consumidos,"12.0000");
         assert.equal(cargas[0].importe_comprado_intervalo,"37.23");
-        assert.equal(cargas[0].galones_estimados_viajes,"10.150800");
-        assert.equal(cargas[0].consumo_referencia_galones_km,"0.153800");
-        assert.equal(cargas[0].desviacion_porcentaje,"18.22");
+        assert.equal(cargas[0].galones_estimados_viajes,null);
+        assert.equal(cargas[0].consumo_referencia_galones_km,null);
+        assert.equal(cargas[0].desviacion_porcentaje,null);
         assert.equal(cargas[1].estado_comparacion,"SIN_CARGA_INICIAL");
         assert.equal((await client.query("SELECT count(*)::int n FROM gasto WHERE estado='ANULADO'")).rows[0].n,1);
     } finally {

@@ -7,7 +7,7 @@ export function prepare(values, catalogos, registro, action) {
         data.version = registro.version;
         if (registro.id_factura_proveedor) data.monto = registro.monto;
     }
-    if (values.clase !== 'PREVENTIVO' || !values.fecha_fin) data.planes_cumplidos = [];
+    if (values.clase !== 'PREVENTIVO') data.planes_cumplidos = [];
     return data;
 }
 

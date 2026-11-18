@@ -5,11 +5,7 @@ export const columns = [
     },
     {
         "key": "fecha_inicio",
-        "label": "Inicio"
-    },
-    {
-        "key": "fecha_fin",
-        "label": "Fin"
+        "label": "Fecha"
     },
     {
         "key": "nombre_chofer",

@@ -39,30 +39,19 @@ que cero. No se elimina una configuración utilizada ni se alteran sus valores e
 se permite ajustar fechas solo conservando todos los días utilizados, incluso en viajes anulados.
 Para un aumento, cerrar la vigencia anterior y crear otra para el día siguiente.
 
-## Horarios
+## Fechas operativas
 
-Viajes y mantenimientos reciben `fecha_inicio` y `fecha_fin` con fecha y hora local de Ecuador,
-sin sufijo Z ni desplazamiento: `2026-10-16T08:00:00`.
-Los viajes deben terminar después del inicio y dentro del mismo día.
-Los mantenimientos pueden durar varios días; `fecha_fin: null` mantiene ocupado el vehículo
-desde el inicio hasta su finalización o anulación.
+Viajes y mantenimientos reciben únicamente `fecha_inicio` en formato YYYY-MM-DD.
+El nombre se conserva por compatibilidad con el dominio; representa el día de la operación.
+No se recibe `fecha_fin` ni se aceptan horas. Pueden registrarse varios viajes
+del mismo vehículo o chofer en un día. Los mantenimientos no bloquean viajes.
 
-No se permiten viajes simultáneos de un vehículo o chofer, ni mantenimientos que se crucen
-entre sí o con viajes del mismo vehículo. Los anulados no ocupan horario.
-Una operación puede empezar exactamente cuando termina otra: intervalos `[inicio, fin)`.
-Las restricciones de exclusión y el bloqueo transaccional protegen también las solicitudes concurrentes.
+El mantenimiento representa un trabajo realizado en esa fecha. Ya no existe
+la acción `POST /api/mantenimientos/:id/finalizar`. Los planes de un preventivo
+se pueden indicar al crearlo o mediante `/:id/cumplimientos`.
 
-Para finalizar un mantenimiento abierto:
-
-```http
-POST /api/mantenimientos/1/finalizar
-Content-Type: application/json
-
-{"fecha_fin":"2026-10-16T13:00:00"}
-```
-
-Devuelve el mantenimiento con su fecha final. No vuelve a consumir materiales ni cambia
-sus detalles. Un mantenimiento ya finalizado o anulado devuelve 409.
+Aplicar la migración [038](../database/migrations/038_fechas_operativas.md) sobre
+una base existente; el esquema consolidado ya incluye estos cambios.
 
 ## Registro de viajes y costos
 
@@ -91,4 +80,4 @@ pagos ni gastos reales. Las remuneraciones no tienen cierre propio; el cierre op
 
 `npm test` ejecuta la suite. `node --test test/costos-horarios.test.js` verifica CRUD,
 vigencias, protección histórica, ausencia de configuración con rollback, decimales,
-distribución diaria, anulaciones, finalización y registros concurrentes.
+distribución diaria, anulaciones y registros concurrentes del mismo día.

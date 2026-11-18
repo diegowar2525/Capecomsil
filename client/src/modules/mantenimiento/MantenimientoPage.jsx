@@ -13,7 +13,6 @@ const permissions = {
     history: 'mantenimientos.historial',
     pay: 'mantenimientos.pagar',
     annul: 'mantenimientos.anular',
-    finish: 'mantenimientos.finalizar',
     fulfill: 'mantenimientos.registrar_cumplimientos',
     payments: 'pagos_proveedor.consultar',
     receipts: 'recepciones.consultar',

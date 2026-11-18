@@ -120,7 +120,7 @@ Estados:
 | `COMPARABLE` | Existe intervalo válido y referencia de viajes completos |
 | `SIN_CARGA_INICIAL` | Primera carga completa conocida; no permite medir consumo previo |
 | `ODOMETRO_SIN_AVANCE` | La distancia no es positiva; no se divide entre cero |
-| `VIAJES_CRUZAN_LIMITES` | Un viaje cruza el inicio o fin; se muestra consumo observado pero no desviación contra un recorrido parcial |
+| `VIAJES_CRUZAN_LIMITES` | Hay viajes en el día de la carga inicial o final; sin horarios no se puede atribuirlos al intervalo. Se muestra consumo observado, sin desviación |
 | `SIN_REFERENCIA_VIAJES` | No hay viajes completos con estimaciones suficientes; puede existir consumo observado sin referencia |
 
 Las cargas parciales posteriores a la última carga completa quedan pendientes de un cierre y no generan un intervalo propio. Se pueden consultar en `/api/abastecimientos-combustible`. Las cargas anuladas se excluyen; al anular un cierre, el siguiente intervalo se reconstruye a partir de la carga completa válida anterior. También se excluyen los viajes anulados.

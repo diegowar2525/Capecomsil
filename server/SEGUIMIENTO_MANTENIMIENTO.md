@@ -13,7 +13,8 @@ Sin filtro, utiliza la hora actual de America/Guayaquil.
 Devuelve `kilometraje_base`, `fecha_inicio_control_km`, `fecha_corte`,
 `kilometros_acumulados`, `kilometraje_estimado` y `estado_control`.
 El cálculo suma los kilómetros históricos de TRAMO_VIAJE para viajes REGISTRADOS
-iniciados desde el comienzo del control y finalizados hasta la fecha de corte inclusive.
+registrados desde el día de inicio del control hasta el día de corte inclusive.
+Se incluyen todos los viajes de esos días, sin ordenar por horas.
 Los viajes anulados o anteriores al control no se cuentan. Un viaje aún no terminado
 no aporta kilómetros parciales. No se consultan las distancias actuales del catálogo.
 
@@ -67,7 +68,7 @@ El resultado incluye el último mantenimiento válido, su kilometraje aplicado,
 
 Próximo servicio = kilometraje del último mantenimiento válido + intervalo.
 Sin mantenimiento válido se utiliza la referencia inicial. El último se determina
-por fecha de finalización, no por orden de registro. Intervalos y anticipación
+por fecha del trabajo, no por orden de registro. Intervalos y anticipación
 son configurables; sus cambios afectan al seguimiento con la configuración actual,
 sin modificar el kilometraje aplicado de los servicios. Un plan utilizado no admite
 cambiar de vehículo ni de referencia inicial; puede desactivarse.
@@ -77,20 +78,8 @@ y no bloquean viajes por kilometraje vencido.
 
 ## Indicar los planes cumplidos
 
-Al crear un mantenimiento ya finalizado, añadir `planes_cumplidos: [1, 2]` al body.
-Si está abierto, indicar los planes al finalizarlo:
-
-```http
-POST /api/mantenimientos/1/finalizar
-Content-Type: application/json
-
-{
-  "fecha_fin": "2026-10-16T13:00:00",
-  "planes_cumplidos": [1, 2]
-}
-```
-
-También pueden añadirse después a un mantenimiento finalizado:
+Al crear un mantenimiento PREVENTIVO, añadir `planes_cumplidos: [1, 2]`.
+También pueden añadirse después:
 
 ```http
 POST /api/mantenimientos/1/cumplimientos
@@ -99,16 +88,14 @@ Content-Type: application/json
 {"planes_cumplidos": [1]}
 ```
 
-Los IDs son de planes, no de productos. Deben estar activos y pertenecer al mismo
-vehículo del mantenimiento. No se repiten planes ni se certifican mantenimientos
-abiertos o anulados. Cumplir uno no reinicia los demás. Omitir la lista no cumple ningún plan.
+Los planes deben estar activos y pertenecer al vehículo del mantenimiento.
+No se permiten en correctivos ni trabajos anulados. Cumplir uno no reinicia
+los demás; omitir la lista no cumple ningún plan.
 
-El servidor calcula `kilometraje_aplicado` al inicio del mantenimiento, usando los
-viajes que terminaron hasta ese instante. No se recibe ni confía en un kilometraje
-manual. La consulta individual del mantenimiento devuelve `cumplimientos`.
-Registrar el mantenimiento, sus consumos y cumplimientos es transaccional; al finalizar,
-una asociación inválida revierte también la fecha final. Añadir un cumplimiento no
-vuelve a consumir materiales. Los consumos mantienen sus reglas actuales.
+El servidor calcula `kilometraje_aplicado` incluyendo todos los viajes registrados
+hasta el día del trabajo inclusive. No recibe un kilometraje manual. Registrar
+el trabajo y sus cumplimientos es transaccional. No hay salida automática de
+inventario ni una acción de finalización.
 
 ## Correcciones e historial
 
@@ -129,6 +116,6 @@ incompatibles, cumplimientos duplicados o cambios que afecten referencias proteg
 ## Verificación
 
 `node --test test/seguimiento-mantenimiento.test.js` verifica umbrales, planes
-independientes, límites temporales, configuración ausente, finalización, anulaciones,
+independientes, límites temporales, configuración ausente, anulaciones,
 registro retroactivo, protección de referencias y cumplimientos concurrentes.
 `npm test` ejecuta la suite completa usando esquemas de prueba.

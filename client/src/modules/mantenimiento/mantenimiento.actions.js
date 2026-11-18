@@ -43,30 +43,6 @@ export const actions = [
         ]
     },
     {
-        "id": "finish",
-        "label": "Finalizar",
-        "fields": [
-            {
-                "name": "fecha_fin",
-                "label": "Fecha de finalización",
-                "type": "datetime-local",
-                "required": true
-            },
-            {
-                "name": "planes_cumplidos",
-                "label": "Planes cumplidos",
-                "type": "select",
-                "required": false,
-                "source": "planes_cumplidos",
-                "multiple": true
-            }
-        ],
-        "states": [
-            "REGISTRADO"
-        ],
-        "requiresOpen": true
-    },
-    {
         "id": "fulfill", available: row => row?.clase === "PREVENTIVO",
         "label": "Vincular un plan",
         "fields": [
@@ -82,7 +58,6 @@ export const actions = [
         "states": [
             "REGISTRADO"
         ],
-        "requiresFinished": true
     },
     {
         "id": "annul",

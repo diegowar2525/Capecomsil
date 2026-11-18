@@ -92,7 +92,7 @@ Los estados administrativos de los catálogos se reciben y almacenan como boolea
 | PUT | `/api/viajes/:id` | Editar cabecera, entregas y tramos con versión y motivo; recalcular costos |
 | GET | `/api/viajes/:id/historial` | Consultar autor y cambios de las ediciones |
 
-Cada viaje identifica vehículo, chofer, `fecha_inicio`, `fecha_fin`, tramos ordenados y entregas. Las fechas llevan hora local sin zona, por ejemplo `2026-10-16T08:00:00`. El fin debe ser posterior y estar dentro del mismo día. No se permiten horarios superpuestos para un vehículo o chofer; una operación puede comenzar exactamente al terminar la anterior.
+Cada viaje identifica vehículo, chofer, `fecha_inicio` (YYYY-MM-DD), tramos ordenados y entregas. Solo se guarda el día. Se permiten varios viajes del mismo vehículo o chofer y mantenimientos en una misma fecha.
 
 Cada entrega identifica gasolinera, terminal, combustible y galones. La tarifa se selecciona por la fecha del viaje y se conserva en `detalle_viaje.tarifa_aplicada`. El valor de transporte es galones por tarifa, redondeado a centavos por entrega. La cabecera no tiene una única tarifa. Se rechaza superar la capacidad del vehículo y se permiten cargas inferiores sin advertencia. El combustible transportado no modifica el inventario interno de repuestos.
 
@@ -128,7 +128,7 @@ El registro de viajes requiere configuraciones vigentes de remuneración, combus
 
 Los costos COMBUSTIBLE y PEAJE se estiman por recorrido y conservan los valores aplicados. CHOFER y VIATICO se distribuyen entre los viajes válidos del día, conservando el total exacto en centavos. Registrar o anular viajes redistribuye las asignaciones diarias dentro de la transacción. No se deben sumar otra vez los totales diarios y sus asignaciones como si fueran gastos diferentes.
 
-Estas estimaciones no generan pagos, gastos reales ni abastecimientos. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md). El registro de viajes exige `fecha_inicio` y `fecha_fin` con hora.
+Estas estimaciones no generan pagos, gastos reales ni abastecimientos. Ver [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md) y [REMUNERACIONES.md](REMUNERACIONES.md). El registro de viajes exige únicamente `fecha_inicio` como fecha sin hora.
 
 ## Compras, recepciones y pagos a proveedores
 
@@ -186,30 +186,20 @@ Ver [INVENTARIO.md](INVENTARIO.md) y [RECORRIDOS_Y_MATERIALES.md](RECORRIDOS_Y_M
 
 ## Mantenimientos y seguimiento
 
-`/api/mantenimientos` permite registrar y consultar lista o detalle. También existen `POST /api/mantenimientos/:id/finalizar`, `/:id/anular` y `/:id/cumplimientos`. No hay edición general ni eliminación de mantenimientos.
+`/api/mantenimientos` permite crear, editar con control de versión y consultar trabajos,
+además de anularlos y vincular cumplimientos de planes preventivos.
 
-Ejemplo con IDs ilustrativos que deben existir en la base:
+Viajes y mantenimientos usan una sola `fecha_inicio` (YYYY-MM-DD), sin hora ni
+`fecha_fin`. Un mantenimiento no bloquea viajes ni tiene acción de finalizar.
+La factura puede registrarse con el trabajo; sin factura, el desembolso se
+genera en su misma fecha. No se consume inventario automáticamente.
 
-```json
-{
-  "id_vehiculo": 1,
-  "id_proveedor": null,
-  "fecha_inicio": "2026-10-05T08:00:00",
-  "fecha_fin": "2026-10-05T10:00:00",
-  "tipo": "Cambio de filtros",
-  "monto": "25.00",
-  "detalles": [
-    { "origen_producto": "INVENTARIO", "id_producto": 1, "cantidad": "2.00" },
-    { "origen_producto": "EXTERNO", "descripcion_producto": "Material aportado por el taller", "cantidad": "1.00" }
-  ]
-}
-```
+`GET /api/vehiculos/:id/kilometraje` suma tramos de viajes válidos desde el día
+de inicio del control hasta el día consultado inclusive. Los planes usan el
+kilometraje del día del trabajo para sus cumplimientos.
 
-Vehículo, inicio con hora, tipo y monto son obligatorios; el proveedor es opcional. El monto admite cero y representa el importe registrado para el mantenimiento: no se calcula desde materiales ni genera automáticamente gastos, facturas o pagos. Los detalles son opcionales. INVENTARIO es el origen predeterminado, comprueba stock y genera salidas; EXTERNO exige descripción y no acepta `id_producto`. Al anular solo se revierten las salidas que realmente se generaron.
-
-Un mantenimiento puede durar varios días. Con `fecha_fin: null`, el vehículo queda ocupado hasta finalizarlo o anularlo. No se permiten cruces con viajes ni otros mantenimientos válidos del mismo vehículo. Cabecera, detalles y movimientos se registran en la misma transacción; el stock insuficiente devuelve 409.
-
-`GET /api/vehiculos/:id/kilometraje` calcula el kilometraje estimado a partir del control base y los tramos históricos de viajes válidos finalizados. Sin control configurado devuelve SIN_CONFIGURAR. `/api/planes-mantenimiento` ofrece CRUD de planes por vehículo y seguimiento con situaciones AL_DIA, PROXIMO, VENCIDO e INACTIVO. Los cumplimientos se vinculan a mantenimientos con las validaciones del servicio.
+Para actualizar una base existente aplicar [038_fechas_operativas.sql](../database/migrations/038_fechas_operativas.sql);
+consultar sus [notas de migración](../database/migrations/038_fechas_operativas.md).
 
 Ver [SEGUIMIENTO_MANTENIMIENTO.md](SEGUIMIENTO_MANTENIMIENTO.md) y [COSTOS_HORARIOS.md](COSTOS_HORARIOS.md).
 
@@ -249,7 +239,7 @@ Desde `server`, `npm test` ejecuta `node --test test/*.test.js`. La suite incluy
 
 Desde `client`, `npm run build` compila la interfaz y `npm run lint` ejecuta Oxlint. La existencia de pruebas no garantiza que hayan pasado en un entorno sin verificar.
 
-[PROJECT_CONTEXT.txt](PROJECT_CONTEXT.txt) conserva el alcance inicial y reglas que han cambiado. El esquema consolidado, el código y los documentos por módulo deben contrastarse al desarrollar. Ejemplos antiguos que usan `fecha` para viajes o mantenimientos deben usar `fecha_inicio` y `fecha_fin` según los validadores actuales.
+[PROJECT_CONTEXT.txt](PROJECT_CONTEXT.txt) conserva el alcance inicial y reglas que han cambiado. El esquema consolidado, el código y los documentos por módulo deben contrastarse al desarrollar. Ejemplos antiguos que usan `fecha` para viajes o mantenimientos deben usar únicamente `fecha_inicio` en formato YYYY-MM-DD.
 
 ## Tipos de gasto y etiquetas de consultas
 

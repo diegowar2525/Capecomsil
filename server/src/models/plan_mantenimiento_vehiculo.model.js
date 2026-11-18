@@ -15,7 +15,7 @@ const findAll = async (filtros = {}, id = null, client = pool) => {
                     corte.hasta,
                     kilometraje_vehiculo (p.id_vehiculo, corte.hasta) AS kilometraje_actual,
                     u.id_mantenimiento AS id_ultimo_mantenimiento,
-                    u.fecha_fin AS fecha_ultimo_mantenimiento,
+                    u.fecha_inicio AS fecha_ultimo_mantenimiento,
                     u.kilometraje_aplicado AS kilometraje_ultimo_mantenimiento,
                     COALESCE(u.kilometraje_aplicado, p.kilometraje_referencia_inicial) AS kilometraje_referencia
                 FROM
@@ -25,7 +25,7 @@ const findAll = async (filtros = {}, id = null, client = pool) => {
                     LEFT JOIN LATERAL (
                         SELECT
                             m.id_mantenimiento,
-                            m.fecha_fin,
+                            m.fecha_inicio,
                             c.kilometraje_aplicado
                         FROM
                             cumplimiento_plan_mantenimiento c
@@ -33,10 +33,9 @@ const findAll = async (filtros = {}, id = null, client = pool) => {
                         WHERE
                             c.id_plan_mantenimiento_vehiculo = p.id_plan_mantenimiento_vehiculo
                             AND m.estado = 'REGISTRADO'
-                            AND m.fecha_fin IS NOT NULL
-                            AND m.fecha_fin <= corte.hasta
+                            AND m.fecha_inicio <= corte.hasta
                         ORDER BY
-                            m.fecha_fin DESC,
+                            m.fecha_inicio DESC,
                             m.id_mantenimiento DESC
                         LIMIT
                             1
@@ -90,7 +89,7 @@ const findAll = async (filtros = {}, id = null, client = pool) => {
         SELECT
             *,
             to_char(hasta, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_corte,
-            to_char(fecha_ultimo_mantenimiento, 'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_ultimo_mantenimiento
+            to_char(fecha_ultimo_mantenimiento, 'YYYY-MM-DD') AS fecha_ultimo_mantenimiento
         FROM
             seguimiento
         WHERE

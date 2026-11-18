@@ -71,7 +71,7 @@ test("Gastos y cargas: decimal, referencias, rollback, odómetro y anulaciones c
         const viatico = await req("/gastos","POST",{...gasto,origen:"VIATICO",id_tipo_gasto:null,id_viatico_chofer:1});
         assert.equal(viatico.status,201,JSON.stringify(viatico));
         const viaje = await req("/viajes","POST",{id_vehiculo:1,id_chofer:1,
-            fecha_inicio:"2026-10-03T08:00",fecha_fin:"2026-10-03T09:00",
+            fecha_inicio:"2026-10-03",
             tramos:[{orden:1,id_trayecto:1}],detalles:[{id_terminal:1,id_gasolinera:1,id_producto_transportado:1,galones:"50"}]});
         assert.equal(viaje.status,201,JSON.stringify(viaje));
         const idViaje = viaje.body.id_viaje;

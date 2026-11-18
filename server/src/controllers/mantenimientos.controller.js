@@ -43,21 +43,9 @@ const registrarCumplimientos = async (req, res, next) => {
     }
 };
 
-const finalizarMantenimiento = async (req, res, next) => {
-    try {
-        const resultado = await mantenimientosService.finalizarMantenimiento(
-            req.params.id,
-            req.body
-        );
-        return res.status(200).json(resultado);
-    } catch (error) {
-        next(error);
-    }
-};
 
 module.exports = {
     registrarCumplimientos,
-    finalizarMantenimiento,
     getMantenimientos,
     getMantenimientoById,
     createMantenimiento

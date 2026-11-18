@@ -30,7 +30,7 @@ test("Migración 019: retira cierre, conserva remuneraciones y costos y permite 
             INSERT INTO terminal(nombre) VALUES ('T'); INSERT INTO gasolinera(nombre) VALUES ('G');
             INSERT INTO trayecto(nombre,id_terminal_origen,id_gasolinera_destino,kilometros) VALUES ('T-G',1,1,10);
             INSERT INTO configuracion_peaje_trayecto(id_trayecto,importe,fecha_inicio) VALUES (1,0,'2026-01-01');
-            INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio,fecha_fin) VALUES (1,1,'2026-10-20 08:00','2026-10-20 09:00');
+            INSERT INTO viaje(id_vehiculo,id_chofer,fecha_inicio) VALUES (1,1,'2026-10-20');
             INSERT INTO tramo_viaje(id_viaje,orden,id_trayecto,kilometros,id_configuracion_peaje_trayecto,peaje_aplicado) VALUES (1,1,1,10,1,0);
             SELECT recalcular_remuneracion(1,'2026-10-20');
             INSERT INTO historial_remuneracion_chofer(id_remuneracion_chofer,accion,motivo,responsable)

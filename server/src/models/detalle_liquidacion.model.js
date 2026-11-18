@@ -4,7 +4,7 @@ const findByLiquidacion = async (id, client = pool) => {
     const result = await client.query(
         `SELECT dl.*, d.id_viaje, d.id_producto_transportado, p.nombre AS nombre_producto_transportado,
             p.unidad_medida, d.id_terminal, te.nombre AS nombre_terminal,
-            to_char(v.fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
+            to_char(v.fecha_inicio,'YYYY-MM-DD') AS fecha_inicio,
             veh.placa, ch.nombre AS nombre_chofer
          FROM detalle_liquidacion dl JOIN detalle_viaje d USING(id_detalle_viaje)
          JOIN viaje v USING(id_viaje)
@@ -21,8 +21,7 @@ const findDisponibles = async (filtros, client = pool) => {
             d.tarifa_aplicada, d.valor_transporte, d.id_gasolinera, d.id_terminal,
             te.nombre AS nombre_terminal, p.nombre AS nombre_producto_transportado, p.unidad_medida,
             v.id_vehiculo, veh.placa, v.id_chofer, ch.nombre AS nombre_chofer,
-            to_char(v.fecha_inicio,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_inicio,
-            to_char(v.fecha_fin,'YYYY-MM-DD"T"HH24:MI:SS') AS fecha_fin,
+            to_char(v.fecha_inicio,'YYYY-MM-DD') AS fecha_inicio,
             EXISTS(SELECT 1 FROM detalle_liquidacion propia
                    WHERE propia.id_liquidacion=$4 AND propia.id_detalle_viaje=d.id_detalle_viaje) AS seleccionada,
             count(*) OVER()::integer AS cantidad_disponible,

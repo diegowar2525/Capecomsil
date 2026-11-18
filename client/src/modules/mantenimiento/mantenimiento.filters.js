@@ -8,10 +8,5 @@ export const filters = [
         'nombre_proveedor'),
     seleccion('clase', 'Clase de trabajo'),
     seleccion('tipo', 'Trabajo realizado'),
-    {
-        name: 'finalizado', field: 'fecha_fin', label: 'Finalización', type: 'select', operator: 'presence', options: [
-            { value: 'true', label: 'Finalizado' },
-            { value: 'false', label: 'En curso' }]
-    },
     ...rangoImporte('monto')
 ];

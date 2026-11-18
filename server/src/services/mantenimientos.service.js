@@ -3,7 +3,6 @@ const pagoMantenimientoModel = require("../models/pago_mantenimiento.model");
 const pool = require("../config/database");
 const { lock } = require("../utils/transaction.lock");
 const { createHttpError } = require("../utils/errors/http.error");
-const { validateFinalizacion } = require("../utils/validators/mantenimiento.validators");
 const mantenimientoModel = require("../models/mantenimiento.model");
 const cumplimientoModel = require("../models/cumplimiento_plan_mantenimiento.model");
 const { validatePlanesCumplidos } = require("../utils/validators/plan_mantenimiento.validators");
@@ -77,47 +76,6 @@ const createMantenimiento = async (data) => {
     }
 };
 
-const finalizarMantenimiento = async (id, data) => {
-    id = validateId(id);
-    const fecha = validateFinalizacion(data);
-    const planes = validatePlanesCumplidos(data.planes_cumplidos);
-    const client = await pool.connect();
-    try {
-        await client.query("BEGIN");
-        await lock(client);
-        const actual = await mantenimientoModel.findByIdForUpdate(client, id);
-        if (!actual) {
-            throw createHttpError("Mantenimiento no encontrado", 404);
-        }
-        if (actual.estado === "ANULADO") {
-            throw createHttpError("El mantenimiento está anulado", 409);
-        }
-        if (actual.fecha_fin !== null) {
-            throw createHttpError("El mantenimiento ya está finalizado", 409);
-        }
-        if (fecha <= actual.fecha_inicio) {
-            throw createHttpError("El fin debe ser posterior al inicio", 400);
-        }
-        if (planes.length && actual.clase !== "PREVENTIVO") {
-            throw createHttpError("Solo los trabajos preventivos pueden cumplir planes de mantenimiento", 409);
-        }
-        const resultado = await mantenimientoModel.finalizar(client, id, fecha);
-        for (const plan of planes) {
-            await cumplimientoModel.create(client, id, plan);
-        }
-        const cumplimientos = await cumplimientoModel.findByMantenimiento(id, client);
-        await client.query("COMMIT");
-        return {
-            ...resultado,
-            cumplimientos
-        };
-    } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-    } finally {
-        client.release();
-    }
-};
 
 const registrarCumplimientos = async (id, data) => {
     id = validateId(id);
@@ -133,8 +91,8 @@ const registrarCumplimientos = async (id, data) => {
         if (!mantenimiento) {
             throw createHttpError("Mantenimiento no encontrado", 404);
         }
-        if (mantenimiento.estado !== "REGISTRADO" || !mantenimiento.fecha_fin) {
-            throw createHttpError("El mantenimiento debe estar finalizado y no anulado", 409);
+        if (mantenimiento.estado !== "REGISTRADO") {
+            throw createHttpError("El mantenimiento no debe estar anulado", 409);
         }
         if (mantenimiento.clase !== "PREVENTIVO") {
             throw createHttpError("Solo los trabajos preventivos pueden cumplir planes de mantenimiento", 409);
@@ -155,7 +113,6 @@ const registrarCumplimientos = async (id, data) => {
 
 module.exports = {
     registrarCumplimientos,
-    finalizarMantenimiento,
     getMantenimientos,
     getMantenimientoById,
     createMantenimiento
