@@ -1,1 +1,3 @@
 .vite/
+.local-migracion/
+__pycache__/
